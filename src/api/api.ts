@@ -1,49 +1,146 @@
-import axios from 'axios';
-import { Folder, Image } from '../types';
+import { Folder, Image, SortOptions } from "../types";
 
-const API_BASE_URL = process.env.VITE_API_BASE_URL || 'https://actimate-takehome.netlify.app/api';
+const API_BASE_URL = process.env.VITE_API_BASE_URL || "/.netlify/functions";
+
+// Helper function to handle fetch requests
+const handleResponse = async (response: Response) => {
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "API Error");
+  }
+  return response.json();
+};
 
 // Folders
-export const getFolders = async (page: number, sort: string): Promise<{ folders: Folder[]; lastKey?: string }> => {
-  const response = await axios.get(`${API_BASE_URL}/folders`, { params: { page, sort } });
-  return response.data;
+export const getFolders = async (
+  parentId: string,
+  page: number,
+  sort: SortOptions
+): Promise<{ folders: Folder[]; lastKey?: any }> => {
+  const url = new URL(`${API_BASE_URL}/folders`);
+  url.searchParams.append("parentId", parentId);
+  url.searchParams.append("sortField", sort.field);
+  url.searchParams.append("sortDirection", sort.direction);
+  url.searchParams.append("page", page.toString());
+  url.searchParams.append("limit", "20");
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+  });
+  return handleResponse(response);
 };
 
-export const createFolder = async (name: string): Promise<Folder> => {
-  const response = await axios.post(`${API_BASE_URL}/folders`, { name });
-  return response.data;
+export const createFolder = async (data: Partial<Folder>): Promise<Folder> => {
+  const response = await fetch(`${API_BASE_URL}/folders`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
 };
 
-export const updateFolder = async (id: string, name: string): Promise<Folder> => {
-  const response = await axios.put(`${API_BASE_URL}/folders/${id}`, { name });
-  return response.data;
+export const updateFolder = async (
+  id: string,
+  data: Partial<Folder>
+): Promise<Folder> => {
+  const response = await fetch(`${API_BASE_URL}/folders/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
 };
 
 export const deleteFolder = async (id: string): Promise<void> => {
-  await axios.delete(`${API_BASE_URL}/folders/${id}`);
+  const response = await fetch(`${API_BASE_URL}/folders/${id}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to delete folder");
+  }
 };
 
 // Images
-export const getImages = async (folderId: string, page: number, sort: string): Promise<{ images: Image[]; lastKey?: string }> => {
-  const response = await axios.get(`${API_BASE_URL}/folders/${folderId}/images`, { params: { page, sort } });
-  return response.data;
+export const getImages = async (
+  folderId: string,
+  page: number,
+  sort: SortOptions
+): Promise<{ images: Image[]; lastKey?: any }> => {
+  const url = new URL(`${API_BASE_URL}/folders/${folderId}/images`);
+  url.searchParams.append("sortField", sort.field);
+  url.searchParams.append("sortDirection", sort.direction);
+  url.searchParams.append("page", page.toString());
+  url.searchParams.append("limit", "20");
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+  });
+  return handleResponse(response);
 };
 
-export const uploadImage = async (folderId: string, file: File): Promise<Image> => {
+export const uploadImage = async (
+  folderId: string,
+  formData: FormData
+): Promise<Image> => {
+  const file = formData.get("file") as File;
   // Get signed URL from backend
-  const { url, key } = await axios.get(`${API_BASE_URL}/folders/${folderId}/images/upload`, { params: { filename: file.name } }).then(res => res.data);
+  const uploadUrlResponse = await fetch(
+    `${API_BASE_URL}/folders/${folderId}/images/upload?filename=${encodeURIComponent(
+      file.name
+    )}`,
+    {
+      method: "GET",
+    }
+  );
+  const { uploadUrl, filename } = await handleResponse(uploadUrlResponse);
 
   // Upload to S3
-  await fetch(url, {
-    method: 'PUT',
+  const uploadResponse = await fetch(uploadUrl, {
+    method: "PUT",
     body: file,
   });
+  if (!uploadResponse.ok) {
+    throw new Error("Failed to upload image to S3");
+  }
 
   // Create image record in backend
-  const response = await axios.post(`${API_BASE_URL}/folders/${folderId}/images`, { key, name: file.name });
-  return response.data;
+  const createImageResponse = await fetch(
+    `${API_BASE_URL}/folders/${folderId}/images`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        key: filename,
+        name: file.name,
+        contentType: file.type,
+        size: file.size,
+      }),
+    }
+  );
+  return handleResponse(createImageResponse);
 };
 
-export const deleteImage = async (folderId: string, id: string): Promise<void> => {
-  await axios.delete(`${API_BASE_URL}/folders/${folderId}/images/${id}`);
+export const deleteImage = async (
+  folderId: string,
+  id: string,
+  filename: string
+): Promise<void> => {
+  const url = new URL(`${API_BASE_URL}/folders/${folderId}/images/${id}`);
+  url.searchParams.append("filename", filename);
+
+  const response = await fetch(url.toString(), {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to delete image");
+  }
 };

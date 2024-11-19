@@ -1,8 +1,17 @@
-import React, { useState } from "react";
-import { Modal, FormControl, Input, Button, VStack } from "native-base";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Modal,
+  View,
+  Button,
+  StyleSheet,
+  ActivityIndicator,
+  Text,
+  Animated,
+  Dimensions,
+} from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { Platform } from "react-native";
-import useApi from "#/hooks/useApi";
+import { useImages } from "#/hooks/useImages";
+import { AnimatedModal } from "#/components/AnimatedModal";
 
 interface UploadImageModalProps {
   isOpen: boolean;
@@ -10,121 +19,79 @@ interface UploadImageModalProps {
   folderId: string;
 }
 
-export function UploadImageModal({
+export const UploadImageModal: React.FC<UploadImageModalProps> = ({
   isOpen,
   onClose,
   folderId,
-}: UploadImageModalProps) {
-  const [name, setName] = useState("");
-  const [selectedImage, setSelectedImage] =
-    useState<ImagePicker.ImagePickerAsset | null>(null);
+}) => {
+  const { uploadImage } = useImages(folderId);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const { apiBaseUrl } = useApi();
-
-  const handleSelectImage = async () => {
+  const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
       quality: 1,
     });
 
     if (!result.canceled) {
-      setSelectedImage(result.assets[0]);
-      if (!name) {
-        setName(result.assets[0].fileName || "Untitled Image");
+      try {
+        setUploading(true);
+        const file = result.assets?.[0] as ImagePicker.ImagePickerAsset;
+        if (!file) {
+          setError("No image selected.");
+          setUploading(false);
+          return;
+        }
+        await uploadImage(file);
+        setUploading(false);
+        onClose();
+      } catch (err) {
+        setError("Failed to upload image.");
+        setUploading(false);
       }
     }
   };
 
-  const handleUpload = async () => {
-    if (!selectedImage) return;
-
-    try {
-      // Get upload URL from your API
-      const response = await fetch(`${apiBaseUrl}/images`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          method: "GET_UPLOAD_URL",
-          data: {
-            filename: selectedImage.fileName || "untitled.jpg",
-            contentType: selectedImage.type || "image/jpeg",
-          },
-        }),
-      });
-
-      const { uploadUrl, filename } = await response.json();
-
-      // Upload the file
-      const blob = await fetch(selectedImage.uri).then((r) => r.blob());
-      await fetch(uploadUrl, {
-        method: "PUT",
-        body: blob,
-        headers: { "Content-Type": selectedImage.type || "image/jpeg" },
-      });
-
-      // Create image record
-      await fetch(`${apiBaseUrl}/images`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          method: "CREATE",
-          data: {
-            name,
-            folderId,
-            filename,
-            contentType: selectedImage.type || "image/jpeg",
-            size: selectedImage.fileSize || 0,
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-          },
-        }),
-      });
-
-      onClose();
-      setName("");
-      setSelectedImage(null);
-    } catch (error) {
-      console.error("Upload failed:", error);
-    }
-  };
-
-  const modalProps = Platform.select({
-    web: {
-      closeOnOverlayClick: true,
-      trapFocus: false,
-      useRNModal: false,
-    },
-    default: {},
-  });
-
   return (
-    <Modal isOpen={isOpen} onClose={onClose} {...modalProps}>
-      <Modal.Content>
-        <Modal.Header>Upload Image</Modal.Header>
-        <Modal.Body>
-          <VStack space={4}>
-            <FormControl>
-              <FormControl.Label>Image Name</FormControl.Label>
-              <Input
-                value={name}
-                onChangeText={setName}
-                placeholder="Enter image name"
-              />
-            </FormControl>
-            <Button onPress={handleSelectImage}>
-              {selectedImage ? "Change Image" : "Select Image"}
-            </Button>
-            {selectedImage && (
-              <Button colorScheme="primary" onPress={handleUpload}>
-                Upload Image
-              </Button>
-            )}
-          </VStack>
-        </Modal.Body>
-      </Modal.Content>
-    </Modal>
+    <AnimatedModal isOpen={isOpen} onClose={onClose}>
+      <Button title="Pick an Image" onPress={handlePickImage} />
+      {uploading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <View style={{ height: 20 }} /> // empty view to push the cancel button down
+      )}
+      {error && <Text style={styles.errorText}>{error}</Text>}
+      <Button title="Cancel" onPress={onClose} color="red" />
+    </AnimatedModal>
   );
-}
+};
 
-export default UploadImageModal;
+const styles = StyleSheet.create({
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: "100%",
+    padding: 16,
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    alignItems: "center",
+    // For iOS shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    // For Android shadow
+    elevation: 5,
+  },
+  errorText: {
+    color: "red",
+    marginVertical: 8,
+    textAlign: "center",
+  },
+});

@@ -4,8 +4,8 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "start": "npx expo start --dev-client --clear",
-    "start:metro": "npx react-native start --reset-cache",
+    "start": "npx expo start --dev-client",
+    "start:metro": "npx react-native start",
     "ios": "npx expo run:ios",
     "dev:ios": "concurrently \"npm run start:metro\" \"npm run ios\"",
     "dev": "concurrently \"netlify dev\" \"npx expo start --dev-client --clear\"",
@@ -47,6 +47,7 @@
     "react-native-svg-transformer": "^1.5.0",
     "react-native-web": "~0.19.6",
     "react-native-web-linear-gradient": "^1.1.2",
+    "react-router-dom": "^6.28.0",
     "react-router-native": "^6.28.0"
   },
   "devDependencies": {

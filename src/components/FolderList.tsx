@@ -7,20 +7,22 @@ import {
   StyleSheet,
 } from "react-native";
 import type { Folder, SortOptions } from "../types";
-import { useFolders } from "#/hooks/useFolders";
+import { useFolders } from "../hooks/useFolders";
 
 interface FolderListProps {
   folderId: string;
   onFolderPress: (folder: Folder) => void;
   onSort: (options: SortOptions) => void;
+  footer?: React.ReactElement;
 }
 
 export const FolderList: React.FC<FolderListProps> = ({
   folderId,
   onFolderPress,
   onSort,
+  footer,
 }) => {
-  const { folders } = useFolders();
+  const { folders, sortFolders } = useFolders(folderId);
 
   const renderItem = React.useCallback(
     ({ item }: { item: Folder }) => (
@@ -34,7 +36,7 @@ export const FolderList: React.FC<FolderListProps> = ({
         </Text>
       </TouchableOpacity>
     ),
-    []
+    [onFolderPress]
   );
 
   return (
@@ -60,7 +62,9 @@ export const FolderList: React.FC<FolderListProps> = ({
         data={folders}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContainer}
         style={styles.list}
+        ListFooterComponent={footer ?? <View style={{ height: 16 }} />}
       />
     </View>
   );
@@ -90,8 +94,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
     borderRadius: 4,
   },
-  list: {
+  listContainer: {
     flex: 1,
+    flexGrow: 1,
+  },
+  list: {
+    flex: 1
   },
   folderItem: {
     padding: 16,

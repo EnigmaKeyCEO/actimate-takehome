@@ -1,28 +1,27 @@
-import React from 'react';
-import { View } from 'react-native';
-import { Button, Icon } from 'native-base';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import React from "react";
+import { View, Button, StyleSheet } from "react-native";
 
 interface FolderActionsProps {
   onAddFolder: () => void;
   onAddImage: () => void;
 }
 
-export function FolderActions({ onAddFolder, onAddImage }: FolderActionsProps) {
+export const FolderActions: React.FC<FolderActionsProps> = ({
+  onAddFolder,
+  onAddImage,
+}) => {
   return (
-    <View style={{ flexDirection: 'row', gap: 8, padding: 16 }}>
-      <Button
-        leftIcon={<Icon as={AntDesign} name="addfolder" size="sm" />}
-        onPress={onAddFolder}
-      >
-        Add Folder
-      </Button>
-      <Button
-        leftIcon={<Icon as={AntDesign} name="picture" size="sm" />}
-        onPress={onAddImage}
-      >
-        Add Image
-      </Button>
+    <View style={styles.container}>
+      <Button title="Add Folder" onPress={onAddFolder} />
+      <Button title="Add Image" onPress={onAddImage} />
     </View>
   );
-}
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 16,
+  },
+});

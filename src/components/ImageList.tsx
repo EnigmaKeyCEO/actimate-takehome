@@ -1,22 +1,39 @@
-import React from 'react';
-import { View, Text, Image, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import type { Image as ImageType, SortOptions } from '../types';
+import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+} from "react-native";
+import type { Image, SortOptions } from "../types";
+import { useImages } from "#/hooks/useImages";
 
 interface ImageListProps {
-  images: ImageType[];
+  folderId: string;
+  onDeleteImage: (id: string, filename: string) => void;
   onSort: (options: SortOptions) => void;
 }
 
-export const ImageList: React.FC<ImageListProps> = ({ images, onSort }) => {
-  const renderItem = ({ item }: { item: ImageType }) => (
-    <View style={styles.imageItem}>
-      <Image
-        source={{ uri: item.url }}
-        style={styles.image}
-        resizeMode="cover"
-      />
-      <Text style={styles.imageName}>{item.name}</Text>
-    </View>
+export const ImageList: React.FC<ImageListProps> = ({
+  folderId,
+  onDeleteImage,
+  onSort,
+}) => {
+  const { images, sortImages } = useImages(folderId);
+
+  const renderItem = React.useCallback(
+    ({ item }: { item: Image }) => (
+      <View style={styles.imageItem}>
+        <Text style={styles.imageName}>{item.name}</Text>
+        <TouchableOpacity
+          onPress={() => onDeleteImage(item.id, item.createdAt)}
+        >
+          <Text style={styles.deleteText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+    ),
+    [onDeleteImage]
   );
 
   return (
@@ -25,13 +42,13 @@ export const ImageList: React.FC<ImageListProps> = ({ images, onSort }) => {
         <Text style={styles.title}>Images</Text>
         <View style={styles.sortButtons}>
           <TouchableOpacity
-            onPress={() => onSort({ field: 'name', direction: 'asc' })}
+            onPress={() => onSort({ field: "name", direction: "asc" })}
             style={styles.sortButton}
           >
             <Text>Sort by Name</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => onSort({ field: 'createdAt', direction: 'desc' })}
+            onPress={() => onSort({ field: "createdAt", direction: "desc" })}
             style={styles.sortButton}
           >
             <Text>Sort by Date</Text>
@@ -42,7 +59,6 @@ export const ImageList: React.FC<ImageListProps> = ({ images, onSort }) => {
         data={images}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        numColumns={2}
         style={styles.list}
       />
     </View>
@@ -55,45 +71,47 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   sortButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   sortButton: {
     marginLeft: 8,
     padding: 8,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     borderRadius: 4,
   },
   list: {
     flex: 1,
   },
   imageItem: {
-    flex: 1,
-    margin: 4,
-    backgroundColor: 'white',
+    padding: 16,
+    backgroundColor: "white",
+    marginBottom: 8,
     borderRadius: 8,
-    overflow: 'hidden',
-    shadowColor: '#000',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
-  image: {
-    width: '100%',
-    aspectRatio: 1,
-  },
   imageName: {
-    padding: 8,
+    fontSize: 18,
+    fontWeight: "500",
+  },
+  deleteText: {
+    color: "red",
     fontSize: 14,
   },
 });

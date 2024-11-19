@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Modal, FormControl, Input, Button } from "native-base";
-import { Platform } from "react-native";
-import useApi from "#/hooks/useApi";
+import { Text, TextInput, Button, StyleSheet } from "react-native";
+import { useFolders } from "../hooks/useFolders";
+import { AnimatedModal } from "./AnimatedModal";
 
 interface CreateFolderModalProps {
   isOpen: boolean;
@@ -9,72 +9,60 @@ interface CreateFolderModalProps {
   parentId: string | null;
 }
 
-export function CreateFolderModal({
+export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   isOpen,
   onClose,
   parentId,
-}: CreateFolderModalProps) {
-  const [name, setName] = useState("");
-
-  const { apiBaseUrl } = useApi();
+}) => {
+  const [folderName, setFolderName] = useState("");
+  const { createFolder } = useFolders(parentId || undefined);
 
   const handleCreate = async () => {
     try {
-      await fetch(`${apiBaseUrl}/folders`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          method: "CREATE",
-          data: {
-            name,
-            parentId,
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-          },
-        }),
+      await createFolder({
+        name: folderName,
+        parentId: parentId || undefined,
+        createdAt: Date.now().toString(),
+        updatedAt: Date.now().toString(),
       });
-
+      setFolderName("");
       onClose();
-      setName("");
-    } catch (error) {
-      console.error("Failed to create folder:", error);
+    } catch (err) {
+      console.error(`
+        Error Creating Folder...
+        Error Details:
+        ${JSON.stringify(err, null, 2)}
+      `);
     }
   };
 
-  const modalProps = Platform.select({
-    web: {
-      closeOnOverlayClick: true,
-      trapFocus: false,
-      useRNModal: false,
-    },
-    default: {},
-  });
-
   return (
-    <Modal isOpen={isOpen} onClose={onClose} {...modalProps}>
-      <Modal.Content>
-        <Modal.Header>Create New Folder</Modal.Header>
-        <Modal.Body>
-          <FormControl>
-            <FormControl.Label>Folder Name</FormControl.Label>
-            <Input
-              value={name}
-              onChangeText={setName}
-              placeholder="Enter folder name"
-            />
-          </FormControl>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button.Group space={2}>
-            <Button variant="ghost" onPress={onClose}>
-              Cancel
-            </Button>
-            <Button onPress={handleCreate}>Create</Button>
-          </Button.Group>
-        </Modal.Footer>
-      </Modal.Content>
-    </Modal>
+    <AnimatedModal isOpen={isOpen} onClose={onClose}>
+      <Text style={styles.title}>Create New Folder</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Folder Name"
+        value={folderName}
+        onChangeText={setFolderName}
+      />
+      <Button title="Create" onPress={handleCreate} />
+      <Button title="Cancel" onPress={onClose} color="red" />
+    </AnimatedModal>
   );
-}
+};
 
-export default CreateFolderModal;
+const styles = StyleSheet.create({
+  title: {
+    fontSize: 20,
+    marginBottom: 12,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 8,
+    marginBottom: 12,
+    borderRadius: 4,
+  },
+});
