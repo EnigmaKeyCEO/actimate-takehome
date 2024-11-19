@@ -1,12 +1,18 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ],
     "module": "ESNext",
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "#/*": [
+        "src/*"
+      ]
     },
     "moduleResolution": "node",
     "resolveJsonModule": true,
@@ -15,5 +21,31 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ],
+  "extensions": [
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".json",
+    ".web.ts",
+    ".web.tsx",
+    ".web.js",
+    ".web.jsx",
+    ".native.ts",
+    ".native.tsx",
+    ".native.js",
+    ".native.jsx",
+    ".android.ts",
+    ".android.tsx",
+    ".android.js",
+    ".android.jsx",
+    ".ios.ts",
+    ".ios.tsx",
+    ".ios.js",
+    ".ios.jsx"
+  ],
+  "extends": "expo/tsconfig.base"
 }

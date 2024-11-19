@@ -7,7 +7,7 @@ import {
   StyleSheet,
 } from "react-native";
 import type { Folder, SortOptions } from "../types";
-import { useFolders } from "@/hooks/useFolders";
+import { useFolders } from "#/hooks/useFolders";
 
 interface FolderListProps {
   folderId: string;

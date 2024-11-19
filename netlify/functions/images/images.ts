@@ -1,24 +1,6 @@
 import { Handler } from '@netlify/functions';
-import { createClient } from '@supabase/supabase-js';
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-);
-
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
+import { getStorageAdapter } from '../utils/storageFactory';
+import { ImageData, SortOptions, PaginationOptions } from '../adapters/StorageAdapter';
 
 export const handler: Handler = async (event) => {
   if (!event.body) {
@@ -30,60 +12,32 @@ export const handler: Handler = async (event) => {
 
   try {
     const { method, data, sort, pagination } = JSON.parse(event.body);
-
-    let query = supabase.from('images');
+    const storage = await getStorageAdapter();
 
     switch (method) {
       case 'GET_UPLOAD_URL':
-        const putCommand = new PutObjectCommand({
-          Bucket: process.env.AWS_S3_BUCKET!,
-          Key: `images/${Date.now()}-${data.filename}`,
-          ContentType: data.contentType,
-        });
-
-        const uploadUrl = await getSignedUrl(s3Client, putCommand, {
-          expiresIn: 3600,
-        });
-
+        const uploadData = await storage.getUploadUrl(data.filename, data.contentType);
         return {
           statusCode: 200,
-          body: JSON.stringify({ uploadUrl }),
+          body: JSON.stringify(uploadData),
         };
 
       case 'CREATE':
-        const { data: created, error: createError } = await query.insert(data);
-        if (createError) throw createError;
+        const image = await storage.createImage(data);
         return {
           statusCode: 201,
-          body: JSON.stringify(created),
+          body: JSON.stringify(image),
         };
 
       case 'READ':
-        if (sort) {
-          query = query.order(sort.field, { ascending: sort.direction === 'asc' });
-        }
-        if (pagination) {
-          const { page, limit } = pagination;
-          query = query
-            .range(page * limit, (page + 1) * limit - 1)
-            .select('*', { count: 'exact' });
-        }
-        const { data: images, error: readError } = await query;
-        if (readError) throw readError;
+        const images = await storage.listImages(sort, pagination);
         return {
           statusCode: 200,
           body: JSON.stringify(images),
         };
 
       case 'DELETE':
-        const deleteCommand = new DeleteObjectCommand({
-          Bucket: process.env.AWS_S3_BUCKET!,
-          Key: data.key,
-        });
-        await s3Client.send(deleteCommand);
-
-        const { error: deleteError } = await query.delete().eq('id', data.id);
-        if (deleteError) throw deleteError;
+        await storage.deleteImage(data.id, data.filename);
         return {
           statusCode: 204,
           body: '',
@@ -96,6 +50,7 @@ export const handler: Handler = async (event) => {
         };
     }
   } catch (error) {
+    console.error('Error:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: 'Internal server error' }),

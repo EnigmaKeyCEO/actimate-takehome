@@ -1,10 +1,6 @@
 import { Handler } from '@netlify/functions';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-);
+import { getStorageAdapter } from '../utils/storageFactory';
+import { FolderData, SortOptions, PaginationOptions } from '../adapters/StorageAdapter';
 
 export const handler: Handler = async (event) => {
   if (!event.body) {
@@ -16,48 +12,32 @@ export const handler: Handler = async (event) => {
 
   try {
     const { method, data, sort, pagination } = JSON.parse(event.body);
-
-    let query = supabase.from('folders');
+    const storage = await getStorageAdapter();
 
     switch (method) {
       case 'CREATE':
-        const { data: created, error: createError } = await query.insert(data);
-        if (createError) throw createError;
+        const folder = await storage.createFolder(data);
         return {
           statusCode: 201,
-          body: JSON.stringify(created),
+          body: JSON.stringify(folder),
         };
 
       case 'READ':
-        if (sort) {
-          query = query.order(sort.field, { ascending: sort.direction === 'asc' });
-        }
-        if (pagination) {
-          const { page, limit } = pagination;
-          query = query
-            .range(page * limit, (page + 1) * limit - 1)
-            .select('*', { count: 'exact' });
-        }
-        const { data: folders, error: readError } = await query;
-        if (readError) throw readError;
+        const folders = await storage.listFolders(sort, pagination);
         return {
           statusCode: 200,
           body: JSON.stringify(folders),
         };
 
       case 'UPDATE':
-        const { data: updated, error: updateError } = await query
-          .update(data)
-          .eq('id', data.id);
-        if (updateError) throw updateError;
+        const updated = await storage.updateFolder(data.id, data);
         return {
           statusCode: 200,
           body: JSON.stringify(updated),
         };
 
       case 'DELETE':
-        const { error: deleteError } = await query.delete().eq('id', data.id);
-        if (deleteError) throw deleteError;
+        await storage.deleteFolder(data.id);
         return {
           statusCode: 204,
           body: '',
@@ -70,6 +50,7 @@ export const handler: Handler = async (event) => {
         };
     }
   } catch (error) {
+    console.error('Error:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: 'Internal server error' }),

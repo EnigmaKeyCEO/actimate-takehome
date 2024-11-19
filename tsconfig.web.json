@@ -1,11 +1,22 @@
 {
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-      "jsx": "react-jsx",
-      "types": ["vite/client"],
-      "paths": {
-        "react-native": ["./node_modules/react-native-web"]
-      }
-    },
-    "include": ["src/**/*", "vite.config.ts"]
-  }
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+    "paths": {
+      "react-native": ["./node_modules/react-native-web"]
+    }
+  },
+  "include": ["src/**/*", "vite.config.ts"],
+  "extensions": [
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".json",
+    ".web.ts",
+    ".web.tsx",
+    ".web.js",
+    ".web.jsx"
+  ]
+}

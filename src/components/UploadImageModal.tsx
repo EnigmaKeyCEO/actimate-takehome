@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Modal, FormControl, Input, Button, VStack } from "native-base";
 import * as ImagePicker from "expo-image-picker";
 import { Platform } from "react-native";
+import useApi from "#/hooks/useApi";
 
 interface UploadImageModalProps {
   isOpen: boolean;
@@ -17,6 +18,8 @@ export function UploadImageModal({
   const [name, setName] = useState("");
   const [selectedImage, setSelectedImage] =
     useState<ImagePicker.ImagePickerAsset | null>(null);
+
+  const { apiBaseUrl } = useApi();
 
   const handleSelectImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -38,7 +41,7 @@ export function UploadImageModal({
 
     try {
       // Get upload URL from your API
-      const response = await fetch("/.netlify/functions/images", {
+      const response = await fetch(`${apiBaseUrl}/images`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -61,7 +64,7 @@ export function UploadImageModal({
       });
 
       // Create image record
-      await fetch("/.netlify/functions/images", {
+      await fetch(`${apiBaseUrl}/images`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

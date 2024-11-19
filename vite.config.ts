@@ -21,14 +21,17 @@ export default defineConfig(({ mode }) => ({
   ],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
-      "#": path.resolve(__dirname, "netlify/functions"),
+      "#": path.resolve(__dirname, "src"),
+      ƒ: path.resolve(__dirname, "netlify/functions"),
       "react-native": "react-native-web",
       "@react-native/assets-registry/registry": path.resolve(
         __dirname,
         "node_modules/react-native-web/dist/modules/AssetRegistry/index.js"
       ),
-      "@expo/vector-icons": "@expo/vector-icons/dist/index.js",
+      "@expo/vector-icons": path.resolve(
+        __dirname,
+        "node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons"
+      ),
       "react-native/Libraries/Utilities/codegenNativeComponent": path.resolve(
         __dirname,
         "node_modules/react-native-web/dist/vendor/react-native/NativeComponent/index.js"

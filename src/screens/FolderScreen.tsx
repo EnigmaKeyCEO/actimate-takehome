@@ -5,8 +5,8 @@ import { FolderActions } from "../components/FolderActions";
 import { FolderList } from "../components/FolderList";
 import { CreateFolderModal } from "../components/CreateFolderModal";
 import { UploadImageModal } from "../components/UploadImageModal";
-import { useFolders } from "@/hooks/useFolders";
-import { Folder } from "@/types";
+import { useFolders } from "#/hooks/useFolders";
+import { Folder } from "#/types";
 import { SortOptions } from "functions/adapters/StorageAdapter";
 
 export function FolderScreen() {

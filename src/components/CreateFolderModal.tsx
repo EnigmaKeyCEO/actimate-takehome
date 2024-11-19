@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Modal, FormControl, Input, Button } from "native-base";
 import { Platform } from "react-native";
+import useApi from "#/hooks/useApi";
 
 interface CreateFolderModalProps {
   isOpen: boolean;
@@ -15,9 +16,11 @@ export function CreateFolderModal({
 }: CreateFolderModalProps) {
   const [name, setName] = useState("");
 
+  const { apiBaseUrl } = useApi();
+
   const handleCreate = async () => {
     try {
-      await fetch("/.netlify/functions/folders", {
+      await fetch(`${apiBaseUrl}/folders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
