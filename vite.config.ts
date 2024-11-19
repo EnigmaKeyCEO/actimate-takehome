@@ -22,7 +22,6 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "#": path.resolve(__dirname, "src"),
-      ƒ: path.resolve(__dirname, "netlify/functions"),
       "react-native": "react-native-web",
       "@react-native/assets-registry/registry": path.resolve(
         __dirname,
@@ -81,5 +80,13 @@ export default defineConfig(({ mode }) => ({
     commonjsOptions: {
       transformMixedEsModules: true,
     },
+    rollupOptions: {
+      external: ['react-native'],
+      output: {
+        globals: {
+          'react-native': 'ReactNative'
+        }
+      }
+    }
   },
 }));
