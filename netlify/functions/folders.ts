@@ -18,8 +18,7 @@ export const handler: Handler = async (event) => {
 
   try {
     const params = {
-      TableName: process.env.VITE_S3_BUCKET_NAME!, // Replace with your actual table name
-      // Add any necessary query parameters here
+      TableName: process.env.VITE_DYNAMODB_FOLDERS_TABLE_NAME!,
     };
 
     const data = await dynamoDb.scan(params).promise();

@@ -1,7 +1,7 @@
-import { CreateFolderInput } from "#/types/Folder";
+import { CreateFolderInput, FileItem, CreateFileInput, UpdateFileInput } from "#/types";
 import { Folder, Image, SortOptions } from "../types";
 
-const API_BASE_URL =
+export const API_BASE_URL =
   process.env.VITE_API_BASE_URL || "https://actimate-takehome.netlify.app/api";
 
 // Helper function to handle fetch requests
@@ -65,23 +65,13 @@ export const deleteFolder = async (id: string): Promise<void> => {
 };
 
 // Files
-export const getFiles = async (folderId: string): Promise<{ files: any[] }> => {
-  const url = new URL(`${API_BASE_URL}/files`);
-  url.searchParams.append("folderId", folderId);
-
-  const response = await fetch(url.toString(), {
-    method: "GET",
-  });
-  return handle(response);
-};
-
-// Images
-export const getImages = async (
+export const getFiles = async (
   folderId: string,
   page: number,
   sort: SortOptions
-): Promise<{ images: Image[]; lastKey?: any }> => {
-  const url = new URL(`${API_BASE_URL}/folders/${folderId}/images`);
+): Promise<{ files: FileItem[]; lastKey?: any }> => {
+  const url = new URL(`${API_BASE_URL}/files`);
+  url.searchParams.append("folderId", folderId);
   url.searchParams.append("sortField", sort.field);
   url.searchParams.append("sortDirection", sort.direction);
   url.searchParams.append("page", page.toString());
@@ -90,67 +80,40 @@ export const getImages = async (
   const response = await fetch(url.toString(), {
     method: "GET",
   });
+  return handle(response, url);
+};
+
+export const uploadFile = async (
+  folderId: string,
+  formData: FormData
+): Promise<FileItem> => {
+  const response = await fetch(`${API_BASE_URL}/files`, {
+    method: "POST",
+    body: formData,
+  });
   return handle(response);
 };
 
-export const uploadImage = async (
-  folderId: string,
-  formData: FormData
-): Promise<Image> => {
-  const file = formData.get("file") as File;
-  // Get signed URL from backend
-  const uploadUrlResponse = await fetch(
-    `${API_BASE_URL}/folders/${folderId}/images/upload?filename=${encodeURIComponent(
-      file.name
-    )}`,
-    {
-      method: "GET",
-    }
-  );
-  const { uploadUrl, filename } = await handle(uploadUrlResponse);
-
-  // Upload to S3
-  const uploadResponse = await fetch(uploadUrl, {
+export const updateFile = async (
+  id: string,
+  updateData: UpdateFileInput
+): Promise<FileItem> => {
+  const response = await fetch(`${API_BASE_URL}/files/${id}`, {
     method: "PUT",
-    body: file,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(updateData),
   });
-  if (!uploadResponse.ok) {
-    throw new Error("Failed to upload image to S3");
-  }
-
-  // Create image record in backend
-  const createImageResponse = await fetch(
-    `${API_BASE_URL}/folders/${folderId}/images`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        key: filename,
-        name: file.name,
-        contentType: file.type,
-        size: file.size,
-      }),
-    }
-  );
-  return handle(createImageResponse);
+  return handle(response);
 };
 
-export const deleteImage = async (
-  folderId: string,
-  id: string,
-  filename: string
-): Promise<void> => {
-  const url = new URL(`${API_BASE_URL}/folders/${folderId}/images/${id}`);
-  url.searchParams.append("filename", filename);
-
-  const response = await fetch(url.toString(), {
+export const deleteFile = async (id: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/files/${id}`, {
     method: "DELETE",
   });
-
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to delete image");
+    throw new Error(errorData.message || "Failed to delete file");
   }
 };

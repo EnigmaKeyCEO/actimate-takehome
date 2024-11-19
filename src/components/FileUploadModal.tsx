@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Modal, View, Button, Text, StyleSheet } from "react-native";
-import * as DocumentPicker from 'expo-document-picker';
+import * as DocumentPicker from "expo-document-picker";
+import { uploadFile } from "#/api/api";
 
 interface FileUploadModalProps {
   isOpen: boolean;
@@ -22,36 +23,27 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
 
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*', // Allow all file types
+        type: "*/*", // Allow all file types
         copyToCacheDirectory: true,
       });
 
-      if (result.type === 'success') {
+      if (result.canceled === false && result.assets.length > 0) {
         const formData = new FormData();
-        formData.append('file', {
-          uri: result.uri,
-          name: result.name,
-          type: result.mimeType || 'application/octet-stream', // Default type if not provided
-        });
-
-        const response = await fetch(`/.netlify/functions/files`, {
-          method: 'POST',
-          body: formData,
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.message || 'Failed to upload file');
-        }
-
-        console.log('File uploaded successfully:', data);
+        const asset = result.assets[0];
+        formData.append("file", {
+          uri: asset.uri,
+          name: asset.name,
+          type: asset.mimeType || "application/octet-stream", // Default type if not provided
+        } as any);
+        const data = await uploadFile(folderId, formData);
+        console.log("File uploaded successfully:", data);
         onClose(); // Close modal after successful upload
       } else {
-        setError('File selection was canceled.');
+        setError("File selection was canceled.");
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'An error occurred during file upload.');
+      setError(err.message || "An error occurred during file upload.");
     } finally {
       setUploading(false);
     }
@@ -62,7 +54,11 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
       <View style={styles.container}>
         <Text style={styles.title}>Upload File</Text>
         {error && <Text style={styles.errorText}>{error}</Text>}
-        <Button title="Select File" onPress={handleFileUpload} disabled={uploading} />
+        <Button
+          title="Select File"
+          onPress={handleFileUpload}
+          disabled={uploading}
+        />
         <Button title="Cancel" onPress={onClose} />
       </View>
     </Modal>
@@ -72,7 +68,7 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 20,
   },
   title: {
@@ -80,7 +76,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   errorText: {
-    color: 'red',
+    color: "red",
     marginBottom: 10,
   },
 });

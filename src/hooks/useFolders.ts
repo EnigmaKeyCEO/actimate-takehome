@@ -62,15 +62,6 @@ export function useFolders(parentId?: string) {
     }
   };
 
-  const loadFiles = async () => {
-    try {
-      const response = await getFiles(parentId || "root");
-      setFiles(response.files);
-    } catch (err: any) {
-      setError(err instanceof Error ? err : new Error("Unknown error"));
-    }
-  };
-
   const loadMoreFolders = () => {
     if (lastKey) {
       const nextPage = page + 1;
@@ -81,13 +72,11 @@ export function useFolders(parentId?: string) {
 
   useEffect(() => {
     fetchFolders();
-    loadFiles(); // Load files when the component mounts
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parentId]);
 
   return {
     folders,
-    files, // Return files
     loading,
     error,
     createFolder,

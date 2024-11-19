@@ -11,6 +11,9 @@ import {
 import { useRoute } from "@react-navigation/native";
 import { useImages } from "#/hooks/useImages";
 import { Image, SortOptions } from "#/types";
+import useFolders from "#/hooks/useFolders";
+import useFiles from "#/hooks/useFiles";
+import * as ImagePicker from 'expo-image-picker';
 
 type RouteParams = {
   folderId: string;
@@ -29,14 +32,32 @@ export function FolderDetailScreen() {
     loadMoreImages,
   } = useImages(folderId);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const { createFolder, deleteFolder, loadMoreFolders } = useFolders(folderId);
+  const { uploadNewFile, updateExistingFile, removeFile, sortFiles } = useFiles(folderId);
 
   const handleUploadImage = async () => {
-    // Implement your image upload logic, e.g., opening an image picker
-    // Example:
-    // const file = await pickImage();
-    // if (file) {
-    //   await uploadImage(file);
-    // }
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        const asset = result.assets[0];
+        await uploadImage(asset);
+
+        const formData = new FormData();
+        formData.append('file', {
+          uri: asset.uri,
+          type: 'image/jpeg',
+          name: 'upload.jpg'
+        } as any);
+        await uploadNewFile(formData);
+      }
+    } catch (err) {
+      console.error("Error uploading:", err);
+    }
   };
 
   const handleDeleteImage = async (id: string, filename: string) => {
