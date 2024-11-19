@@ -30,7 +30,7 @@ export const FolderList: React.FC<FolderListProps> = ({
       >
         <Text style={styles.folderName}>{item.name}</Text>
         <Text style={styles.folderDate}>
-          Created: {new Date(item.created_at).toLocaleDateString()}
+          Created: {new Date(item.createdAt).toLocaleDateString()}
         </Text>
       </TouchableOpacity>
     ),
@@ -49,7 +49,7 @@ export const FolderList: React.FC<FolderListProps> = ({
             <Text>Sort by Name</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => onSort({ field: "created_at", direction: "desc" })}
+            onPress={() => onSort({ field: "createdAt", direction: "desc" })}
             style={styles.sortButton}
           >
             <Text>Sort by Date</Text>

@@ -1,7 +1,7 @@
 import { Handler } from '@netlify/functions';
-import { dynamoDb } from './awsConfig';
+import { dynamoDb } from '../awsConfig';
 import { v4 as uuidv4 } from 'uuid';
-import { Folder } from './types';
+import { Folder } from '../types';
 
 export const handler: Handler = async (event) => {
   try {
