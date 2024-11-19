@@ -7,23 +7,21 @@ import {
   StyleSheet,
   Animated,
 } from "react-native";
-import type { Folder, SortOptions } from "../types";
+import type { Folder } from "../types";
 import { useFolders } from "../hooks/useFolders";
 
 interface FolderListProps {
   folderId: string;
   onFolderPress: (folder: Folder) => void;
-  onSort: (options: SortOptions) => void;
   footer?: React.ReactElement;
 }
 
 export const FolderList: React.FC<FolderListProps> = ({
   folderId,
   onFolderPress,
-  onSort,
   footer,
 }) => {
-  const { folders, sortFolders } = useFolders(folderId);
+  const { folders } = useFolders(folderId);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const renderItem = React.useCallback(
@@ -53,20 +51,6 @@ export const FolderList: React.FC<FolderListProps> = ({
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Folders</Text>
-        <View style={styles.sortButtons}>
-          <TouchableOpacity
-            onPress={() => onSort({ field: "name", direction: "asc" })}
-            style={styles.sortButton}
-          >
-            <Text>Sort by Name</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => onSort({ field: "createdAt", direction: "desc" })}
-            style={styles.sortButton}
-          >
-            <Text>Sort by Date</Text>
-          </TouchableOpacity>
-        </View>
       </View>
       <FlatList
         data={folders}
@@ -94,15 +78,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-  },
-  sortButtons: {
-    flexDirection: "row",
-  },
-  sortButton: {
-    marginLeft: 8,
-    padding: 8,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 4,
   },
   listContainer: {
     flex: 1,

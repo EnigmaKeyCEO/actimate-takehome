@@ -54,20 +54,6 @@ export const createFolder = async (
   return handle(response, url, data);
 };
 
-export const updateFolder = async (
-  id: string,
-  data: Partial<Folder>
-): Promise<Folder> => {
-  const response = await fetch(`${API_BASE_URL}/folders/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
-  return handle(response);
-};
-
 export const deleteFolder = async (id: string): Promise<void> => {
   const response = await fetch(`${API_BASE_URL}/folders/${id}`, {
     method: "DELETE",
@@ -76,6 +62,17 @@ export const deleteFolder = async (id: string): Promise<void> => {
     const errorData = await response.json();
     throw new Error(errorData.message || "Failed to delete folder");
   }
+};
+
+// Files
+export const getFiles = async (folderId: string): Promise<{ files: any[] }> => {
+  const url = new URL(`${API_BASE_URL}/files`);
+  url.searchParams.append("folderId", folderId);
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+  });
+  return handle(response);
 };
 
 // Images

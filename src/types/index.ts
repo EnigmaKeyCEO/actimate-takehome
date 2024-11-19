@@ -7,7 +7,7 @@ export type SortField = SortOptions["field"];
 
 export type { Folder } from './Folder';
 export type { Image } from './Image';
-
+export type { CreateFolderInput } from './Folder'; // Add this line
 
 export interface PaginationOptions {
   page: number;

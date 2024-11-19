@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import type { Folder, SortOptions, PaginationOptions } from "../types";
+import type { Folder, SortOptions, CreateFolderInput } from "../types";
 import {
   getFolders,
   createFolder as apiCreateFolder,
-  updateFolder as apiUpdateFolder,
   deleteFolder as apiDeleteFolder,
+  getFiles,
 } from "../api/api";
-import { CreateFolderInput } from "#/types/Folder";
 
 export function useFolders(parentId?: string) {
   const [folders, setFolders] = useState<Folder[]>([]);
+  const [files, setFiles] = useState<any[]>([]); // Add state for files
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [sortOptions, setSortOptions] = useState<SortOptions | undefined>(
@@ -52,24 +52,6 @@ export function useFolders(parentId?: string) {
     }
   };
 
-  const updateFolder = async (
-    id: string,
-    updatedData: Partial<Omit<Folder, "id">>
-  ) => {
-    try {
-      const updatedFolder = await apiUpdateFolder(id, {
-        ...updatedData,
-        updatedAt: new Date().toISOString(),
-      });
-      setFolders((prev) =>
-        prev.map((folder) => (folder.id === id ? updatedFolder : folder))
-      );
-    } catch (err: any) {
-      setError(err instanceof Error ? err : new Error("Unknown error"));
-      throw err;
-    }
-  };
-
   const deleteFolder = async (id: string) => {
     try {
       await apiDeleteFolder(id);
@@ -80,10 +62,13 @@ export function useFolders(parentId?: string) {
     }
   };
 
-  const sortFolders = (sort: SortOptions) => {
-    setSortOptions(sort);
-    setPage(1);
-    fetchFolders(sort, 1);
+  const loadFiles = async () => {
+    try {
+      const response = await getFiles(parentId || "root");
+      setFiles(response.files);
+    } catch (err: any) {
+      setError(err instanceof Error ? err : new Error("Unknown error"));
+    }
   };
 
   const loadMoreFolders = () => {
@@ -96,17 +81,17 @@ export function useFolders(parentId?: string) {
 
   useEffect(() => {
     fetchFolders();
+    loadFiles(); // Load files when the component mounts
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parentId]);
 
   return {
     folders,
+    files, // Return files
     loading,
     error,
     createFolder,
-    updateFolder,
     deleteFolder,
-    sortFolders,
     loadMoreFolders,
   };
 }

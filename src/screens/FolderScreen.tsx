@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   Animated,
-  Button,
   FlatList,
   ActivityIndicator,
   Text,
@@ -11,18 +10,13 @@ import {
 } from "react-native";
 import { useNavigate, useParams } from "react-router-native";
 import { FolderActions } from "../components/FolderActions";
-import { FolderList } from "../components/FolderList";
-import { CreateFolderModal } from "../components/CreateFolderModal";
-import { UploadImageModal } from "../components/UploadImageModal";
 import { useFolders } from "../hooks/useFolders";
 import { Folder } from "../types";
-import { SortOptions } from "../types";
 import { useModal } from "#/components/Modal";
 
 export function FolderScreen() {
   const { folderId } = useParams<{ folderId: string }>();
   const [showFolderModal, setShowFolderModal] = useState(false);
-  const [showImageModal, setShowImageModal] = useState(false);
   const navigate = useNavigate();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -32,7 +26,6 @@ export function FolderScreen() {
     error,
     createFolder,
     deleteFolder,
-    sortFolders,
     loadMoreFolders,
   } = useFolders(folderId);
   const { showModal } = useModal();
@@ -62,13 +55,6 @@ export function FolderScreen() {
     setFolderName("");
   }, [setShowFolderModal, setFolderName]);
 
-  const handleSort = React.useCallback(
-    (sortOptions: SortOptions) => {
-      sortFolders(sortOptions);
-    },
-    [sortFolders]
-  );
-
   const handleDeleteFolder = React.useCallback(
     async (id: string) => {
       try {
@@ -86,15 +72,12 @@ export function FolderScreen() {
     switch (error.message) {
       case "Network Error":
         return <Text style={styles.errorText1}>No internet connection</Text>;
-      case "Method Not Supported":
+      case "Unhandled Request":
         return (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText1}>Hmm... No Stuff?!</Text>
-            <Text style={styles.errorText2}>No folders or images here.</Text>
+            <Text style={styles.errorText2}>No folders here.</Text>
             <View style={{ height: 20 }} />
-            <Text style={styles.errorText2}>Upload Your First Image</Text>
-            <Text style={styles.errorText2}>or Create a New Folder!</Text>
-            <View style={{ height: 50 }} />
             <Text style={styles.errorText3}>
               If you're having trouble, please check your internet connection
               and try again later.
@@ -106,13 +89,12 @@ export function FolderScreen() {
     }
   }, [error]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (error) {
       showModal(
         errorTextElement?.props.children[0].toString().includes(error.message)
           ? "Unknown Error"
-          : // Yeah... a little hacky, but it works. TODO: Fix this.
-            React.Children.map(errorTextElement?.props.children, (child) => {
+          : React.Children.map(errorTextElement?.props.children, (child) => {
               if (typeof child === "string") {
                 return child;
               }
@@ -170,23 +152,8 @@ export function FolderScreen() {
       <View style={styles.folderActionsContainer}>
         <FolderActions
           onAddFolder={() => setShowFolderModal(true)}
-          onAddImage={() => setShowImageModal(true)}
         />
       </View>
-
-      {/* Modals */}
-      <CreateFolderModal
-        isOpen={showFolderModal}
-        onClose={() => handleCreateFolder()}
-        parentId={folderId || null}
-        setInputValue={(value: string) => setFolderName(value)}
-      />
-
-      <UploadImageModal
-        isOpen={showImageModal}
-        onClose={() => setShowImageModal(false)}
-        folderId={folderId || "root"}
-      />
     </Animated.View>
   );
 }
