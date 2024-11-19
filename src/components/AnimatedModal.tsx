@@ -26,10 +26,11 @@ export const AnimatedModal: React.FC<AnimatedModalProps> = ({
   const slideAnim = useRef(
     new Animated.Value(Dimensions.get("window").height)
   ).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
     if (isOpen) {
-      // Animate overlay fade-in and content slide-up
+      // Animate overlay fade-in, content slide-up, and scale-up
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -41,9 +42,14 @@ export const AnimatedModal: React.FC<AnimatedModalProps> = ({
           bounciness: 10,
           useNativeDriver: true,
         }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
       ]).start();
     } else {
-      // Animate overlay fade-out and content slide-down
+      // Animate overlay fade-out, content slide-down, and scale-down
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 0,
@@ -55,9 +61,14 @@ export const AnimatedModal: React.FC<AnimatedModalProps> = ({
           duration: 300,
           useNativeDriver: true,
         }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.8,
+          duration: 300,
+          useNativeDriver: true,
+        }),
       ]).start();
     }
-  }, [isOpen, fadeAnim, slideAnim]);
+  }, [isOpen, fadeAnim, slideAnim, scaleAnim]);
 
   return (
     <Modal visible={isOpen} transparent animationType="none" onRequestClose={onClose}>
@@ -67,7 +78,7 @@ export const AnimatedModal: React.FC<AnimatedModalProps> = ({
             style={[
               styles.modalContainer,
               containerStyle,
-              { transform: [{ translateY: slideAnim }] },
+              { transform: [{ translateY: slideAnim }, { scale: scaleAnim }] },
             ]}
           >
             {children}

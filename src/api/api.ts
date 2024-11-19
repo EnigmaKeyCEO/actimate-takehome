@@ -1,6 +1,8 @@
 import { Folder, Image, SortOptions } from "../types";
 
-const API_BASE_URL = process.env.VITE_API_BASE_URL || "/.netlify/functions";
+const API_BASE_URL =
+  process.env.VITE_API_BASE_URL ||
+  "https://actimate-takehome.netlify.app/.netlify/functions";
 
 // Helper function to handle fetch requests
 const handleResponse = async (response: Response) => {

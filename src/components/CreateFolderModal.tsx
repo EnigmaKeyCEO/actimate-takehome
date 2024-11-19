@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Text, TextInput, Button, StyleSheet } from "react-native";
+import { Text, TextInput, Button, StyleSheet, Animated } from "react-native";
 import { useFolders } from "../hooks/useFolders";
 import { AnimatedModal } from "./AnimatedModal";
 
@@ -16,8 +16,18 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
 }) => {
   const [folderName, setFolderName] = useState("");
   const { createFolder } = useFolders(parentId || undefined);
+  const [shakeAnim] = useState(new Animated.Value(0));
 
   const handleCreate = async () => {
+    if (!folderName.trim()) {
+      Animated.sequence([
+        Animated.timing(shakeAnim, { toValue: 10, duration: 100, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -10, duration: 100, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
+      ]).start();
+      return;
+    }
+
     try {
       await createFolder({
         name: folderName,
@@ -39,12 +49,14 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   return (
     <AnimatedModal isOpen={isOpen} onClose={onClose}>
       <Text style={styles.title}>Create New Folder</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Folder Name"
-        value={folderName}
-        onChangeText={setFolderName}
-      />
+      <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
+        <TextInput
+          style={styles.input}
+          placeholder="Folder Name"
+          value={folderName}
+          onChangeText={setFolderName}
+        />
+      </Animated.View>
       <Button title="Create" onPress={handleCreate} />
       <Button title="Cancel" onPress={onClose} color="red" />
     </AnimatedModal>

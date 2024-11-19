@@ -1,4 +1,4 @@
-import { SortOptions } from "@/types";
+import { SortOptions } from "../../../src/types";
 
 interface FolderResponse {
   id: string;

@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  Animated,
 } from "react-native";
 import type { Folder, SortOptions } from "../types";
 import { useFolders } from "../hooks/useFolders";
@@ -23,6 +24,7 @@ export const FolderList: React.FC<FolderListProps> = ({
   footer,
 }) => {
   const { folders, sortFolders } = useFolders(folderId);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const renderItem = React.useCallback(
     ({ item }: { item: Folder }) => (
@@ -39,8 +41,16 @@ export const FolderList: React.FC<FolderListProps> = ({
     [onFolderPress]
   );
 
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
+
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Folders</Text>
         <View style={styles.sortButtons}>
@@ -66,7 +76,7 @@ export const FolderList: React.FC<FolderListProps> = ({
         style={styles.list}
         ListFooterComponent={footer ?? <View style={{ height: 16 }} />}
       />
-    </View>
+    </Animated.View>
   );
 };
 

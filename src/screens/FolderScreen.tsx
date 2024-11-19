@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, StyleSheet, Animated, Button, FlatList, ActivityIndicator, Text, TouchableOpacity } from "react-native";
 import { useNavigate, useParams } from "react-router-native";
 import { FolderActions } from "../components/FolderActions";
 import { FolderList } from "../components/FolderList";
@@ -14,8 +14,17 @@ export function FolderScreen() {
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const navigate = useNavigate();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const { sortFolders } = useFolders(folderId);
+  const {
+    folders,
+    loading,
+    error,
+    createFolder,
+    deleteFolder,
+    sortFolders,
+    loadMoreFolders,
+  } = useFolders(folderId);
 
   const handleFolderPress = (folder: Folder) => {
     navigate(`/folders/${folder.id}`);
@@ -25,12 +34,57 @@ export function FolderScreen() {
     sortFolders(sortOptions);
   };
 
+  const handleAddFolder = async () => {
+    try {
+      await createFolder({
+        name: "New Folder",
+        parentId: folderId || "root",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error("Error creating folder:", err);
+    }
+  };
+
+  const handleDeleteFolder = async (id: string) => {
+    try {
+      await deleteFolder(id);
+    } catch (err) {
+      console.error("Error deleting folder:", err);
+    }
+  };
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
+
+  const renderItem = ({ item }: { item: Folder }) => (
+    <View style={styles.folderItem}>
+      <Text style={styles.folderName} onPress={() => handleFolderPress(item)}>
+        {item.name}
+      </Text>
+      <TouchableOpacity onPress={() => handleDeleteFolder(item.id)}>
+        <Text style={styles.threeDotIcon}>⋮</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
-    <View style={styles.container}>
-      <FolderList
-        folderId={folderId || "root"}
-        onFolderPress={handleFolderPress}
-        onSort={handleSort}
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+      <Button title="Add Folder" onPress={handleAddFolder} />
+      {error && <Text style={styles.errorText}>{error.message}</Text>}
+      <FlatList
+        data={folders}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        onEndReached={loadMoreFolders}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={loading ? <ActivityIndicator /> : null}
       />
 
       {/* FolderActions Fixed at Bottom */}
@@ -53,7 +107,7 @@ export function FolderScreen() {
         onClose={() => setShowImageModal(false)}
         folderId={folderId || "root"}
       />
-    </View>
+    </Animated.View>
   );
 }
 
@@ -61,6 +115,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: "column",
+  },
+  folderItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginVertical: 8,
+    padding: 16,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+  },
+  folderName: {
+    fontSize: 18,
+    flex: 1,
+  },
+  threeDotIcon: {
+    fontSize: 24,
+    color: "#666",
+  },
+  errorText: {
+    color: "red",
+    marginVertical: 8,
   },
   folderActionsContainer: {
     padding: 10,

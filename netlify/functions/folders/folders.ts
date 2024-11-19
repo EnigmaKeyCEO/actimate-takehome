@@ -18,7 +18,9 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 200,
       headers,
-      body: "",
+      body: JSON.stringify({
+        success: true,
+      }),
     };
   }
 
@@ -33,7 +35,6 @@ export const handler: Handler = async (event) => {
         TableName: foldersTable,
         Limit: parseInt(limit.toString(), 10),
         ExclusiveStartKey: lastKey ? JSON.parse(lastKey) : undefined,
-        // Implement sorting logic if using a Scan or preferably using Query with sort keys
       };
       const data = await dynamoDb.scan(params).promise();
       return {
@@ -67,7 +68,7 @@ export const handler: Handler = async (event) => {
     if (path.startsWith("/folders/") && httpMethod === "PUT") {
       const folderId = path.split("/")[2];
       const { name } = JSON.parse(body!);
-      const params = {
+      const params: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
         TableName: foldersTable,
         Key: { id: folderId },
         UpdateExpression: "set #name = :name, updatedAt = :updatedAt",
@@ -88,7 +89,7 @@ export const handler: Handler = async (event) => {
 
     if (path.startsWith("/folders/") && httpMethod === "DELETE") {
       const folderId = path.split("/")[2];
-      const params = {
+      const params: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
         TableName: foldersTable,
         Key: { id: folderId },
       };
@@ -96,13 +97,23 @@ export const handler: Handler = async (event) => {
       return {
         statusCode: 204,
         headers,
-        body: "",
+        body: JSON.stringify({
+          success: true,
+        }),
       };
     }
 
-    return { statusCode: 405, headers, body: "Method Not Supported" };
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ message: "Method Not Supported" }),
+    };
   } catch (error) {
     console.error(error);
-    return { statusCode: 500, headers, body: "Internal Server Error" };
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ message: "Internal Server Error" }),
+    };
   }
 };

@@ -18,7 +18,7 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 200,
       headers,
-      body: "",
+      body: JSON.stringify({}),
     };
   }
 
@@ -30,7 +30,11 @@ export const handler: Handler = async (event) => {
       /\/folders\/([^/]+)\/images(\/upload)?(\/([^/]+))?/
     );
     if (!folderIdMatch) {
-      return { statusCode: 404, body: "Not Found" };
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({ message: "Not Found" }),
+      };
     }
 
     const folderId = folderIdMatch[1];
@@ -111,13 +115,23 @@ export const handler: Handler = async (event) => {
       return {
         statusCode: 204,
         headers,
-        body: "",
+        body: JSON.stringify({
+          success: true,
+        }),
       };
     }
 
-    return { statusCode: 405, headers, body: "Method Not Supported" };
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ message: "Method Not Supported" }),
+    };
   } catch (error) {
     console.error(error);
-    return { statusCode: 500, headers, body: "Internal Server Error" };
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ message: "Internal Server Error" }),
+    };
   }
 };

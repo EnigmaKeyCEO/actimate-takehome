@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import {
   View,
   Button,
@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   Text,
+  Animated,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { useImages } from "#/hooks/useImages";
@@ -27,6 +28,7 @@ export function FolderDetailScreen() {
     sortImages,
     loadMoreImages,
   } = useImages(folderId);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const handleUploadImage = async () => {
     // Implement your image upload logic, e.g., opening an image picker
@@ -59,8 +61,16 @@ export function FolderDetailScreen() {
     </View>
   );
 
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
+
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <Button title="Upload Image" onPress={handleUploadImage} />
       {error && <Text style={styles.errorText}>{error.message}</Text>}
       <FlatList
@@ -71,7 +81,7 @@ export function FolderDetailScreen() {
         onEndReachedThreshold={0.5}
         ListFooterComponent={loading ? <ActivityIndicator /> : null}
       />
-    </View>
+    </Animated.View>
   );
 }
 

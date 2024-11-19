@@ -27,6 +27,7 @@ export const UploadImageModal: React.FC<UploadImageModalProps> = ({
   const { uploadImage } = useImages(folderId);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fadeAnim] = useState(new Animated.Value(0));
 
   const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -53,16 +54,34 @@ export const UploadImageModal: React.FC<UploadImageModalProps> = ({
     }
   };
 
+  useEffect(() => {
+    if (isOpen) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isOpen, fadeAnim]);
+
   return (
     <AnimatedModal isOpen={isOpen} onClose={onClose}>
-      <Button title="Pick an Image" onPress={handlePickImage} />
-      {uploading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
-      ) : (
-        <View style={{ height: 20 }} /> // empty view to push the cancel button down
-      )}
-      {error && <Text style={styles.errorText}>{error}</Text>}
-      <Button title="Cancel" onPress={onClose} color="red" />
+      <Animated.View style={{ opacity: fadeAnim }}>
+        <Button title="Pick an Image" onPress={handlePickImage} />
+        {uploading ? (
+          <ActivityIndicator size="large" color="#0000ff" />
+        ) : (
+          <View style={{ height: 20 }} /> // empty view to push the cancel button down
+        )}
+        {error && <Text style={styles.errorText}>{error}</Text>}
+        <Button title="Cancel" onPress={onClose} color="red" />
+      </Animated.View>
     </AnimatedModal>
   );
 };

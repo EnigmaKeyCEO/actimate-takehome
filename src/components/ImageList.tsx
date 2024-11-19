@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  Animated,
 } from "react-native";
 import type { Image, SortOptions } from "../types";
 import { useImages } from "#/hooks/useImages";
@@ -21,6 +22,7 @@ export const ImageList: React.FC<ImageListProps> = ({
   onSort,
 }) => {
   const { images, sortImages } = useImages(folderId);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const renderItem = React.useCallback(
     ({ item }: { item: Image }) => (
@@ -36,8 +38,16 @@ export const ImageList: React.FC<ImageListProps> = ({
     [onDeleteImage]
   );
 
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
+
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Images</Text>
         <View style={styles.sortButtons}>
@@ -61,7 +71,7 @@ export const ImageList: React.FC<ImageListProps> = ({
         keyExtractor={(item) => item.id}
         style={styles.list}
       />
-    </View>
+    </Animated.View>
   );
 };
 
