@@ -1,8 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { viteCommonjs } from '@originjs/vite-plugin-commonjs';
+import { PluginItem } from '@babel/core';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react({
       babel: {
@@ -10,8 +11,8 @@ export default defineConfig({
           plugins: ['jsx']
         },
         plugins: [
-          ['react-refresh/babel', {}, 'refresh'],
-        ],
+          mode === 'development' && 'react-refresh/babel'
+        ].filter(Boolean) as PluginItem[]
       }
     }),
     viteCommonjs()
@@ -34,4 +35,4 @@ export default defineConfig({
   define: {
     'process.env': {}
   }
-});
+}));
