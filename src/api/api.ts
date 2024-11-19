@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Folder, Image } from '../types';
 
-const API_BASE_URL = process.env.VITE_API_BASE_URL || 'https://actimate-takehome.netlify.app/.netlify/functions';
+const API_BASE_URL = process.env.VITE_API_BASE_URL || 'https://actimate-takehome.netlify.app/api';
 
 // Folders
 export const getFolders = async (page: number, sort: string): Promise<{ folders: Folder[]; lastKey?: string }> => {
