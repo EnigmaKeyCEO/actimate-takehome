@@ -1,6 +1,7 @@
 {
   "name": "actimate-takehome",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "metro": "npx react-native start --port 8081 --reset-cache",
@@ -32,6 +33,8 @@
     "expo-system-ui": "^4.0.3",
     "firebase": "^10.8.0",
     "firebase-admin": "^13.0.0",
+    "inline-style-prefixer": "^7.0.1",
+    "lodash": "^4.17.21",
     "native-base": "^3.4.28",
     "nativewind": "^4.1.23",
     "normalize-css-color": "^1.0.2",
@@ -48,6 +51,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
+    "@babel/plugin-transform-react-jsx": "^7.25.9",
     "@babel/preset-env": "^7.20.0",
     "@babel/preset-react": "^7.20.0",
     "@babel/preset-typescript": "^7.20.0",
@@ -60,6 +64,10 @@
     "babel-preset-expo": "^12.0.1",
     "concurrently": "^9.1.0",
     "typescript": "^5.1.3",
-    "vite": "^5.0.12"
+    "vite": "^5.0.12",
+    "vite-plugin-react-native-web": "^1.1.2"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.27.3"
   }
 }
