@@ -7,12 +7,14 @@ interface CreateFolderModalProps {
   isOpen: boolean;
   onClose: () => void;
   parentId: string | null;
+  setInputValue?: (value: string) => void;
 }
 
 export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   isOpen,
   onClose,
   parentId,
+  setInputValue = () => {},
 }) => {
   const [folderName, setFolderName] = useState("");
   const { createFolder } = useFolders(parentId || undefined);
@@ -36,6 +38,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
         updatedAt: Date.now().toString(),
       });
       setFolderName("");
+      setInputValue?.("");
       onClose();
     } catch (err) {
       console.error(`

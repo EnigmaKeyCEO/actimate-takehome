@@ -1,11 +1,20 @@
 import React from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { NativeRouter, Route as NativeRoute, Routes as NativeRoutes } from "react-router-native";
-import { BrowserRouter, Route as BrowserRoute, Routes as BrowserRoutes } from "react-router-dom";
+import {
+  NativeRouter,
+  Route as NativeRoute,
+  Routes as NativeRoutes,
+} from "react-router-native";
+import {
+  BrowserRouter,
+  Route as BrowserRoute,
+  Routes as BrowserRoutes,
+} from "react-router-dom";
 import { LogBox, Platform, SafeAreaView } from "react-native";
 import { NativeBaseProvider, extendTheme } from "native-base";
 import { FolderScreen } from "./screens/FolderScreen";
 import { FolderDetailScreen } from "./screens/FolderDetailScreen";
+import { Modal, ModalProvider } from "#/components/Modal";
 
 const theme = extendTheme({
   config: {
@@ -29,20 +38,23 @@ const Route = Platform.OS === "web" ? BrowserRoute : NativeRoute;
 
 export default function App() {
   React.useEffect(() => {
-    LogBox.ignoreLogs([/Warning:/]); // Ignore log notification by message
-    // LogBox.ignoreAllLogs(); //Ignore all log notifications
+    LogBox.ignoreLogs([/Warning:/, /SSRProvider/]);
+    // LogBox.ignoreAllLogs();
   }, []);
   return (
     <SafeAreaProvider>
       <NativeBaseProvider theme={theme} config={config}>
-        <SafeAreaView style={{ flex: 1 }}>
-          <Router future={{ v7_relativeSplatPath: true }}>
-            <Routes>
-              <Route path="/" element={<FolderScreen />} />
-              <Route path="/folder/:id" element={<FolderDetailScreen />} />
-            </Routes>
-          </Router>
-        </SafeAreaView>
+        <ModalProvider>
+          <SafeAreaView style={{ flex: 1 }}>
+            <Router future={{ v7_relativeSplatPath: true }}>
+              <Routes>
+                <Route path="/" element={<FolderScreen />} />
+                <Route path="/folder/:id" element={<FolderDetailScreen />} />
+              </Routes>
+            </Router>
+            <Modal />
+          </SafeAreaView>
+        </ModalProvider>
       </NativeBaseProvider>
     </SafeAreaProvider>
   );

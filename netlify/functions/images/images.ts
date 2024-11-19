@@ -267,7 +267,7 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 405,
       headers,
-      body: JSON.stringify({ message: "Method Not Supported" }),
+      body: JSON.stringify({ message: "Unhandled Request" }),
     };
   } catch (error) {
     console.error("Error handling request:", error);

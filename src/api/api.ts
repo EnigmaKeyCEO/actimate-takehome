@@ -1,16 +1,24 @@
+import { CreateFolderInput } from "#/types/Folder";
 import { Folder, Image, SortOptions } from "../types";
 
 const API_BASE_URL =
-  process.env.VITE_API_BASE_URL ||
-  "https://actimate-takehome.netlify.app/.netlify/functions";
+  process.env.VITE_API_BASE_URL || "https://actimate-takehome.netlify.app/api";
 
 // Helper function to handle fetch requests
-const handleResponse = async (response: Response) => {
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "API Error");
+const handle = async (response: Response, ...more: any[]) => {
+  try {
+    if (more && process.env.NODE_ENV === "development") {
+      console.log("Request:", JSON.stringify(more, null, 2));
+    }
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "API Error");
+    }
+    return response.json();
+  } catch (err) {
+    console.error("Error handling response:", err);
+    throw err;
   }
-  return response.json();
 };
 
 // Folders
@@ -29,18 +37,21 @@ export const getFolders = async (
   const response = await fetch(url.toString(), {
     method: "GET",
   });
-  return handleResponse(response);
+  return handle(response, url);
 };
 
-export const createFolder = async (data: Partial<Folder>): Promise<Folder> => {
-  const response = await fetch(`${API_BASE_URL}/folders`, {
+export const createFolder = async (
+  data: CreateFolderInput
+): Promise<Folder> => {
+  const url = new URL(`${API_BASE_URL}/folders`);
+  const response = await fetch(url.toString(), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
   });
-  return handleResponse(response);
+  return handle(response, url, data);
 };
 
 export const updateFolder = async (
@@ -54,7 +65,7 @@ export const updateFolder = async (
     },
     body: JSON.stringify(data),
   });
-  return handleResponse(response);
+  return handle(response);
 };
 
 export const deleteFolder = async (id: string): Promise<void> => {
@@ -82,7 +93,7 @@ export const getImages = async (
   const response = await fetch(url.toString(), {
     method: "GET",
   });
-  return handleResponse(response);
+  return handle(response);
 };
 
 export const uploadImage = async (
@@ -99,7 +110,7 @@ export const uploadImage = async (
       method: "GET",
     }
   );
-  const { uploadUrl, filename } = await handleResponse(uploadUrlResponse);
+  const { uploadUrl, filename } = await handle(uploadUrlResponse);
 
   // Upload to S3
   const uploadResponse = await fetch(uploadUrl, {
@@ -126,7 +137,7 @@ export const uploadImage = async (
       }),
     }
   );
-  return handleResponse(createImageResponse);
+  return handle(createImageResponse);
 };
 
 export const deleteImage = async (

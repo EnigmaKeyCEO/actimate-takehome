@@ -26,16 +26,16 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    if (process.env.NODE_ENV === "development") {
-      console.log("Incoming Request:", {
-        httpMethod: event.httpMethod,
-        path: event.path,
-        body: event.body,
-        queryStringParameters: event.queryStringParameters,
-      });
-    }
+    // if (process.env.NODE_ENV === "development") {
+    console.log("Incoming Request:", {
+      httpMethod: event.httpMethod,
+      path: event.path,
+      body: event.body,
+      queryStringParameters: event.queryStringParameters,
+    });
+    // }
     const { httpMethod, path, body, queryStringParameters } = event;
-    const foldersTable = "Folders"; // Ensure this matches your DynamoDB table
+    const foldersTable = "actimate-takehome"; // Ensure this matches your DynamoDB table
 
     // Normalize path by removing trailing slashes
     const normalizedPath = path.replace(/\/+$/, "");
@@ -140,7 +140,7 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 405,
       headers,
-      body: JSON.stringify({ message: "Method Not Supported" }),
+      body: JSON.stringify({ message: "Unhandled Request" }),
     };
   } catch (error) {
     console.error(error);
