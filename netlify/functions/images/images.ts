@@ -88,7 +88,7 @@ export const handler: Handler = async (event) => {
       }
 
       const url = S3.getSignedUrl("putObject", {
-        Bucket: process.env.S3_BUCKET_NAME!,
+        Bucket: process.env.VITE_S3_BUCKET_NAME!,
         Key: key,
         Expires: 60, // URL valid for 60 seconds
         ContentType: contentType, // Adjust based on file extension
