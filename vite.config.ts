@@ -42,6 +42,7 @@ export default defineConfig(({ mode }) => ({
         '.js': 'jsx',
       },
       resolveExtensions: ['.web.tsx', '.web.ts', '.web.jsx', '.web.js', '.tsx', '.ts', '.jsx', '.js'],
+      jsx: 'automatic',
     }
   },
   build: {
