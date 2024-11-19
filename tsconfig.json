@@ -1,0 +1,12 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@react-native/assets-registry/registry": ["./src/shims/assetRegistry.ts"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
+}
