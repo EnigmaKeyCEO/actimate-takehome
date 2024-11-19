@@ -1,169 +1,156 @@
-# Image Folder Management - Netlify Functions
+# Image Folder Management Backend API
 
-This directory contains the serverless functions that power the Image Folder Management application's backend. These functions handle image uploads, folder management, and data persistence using Firebase.
+## Introduction
+This backend API provides endpoints for managing image folders and images, including CRUD operations and generating signed URLs for AWS S3.
 
-## Architecture
+## Setup Instructions
 
-The backend is built using Netlify Functions and integrates with Firebase for data storage and file management. Each function is designed to handle specific aspects of the application's functionality.
+### Prerequisites
+- AWS account with S3 and DynamoDB access
+- Node.js and npm
 
-## Functions Overview
+### Installation
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Configure environment variables:
+   Create a `.env` file with the following:
+   ```
+   AWS_ACCESS_KEY_ID=your_access_key
+   AWS_SECRET_ACCESS_KEY=your_secret_key
+   AWS_REGION=your_region
+   S3_BUCKET_NAME=your_s3_bucket_name
+   ```
+4. Deploy using Netlify Functions:
+   Ensure Netlify is configured to handle functions from the `/netlify/functions` directory.
 
-### `folders.ts`
-
-Handles all folder-related operations:
-- Create new folders
-- List folders with sorting and pagination
-- Update folder metadata
-- Delete folders
-
-### `images.ts`
-
-Manages image-related operations:
-- Generate upload URLs for Firebase Storage
-- Create image metadata records
-- List images with sorting and pagination
-- Delete images and their associated files
-
-## Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
-```env
-# Firebase Configuration
-FIREBASE_API_KEY=your_api_key
-FIREBASE_AUTH_DOMAIN=your_auth_domain
-FIREBASE_PROJECT_ID=your_project_id
-FIREBASE_STORAGE_BUCKET=your_storage_bucket
-FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
-FIREBASE_APP_ID=your_app_id
-```
-
-## Local Development
-
-1. Install the Netlify CLI:
+### Running Locally
+You can test functions locally with Netlify CLI:
 ```bash
 npm install -g netlify-cli
-```
-
-2. Start the development server:
-```bash
 netlify dev
 ```
-
-This will start both the frontend application and the serverless functions.
 
 ## API Endpoints
 
 ### Folders
-
-```typescript
-POST /.netlify/functions/folders
-{
-  "method": "CREATE" | "READ" | "UPDATE" | "DELETE",
-  "data": {
-    // Folder data
-  },
-  "sort"?: {
-    "field": "name" | "created_at" | "updated_at",
-    "direction": "asc" | "desc"
-  },
-  "pagination"?: {
-    "page": number,
-    "limit": number
-  }
-}
-```
+- **GET /folders**
+  - Description: List folders with pagination.
+  - Query Parameters:
+    - `page`: Page number
+    - `sort`: Sort criteria
+- **POST /folders**
+  - Description: Create a new folder.
+  - Body:
+    ```json
+    { "name": "Folder Name" }
+    ```
+- **PUT /folders/:id**
+  - Description: Update a folder.
+  - Body:
+    ```json
+    { "name": "Updated Folder Name" }
+    ```
+- **DELETE /folders/:id**
+  - Description: Delete a folder.
 
 ### Images
+- **GET /folders/:folderId/images**
+  - Description: List images in a folder with pagination.
+  - Query Parameters:
+    - `page`: Page number
+    - `sort`: Sort criteria
+- **GET /folders/:folderId/images/upload?filename=**
+  - Description: Get a signed URL for uploading an image.
+- **POST /folders/:folderId/images**
+  - Description: Create an image record after upload.
+  - Body:
+    ```json
+    { "key": "s3_key", "name": "Image Name" }
+    ```
+- **DELETE /folders/:folderId/images/:id**
+  - Description: Delete an image.
 
-```typescript
-POST /.netlify/functions/images
-{
-  "method": "GET_UPLOAD_URL" | "CREATE" | "READ" | "DELETE",
-  "data": {
-    // Image data
-  },
-  "sort"?: {
-    "field": "name" | "created_at" | "updated_at",
-    "direction": "asc" | "desc"
-  },
-  "pagination"?: {
-    "page": number,
-    "limit": number
-  }
-}
-```
+## AWS Integration
 
-## Error Handling
+### S3
+- **Bucket Name**: Defined in `S3_BUCKET_NAME` environment variable.
+- **Permissions**: Ensure proper CORS and bucket policies are set to allow signed URL operations.
 
-All functions follow a consistent error handling pattern:
-
-```typescript
-try {
-  // Function logic
-} catch (error) {
-  return {
-    statusCode: 500,
-    body: JSON.stringify({ error: 'Internal server error' })
-  };
-}
-```
-
-## Security
-
-- All functions validate input data before processing
-- Firebase Security Rules control access to data and files
-- No authentication is required as per project requirements
+### DynamoDB
+- **Tables**:
+  - **Folders**
+    - Primary Key: `id` (String)
+    - Attributes: `name`, `createdAt`, `updatedAt`
+  - **Images**
+    - Primary Key: `id` (String)
+    - Attributes: `folderId`, `key`, `name`, `url`, `createdAt`, `updatedAt`
+    - **GSI**: `folderId-index` on `folderId` attribute for querying images by folder.
 
 ## Deployment
 
-The functions are automatically deployed when pushing to the main branch if you've set up Netlify continuous deployment.
+### AWS CDK (Optional)
+Provide infrastructure as code scripts if applicable, e.g.,
+```typescript
+// cdk-stack.ts
+import * as cdk from 'aws-cdk-lib';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 
-To deploy manually:
+export class ActimateStack extends cdk.Stack {
+  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
 
-```bash
-netlify deploy --prod
+    const bucket = new s3.Bucket(this, 'ImagesBucket', {
+      versioned: true,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    const foldersTable = new dynamodb.Table(this, 'FoldersTable', {
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+    });
+
+    const imagesTable = new dynamodb.Table(this, 'ImagesTable', {
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+      globalSecondaryIndexes: [{
+        indexName: 'folderId-index',
+        partitionKey: { name: 'folderId', type: dynamodb.AttributeType.STRING },
+        sortKey: { name: 'createdAt', type: dynamodb.AttributeType.STRING },
+      }]
+    });
+
+    // Add permissions, etc., as needed
+  }
+}
 ```
 
-## Testing
+### Deployment Steps
+Provide clear steps for deploying backend functions and ensuring they are correctly linked with Netlify.
 
-To test the functions locally:
+## Environment Variables
+List all required environment variables and their descriptions.
 
-1. Start the development server:
-```bash
-netlify dev
+```
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+AWS_REGION=your_region
+S3_BUCKET_NAME=your_s3_bucket_name
 ```
 
-2. Use tools like Postman or curl to send requests to:
-```
-http://localhost:8888/.netlify/functions/[function-name]
-```
-
-## Monitoring
-
-Monitor function execution and errors through the Netlify dashboard:
-
-1. Go to your site's dashboard
-2. Navigate to Functions
-3. View execution logs and error reports
-
-## Best Practices
-
-1. Keep functions small and focused
-2. Use TypeScript for better type safety
-3. Implement proper error handling
-4. Follow the principle of least privilege
-5. Cache frequently accessed data
-6. Implement rate limiting for production
+Ensure these are set in your Netlify dashboard under **Environment Variables**.
 
 ## Troubleshooting
+Include common issues and solutions.
 
-Common issues and solutions:
-
-1. **CORS errors**: Ensure your function includes proper headers
-2. **Timeout errors**: Keep functions under the 10s limit
-3. **Memory issues**: Stay within the 1024MB limit
-
-## Support
-
-For issues and feature requests, please create an issue in the repository.
+```
+- **Issue**: Unable to generate signed URLs.
+  - **Solution**: Check AWS credentials and ensure the S3 bucket policies allow PUT operations.
+  
+- **Issue**: DynamoDB connection errors.
+  - **Solution**: Verify AWS region and credentials.
+```

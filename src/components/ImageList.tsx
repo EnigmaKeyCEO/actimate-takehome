@@ -31,7 +31,7 @@ export const ImageList: React.FC<ImageListProps> = ({ images, onSort }) => {
             <Text>Sort by Name</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => onSort({ field: 'created_at', direction: 'desc' })}
+            onPress={() => onSort({ field: 'createdAt', direction: 'desc' })}
             style={styles.sortButton}
           >
             <Text>Sort by Date</Text>

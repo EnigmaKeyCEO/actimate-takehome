@@ -1,10 +1,10 @@
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NativeRouter, Route, Routes } from 'react-router-native';
+import { Platform } from 'react-native';
 import { NativeBaseProvider, extendTheme } from 'native-base';
 import { FolderScreen } from './screens/FolderScreen';
-import { FolderDetailScreen } from './screens/FolderDetailScreen';
-import { Platform } from 'react-native';
+import FolderDetailScreen from './screens/FolderDetailScreen';
 
 const theme = extendTheme({
   config: {

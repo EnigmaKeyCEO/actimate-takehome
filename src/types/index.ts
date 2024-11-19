@@ -1,22 +1,13 @@
 export interface SortOptions {
-  field: "name" | "created_at" | "updated_at";
+  field: "name" | "createdAt" | "updatedAt";
   direction: "asc" | "desc";
 }
 
 export type SortField = SortOptions["field"];
 
-export interface Folder extends Record<SortField, string> {
-  id: string;
-}
+export type { Folder } from './Folder';
+export type { Image } from './Image';
 
-export interface Image extends Record<SortField, string> {
-  id: string;
-  folder_id: string;
-  name: string;
-  url: string;
-  created_at: string;
-  updated_at: string;
-}
 
 export interface PaginationOptions {
   page: number;

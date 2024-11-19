@@ -47,8 +47,8 @@ export function useImages(folderId: string) {
         folder_id: folderId,
         name: file.name,
         url: downloadUrl,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       });
       
       await fetchImages();
