@@ -15,9 +15,6 @@ const theme = extendTheme({
 
 // Configure NativeBase for web
 const config = {
-  dependencies: {
-    'linear-gradient': require('react-native-web-linear-gradient'),
-  },
   // Disable features not supported on web
   disableBackHandler: Platform.OS === 'web',
   backHandler: undefined,

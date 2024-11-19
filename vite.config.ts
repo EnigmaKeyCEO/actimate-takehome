@@ -4,7 +4,8 @@ import { viteCommonjs } from "@originjs/vite-plugin-commonjs";
 import path from "path";
 import { PluginItem } from "@babel/core";
 
-const exclusionRegex = /node_modules(?!\/(@?expo[-/]vector-icons|lodash\..*|native-base|normalize-css-color|inline-style-prefixer))/;
+const exclusionRegex =
+  /node_modules(?!\/(@?expo[-/]vector-icons|lodash\..*|native-base|normalize-css-color|inline-style-prefixer))/;
 
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -40,10 +41,6 @@ export default defineConfig(({ mode }) => ({
         __dirname,
         "node_modules/react-native-web/dist/modules/AssetRegistry/index.js"
       ),
-      // "@expo/vector-icons": path.resolve(
-      //   __dirname,
-      //   "node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons"
-      // ),
       "@expo/vector-icons": path.resolve(
         __dirname,
         "node_modules/@expo/vector-icons"
@@ -57,18 +54,6 @@ export default defineConfig(({ mode }) => ({
         "node_modules/react-native-web/dist/vendor/react-native/NativeComponent/index.js"
       ),
       "@react-native/normalize-colors": "normalize-css-color",
-      "inline-style-prefixer/lib/plugins/backgroundClip": path.resolve(
-        __dirname,
-        "node_modules/inline-style-prefixer/lib/plugins/backgroundClip"
-      ),
-      "inline-style-prefixer/lib/plugins/crossFade": path.resolve(
-        __dirname,
-        "node_modules/inline-style-prefixer/lib/plugins/crossFade"
-      ),
-      "inline-style-prefixer/lib/plugins/cursor": path.resolve(
-        __dirname,
-        "node_modules/inline-style-prefixer/lib/plugins/cursor"
-      ),
     },
     extensions: [
       ".web.tsx",
@@ -100,94 +85,42 @@ export default defineConfig(({ mode }) => ({
       "lodash.isempty",
       "lodash.omitby",
       "tinycolor2",
-      "inline-style-prefixer/lib/plugins/backgroundClip",
-      "inline-style-prefixer/lib/plugins/crossFade",
-      "inline-style-prefixer/lib/plugins/cursor",
-      "@react-native/normalize-colors",
-      "inline-style-prefixer/lib/plugins/filter",
-      "inline-style-prefixer/lib/plugins/imageSet",
-      "inline-style-prefixer/lib/plugins/logical",
-      "postcss-value-parser",
-      "inline-style-prefixer/lib/createPrefixer",
+      "inline-style-prefixer",
+      "postcss-value-parser"
     ],
     esbuildOptions: {
-      loader: {
-        ".js": "jsx",
-      },
-      resolveExtensions: [
-        ".web.tsx",
-        ".web.ts",
-        ".web.jsx",
-        ".web.js",
-        ".tsx",
-        ".ts",
-        ".jsx",
-        ".js",
-      ],
-      jsx: "automatic",
+      target: 'esnext',
+      supported: {
+        'top-level-await': true
+      }
     },
+    exclude: [
+      'inline-style-prefixer'
+    ]
   },
   build: {
     commonjsOptions: {
+      transformMixedEsModules: true,
       include: [
         /node_modules/,
         /inline-style-prefixer/,
         /postcss-value-parser/,
         /lodash\..*/,
-      ],
-      requireReturnsDefault: "auto",
-      defaultIsModuleExports: true,
-      transformMixedEsModules: true,
+      ]
     },
     rollupOptions: {
-      external: [
-        "react-native",
-        "react",
-        "react/jsx-runtime",
-        "react-dom",
-        "use-sync-external-store",
-        "use-sync-external-store/shim",
-        "lodash.get",
-        "lodash.isempty",
-        "lodash.omitBy",
-        "tinycolor2",
-        "inline-style-prefixer/lib/plugins/backgroundClip",
-        "inline-style-prefixer/lib/plugins/crossFade",
-        "inline-style-prefixer/lib/plugins/cursor",
-        "inline-style-prefixer/lib/plugins/filter",
-        "inline-style-prefixer/lib/plugins/imageSet",
-        "inline-style-prefixer/lib/plugins/logical",
-        "inline-style-prefixer/lib/plugins/position",
-        "inline-style-prefixer/lib/plugins/sizing",
-        "inline-style-prefixer/lib/plugins/transition",
-        "inline-style-prefixer/lib/createPrefixer",
-        "postcss-value-parser",
-      ],
       output: {
-        globals: {
-          "react-native": "ReactNative",
-          react: "React",
-          "react/jsx-runtime": "JSX",
-          "react-dom": "ReactDOM",
-          "use-sync-external-store": "useSyncExternalStore",
-          "use-sync-external-store/shim": "useSyncExternalStoreShim",
-          "lodash.get": "get",
-          "lodash.isempty": "isEmpty",
-          "lodash.omitby": "omitBy",
-          tinycolor2: "tinycolor",
-          "inline-style-prefixer/lib/plugins/backgroundClip": "backgroundClip",
-          "inline-style-prefixer/lib/plugins/crossFade": "crossFade",
-          "inline-style-prefixer/lib/plugins/cursor": "cursor",
-          "inline-style-prefixer/lib/plugins/filter": "filter",
-          "inline-style-prefixer/lib/plugins/imageSet": "imageSet",
-          "inline-style-prefixer/lib/plugins/logical": "logical",
-          "inline-style-prefixer/lib/plugins/position": "position",
-          "inline-style-prefixer/lib/plugins/sizing": "sizing",
-          "inline-style-prefixer/lib/plugins/transition": "transition",
-          "inline-style-prefixer/lib/createPrefixer": "createPrefixer",
-          "postcss-value-parser": "valueParser",
-        },
-      },
-    },
+        format: "es",
+        entryFileNames: "assets/[name].[hash].js",
+        chunkFileNames: "assets/[name].[hash].js",
+        assetFileNames: "assets/[name].[hash][extname]"
+      }
+    }
   },
+  server: {
+    port: 3000,
+    cors: {
+      origin: '*'
+    }
+  }
 }));
