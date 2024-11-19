@@ -67,3 +67,10 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Expo
+# .expo # not sure if this is needed in git
+
+# Vite
+/dist
+
