@@ -77,3 +77,8 @@ node_modules/
 
 # Local Netlify folder
 .netlify
+.stackblitzrc
+
+# .bak files... all of them
+.bak
+.bak.*
