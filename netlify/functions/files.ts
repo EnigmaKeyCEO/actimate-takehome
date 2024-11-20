@@ -136,7 +136,7 @@ const handlePost = async (event: any, headers: any) => {
   };
 
   const dbParams = {
-    TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
+    TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME ?? "Files",
     Item: fileItem,
   };
 

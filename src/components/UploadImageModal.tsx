@@ -10,8 +10,8 @@ import {
   Dimensions,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { useImages } from "#/hooks/useImages";
 import { AnimatedModal } from "#/components/AnimatedModal";
+import useFiles from "#/hooks/useFiles";
 
 interface UploadImageModalProps {
   isOpen: boolean;
@@ -24,7 +24,7 @@ export const UploadImageModal: React.FC<UploadImageModalProps> = ({
   onClose,
   folderId,
 }) => {
-  const { uploadImage } = useImages(folderId);
+  const { uploadNewFile } = useFiles(folderId);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -44,7 +44,13 @@ export const UploadImageModal: React.FC<UploadImageModalProps> = ({
           setUploading(false);
           return;
         }
-        await uploadImage(file);
+        const formData = new FormData();
+        formData.append('file', {
+          uri: file.uri,
+          type: file.type,
+          name: file.fileName,
+        } as any);
+        await uploadNewFile(formData);
         setUploading(false);
         onClose();
       } catch (err) {

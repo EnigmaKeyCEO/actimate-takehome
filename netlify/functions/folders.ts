@@ -18,7 +18,7 @@ export const handler: Handler = async (event) => {
 
   try {
     const params = {
-      TableName: process.env.VITE_DYNAMODB_FOLDERS_TABLE_NAME!,
+      TableName: process.env.VITE_DYNAMODB_FOLDERS_TABLE_NAME ?? "Folders",
     };
 
     const data = await dynamoDb.scan(params).promise();

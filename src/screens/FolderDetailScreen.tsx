@@ -9,11 +9,10 @@ import {
   Animated,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
-import { useImages } from "#/hooks/useImages";
 import { Image, SortOptions } from "#/types";
 import useFolders from "#/hooks/useFolders";
 import useFiles from "#/hooks/useFiles";
-import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from "expo-image-picker";
 
 type RouteParams = {
   folderId: string;
@@ -22,18 +21,18 @@ type RouteParams = {
 export function FolderDetailScreen() {
   const route = useRoute();
   const { folderId } = route.params as RouteParams;
-  const {
-    images,
-    loading,
-    error,
-    uploadImage,
-    deleteImage,
-    sortImages,
-    loadMoreImages,
-  } = useImages(folderId);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const { createFolder, deleteFolder, loadMoreFolders } = useFolders(folderId);
-  const { uploadNewFile, updateExistingFile, removeFile, sortFiles } = useFiles(folderId);
+  const {
+    uploadNewFile,
+    updateExistingFile,
+    removeFile,
+    sortFiles,
+    files,
+    loading,
+    error,
+    loadMoreFiles,
+  } = useFiles(folderId);
 
   const handleUploadImage = async () => {
     try {
@@ -45,13 +44,11 @@ export function FolderDetailScreen() {
 
       if (!result.canceled) {
         const asset = result.assets[0];
-        await uploadImage(asset);
-
         const formData = new FormData();
-        formData.append('file', {
+        formData.append("file", {
           uri: asset.uri,
-          type: 'image/jpeg',
-          name: 'upload.jpg'
+          type: "image/jpeg",
+          name: "upload.jpg",
         } as any);
         await uploadNewFile(formData);
       }
@@ -62,14 +59,14 @@ export function FolderDetailScreen() {
 
   const handleDeleteImage = async (id: string, filename: string) => {
     try {
-      await deleteImage(id, filename);
+      await removeFile(id);
     } catch (err) {
       console.error("Error deleting image:", err);
     }
   };
 
   const handleSort = (sortOptions: SortOptions) => {
-    sortImages(sortOptions);
+    sortFiles(sortOptions);
   };
 
   const renderItem = ({ item }: { item: Image }) => (
@@ -93,12 +90,11 @@ export function FolderDetailScreen() {
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <Button title="Upload Image" onPress={handleUploadImage} />
-      {error && <Text style={styles.errorText}>{error.message}</Text>}
       <FlatList
-        data={images}
+        data={files}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        onEndReached={loadMoreImages}
+        onEndReached={loadMoreFiles}
         onEndReachedThreshold={0.5}
         ListFooterComponent={loading ? <ActivityIndicator /> : null}
       />
