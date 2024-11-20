@@ -1,16 +1,11 @@
 import { Handler } from "@netlify/functions";
-import { S3, dynamoDb } from "./awsConfig"; // Import S3 and DynamoDB configurations
+import { S3, dynamoDb } from "./awsConfig";
+import { GetObjectCommand, PutObjectCommand, DeleteObjectCommand, CopyObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteItemCommand, GetItemCommand, PutItemCommand, UpdateItemCommand, UpdateItemCommandInput } from "@aws-sdk/client-dynamodb";
+import { unmarshall } from "@aws-sdk/util-dynamodb";
+import { FileItem } from "../../src/types/File";
 import { v4 as uuidv4 } from "uuid";
-
-interface FileItem {
-  id: string;
-  folderId: string;
-  key: string;
-  url: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 
 export const handler: Handler = async (event) => {
   const headers = {
@@ -57,88 +52,81 @@ export const handler: Handler = async (event) => {
 // Handler for GET requests to list files
 const handleGet = async (event: any, headers: any) => {
   const folderId = event.queryStringParameters?.folderId;
+  const lastKey = event.queryStringParameters?.lastKey;
 
   const params = {
     TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
     IndexName: "folderId-index",
     KeyConditionExpression: "folderId = :folderId",
     ExpressionAttributeValues: {
-      ":folderId": folderId || "root",
+      ":folderId": { S: folderId || "root" },
     },
-    ScanIndexForward: true, // true for ascending, false for descending
+    ScanIndexForward: true,
+    Limit: 20,
+    ExclusiveStartKey: lastKey ? JSON.parse(lastKey) : undefined,
   };
 
-  const result = await dynamoDb.query(params).promise();
-  const files: FileItem[] = result.Items as FileItem[];
+  const command = new QueryCommand(params);
+  const result = await dynamoDb.send(command);
+  const files: FileItem[] = result.Items
+    ? result.Items.map((item) => unmarshall(item) as FileItem)
+    : [];
 
   return {
     statusCode: 200,
     headers,
-    body: JSON.stringify(files),
+    body: JSON.stringify({
+      files,
+      lastKey: result.LastEvaluatedKey ? JSON.stringify(result.LastEvaluatedKey) : null,
+    }),
   };
 };
 
 // Handler for POST requests to upload a new file
 const handlePost = async (event: any, headers: any) => {
-  if (!event.body) {
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ message: "Request body is missing." }),
-    };
-  }
+  const formData = JSON.parse(event.body);
+  const { file, folderId } = formData;
 
-  const body = JSON.parse(event.body);
-  const file = body.file;
+  const fileId = uuidv4();
+  const key = `${folderId}/${file.name}`;
 
-  if (!file) {
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ message: "File data is required." }),
-    };
-  }
-
-  const { uri, name, type, folderId } = file;
-
-  if (!uri || !name || !type || !folderId) {
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ message: "File uri, name, type, and folderId are required." }),
-    };
-  }
-
-  const id = uuidv4();
-  const key = `uploads/${id}-${name}`;
-  const fileUrl = `https://${process.env.VITE_S3_BUCKET_NAME}.s3.amazonaws.com/${key}`;
-  const timestamp = new Date().toISOString();
-
-  const uploadParams = {
+  // Upload file to S3
+  const putParams = {
     Bucket: process.env.VITE_S3_BUCKET_NAME!,
     Key: key,
-    Body: Buffer.from(uri, 'base64'),
-    ContentType: type,
+    Body: Buffer.from(file.content, "base64"),
+    ContentType: file.type,
   };
 
-  await S3.upload(uploadParams).promise();
+  const putCommand = new PutObjectCommand(putParams);
+  await S3.send(putCommand);
 
+  // Create file record in DynamoDB
   const fileItem: FileItem = {
-    id,
-    folderId,
+    id: fileId,
+    folderId: folderId || "root",
     key,
-    url: fileUrl,
-    name,
-    createdAt: timestamp,
-    updatedAt: timestamp,
+    url: `https://${process.env.VITE_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`,
+    name: file.name,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
-  const dbParams = {
-    TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME ?? "Files",
-    Item: fileItem,
+  const putItemParams = {
+    TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
+    Item: {
+      id: { S: fileItem.id },
+      folderId: { S: fileItem.folderId },
+      key: { S: fileItem.key },
+      url: { S: fileItem.url },
+      name: { S: fileItem.name },
+      createdAt: { S: fileItem.createdAt },
+      updatedAt: { S: fileItem.updatedAt },
+    },
   };
 
-  await dynamoDb.put(dbParams).promise();
+  const putItemCommand = new PutItemCommand(putItemParams);
+  await dynamoDb.send(putItemCommand);
 
   return {
     statusCode: 201,
@@ -147,64 +135,84 @@ const handlePost = async (event: any, headers: any) => {
   };
 };
 
-// Handler for PUT requests to update a file's metadata
+// Handler for PUT requests to update a file
 const handlePut = async (event: any, headers: any) => {
-  const pathSegments = event.path.split("/");
-  const fileId = pathSegments[pathSegments.length - 1];
+  const { id, updateData } = JSON.parse(event.body);
 
-  if (!fileId) {
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ message: "File ID is required in the URL." }),
-    };
-  }
-
-  if (!event.body) {
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ message: "Request body is missing." }),
-    };
-  }
-
-  const body = JSON.parse(event.body);
-  const { name, folderId } = body;
-
-  if (!name && !folderId) {
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ message: "At least one of name or folderId must be provided." }),
-    };
-  }
-
-  const updateExpressions: string[] = [];
-  const expressionAttributeValues: any = {};
-
-  if (name) {
-    updateExpressions.push("name = :name");
-    expressionAttributeValues[":name"] = name;
-  }
-
-  if (folderId) {
-    updateExpressions.push("folderId = :folderId");
-    expressionAttributeValues[":folderId"] = folderId;
-  }
-
-  updateExpressions.push("updatedAt = :updatedAt");
-  expressionAttributeValues[":updatedAt"] = new Date().toISOString();
-
-  const params = {
+  // Fetch existing file record
+  const getParams = {
     TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
-    Key: { id: fileId },
-    UpdateExpression: "set " + updateExpressions.join(", "),
-    ExpressionAttributeValues: expressionAttributeValues,
-    ReturnValues: "ALL_NEW",
+    Key: {
+      id: { S: id },
+    },
   };
 
-  const result = await dynamoDb.update(params).promise();
-  const updatedFile: FileItem = result.Attributes as FileItem;
+  const getCommand = new GetItemCommand(getParams);
+  const getResult = await dynamoDb.send(getCommand);
+
+  if (!getResult.Item) {
+    return {
+      statusCode: 404,
+      headers,
+      body: JSON.stringify({ message: "File not found" }),
+    };
+  }
+
+  const existingFile: FileItem = unmarshall(getResult.Item) as FileItem;
+
+  // Update S3 key if folderId or name changes
+  let newKey = existingFile.key;
+  if (updateData.folderId || updateData.name) {
+    const newFolderId = updateData.folderId || existingFile.folderId;
+    const newName = updateData.name || existingFile.name;
+    newKey = `${newFolderId}/${newName}`;
+
+    const copyParams = {
+      Bucket: process.env.VITE_S3_BUCKET_NAME!,
+      CopySource: `${process.env.VITE_S3_BUCKET_NAME}/${existingFile.key}`,
+      Key: newKey,
+    };
+
+    const copyCommand = new CopyObjectCommand(copyParams);
+    await S3.send(copyCommand);
+
+    const deleteParams = {
+      Bucket: process.env.VITE_S3_BUCKET_NAME!,
+      Key: existingFile.key,
+    };
+
+    const deleteCommand = new DeleteObjectCommand(deleteParams);
+    await S3.send(deleteCommand);
+  }
+
+  // Update DynamoDB record
+  const updatedAt = new Date().toISOString();
+  const updateParams = {
+    TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
+    Key: {
+      id: { S: id },
+    },
+    UpdateExpression:
+      "set folderId = :folderId, #name = :name, key = :key, url = :url, updatedAt = :updatedAt",
+    ExpressionAttributeNames: {
+      "#name": "name",
+    },
+    ExpressionAttributeValues: {
+      ":folderId": { S: updateData.folderId || existingFile.folderId },
+      ":name": { S: updateData.name || existingFile.name },
+      ":key": { S: newKey },
+      ":url": {
+        S: `https://${process.env.VITE_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${newKey}`,
+      },
+      ":updatedAt": { S: updatedAt },
+    },
+    ReturnValues: "ALL_NEW",
+  } as UpdateItemCommandInput;
+
+  const updateCommand = new UpdateItemCommand(updateParams);
+  const updateResult = await dynamoDb.send(updateCommand);
+
+  const updatedFile: FileItem = unmarshall(updateResult.Attributes!) as FileItem;
 
   return {
     statusCode: 200,
@@ -215,53 +223,52 @@ const handlePut = async (event: any, headers: any) => {
 
 // Handler for DELETE requests to remove a file
 const handleDelete = async (event: any, headers: any) => {
-  const pathSegments = event.path.split("/");
-  const fileId = pathSegments[pathSegments.length - 1];
+  const { id } = JSON.parse(event.body);
 
-  if (!fileId) {
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ message: "File ID is required in the URL." }),
-    };
-  }
-
-  // Retrieve the file item to get the S3 key
+  // Fetch existing file record
   const getParams = {
     TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
-    Key: { id: fileId },
+    Key: {
+      id: { S: id },
+    },
   };
 
-  const getResult = await dynamoDb.get(getParams).promise();
-  const fileItem: FileItem | undefined = getResult.Item as FileItem | undefined;
+  const getCommand = new GetItemCommand(getParams);
+  const getResult = await dynamoDb.send(getCommand);
 
-  if (!fileItem) {
+  if (!getResult.Item) {
     return {
       statusCode: 404,
       headers,
-      body: JSON.stringify({ message: "File not found." }),
+      body: JSON.stringify({ message: "File not found" }),
     };
   }
 
-  // Delete from S3
-  const deleteS3Params = {
+  const existingFile: FileItem = unmarshall(getResult.Item) as FileItem;
+
+  // Delete file from S3
+  const deleteParams = {
     Bucket: process.env.VITE_S3_BUCKET_NAME!,
-    Key: fileItem.key,
+    Key: existingFile.key,
   };
 
-  await S3.deleteObject(deleteS3Params).promise();
+  const deleteCommand = new DeleteObjectCommand(deleteParams);
+  await S3.send(deleteCommand);
 
-  // Delete from DynamoDB
-  const deleteDbParams = {
+  // Remove record from DynamoDB
+  const deleteItemParams = {
     TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
-    Key: { id: fileId },
+    Key: {
+      id: { S: id },
+    },
   };
 
-  await dynamoDb.delete(deleteDbParams).promise();
+  const deleteItemCommand = new DeleteItemCommand(deleteItemParams);
+  await dynamoDb.send(deleteItemCommand);
 
   return {
     statusCode: 200,
     headers,
-    body: JSON.stringify({ message: "File deleted successfully." }),
+    body: JSON.stringify({ message: "File deleted successfully" }),
   };
 };

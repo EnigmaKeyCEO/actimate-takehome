@@ -1,20 +1,29 @@
-import AWS from 'aws-sdk';
+import { S3Client } from "@aws-sdk/client-s3";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-console.log("AWS Region:", process.env.AWS_REGION);
+// Load environment variables from a secure source
+const region = process.env.VITE_AWS_REGION || "us-east-2";
+const accessKeyId = process.env.VITE_AWS_ACCESS_KEY_ID!;
+const secretAccessKey = process.env.VITE_AWS_SECRET_ACCESS_KEY!;
 
-const config = {
-  region: process.env.AWS_REGION,
+// Initialize S3 Client
+export const S3 = new S3Client({
+  region,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "",
+    accessKeyId,
+    secretAccessKey,
   },
-};
+});
 
-if (config.region && config.credentials.accessKeyId && config.credentials.secretAccessKey) {
-  AWS.config.update(config);
-} else {
-  throw new Error("AWS config is missing required values");
-}
+// Initialize DynamoDB Client
+const dynamoDbClient = new DynamoDBClient({
+  region,
+  credentials: {
+    accessKeyId,
+    secretAccessKey,
+  },
+});
 
-export const S3 = new AWS.S3();
-export const dynamoDb = new AWS.DynamoDB.DocumentClient();
+// Create DynamoDB Document Client
+export const dynamoDb = DynamoDBDocumentClient.from(dynamoDbClient);
