@@ -1,6 +1,6 @@
-import { View, Text, useTheme, Theme } from "native-base";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import React from "react";
-import { StyleSheet, TouchableOpacity } from "react-native";
+import { Theme, useTheme } from "native-base";
 
 interface FolderActionsProps {
   onAddFolder: () => void;
@@ -10,7 +10,7 @@ interface FolderActionsProps {
 const FolderActionButton: React.FC<{
   title: string;
   onPress: () => void;
-  styles: StyleSheet.NamedStyles<any>;
+  styles: any;
 }> = ({ title, onPress, styles }) => {
   return (
     <TouchableOpacity style={styles.button} onPress={onPress}>
@@ -64,4 +64,4 @@ const useStyles = (theme: Theme) =>
         marginTop: 10,
       },
     });
-  }, []);
+  }, [theme]); 

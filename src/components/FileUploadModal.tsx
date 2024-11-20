@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Modal, View, Button, Text, StyleSheet } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
-import { uploadFile } from "#/api/api";
+import { uploadFile } from "#/api";
 
 interface FileUploadModalProps {
   isOpen: boolean;

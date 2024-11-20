@@ -4,14 +4,15 @@ import {
   View,
   Button,
   StyleSheet,
-  ActivityIndicator,
   Text,
   Animated,
-  Dimensions,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { AnimatedModal } from "#/components/AnimatedModal";
+import { AnimatedModal } from "./common/AnimatedModal";
+import { LoadingIndicator } from "#/components/common/LoadingIndicator";
+
 import useFiles from "#/hooks/useFiles";
+
 
 interface UploadImageModalProps {
   isOpen: boolean;
@@ -81,7 +82,7 @@ export const UploadImageModal: React.FC<UploadImageModalProps> = ({
       <Animated.View style={{ opacity: fadeAnim }}>
         <Button title="Pick an Image" onPress={handlePickImage} />
         {uploading ? (
-          <ActivityIndicator size="large" color="#0000ff" />
+          <LoadingIndicator />
         ) : (
           <View style={{ height: 20 }} /> // empty view to push the cancel button down
         )}

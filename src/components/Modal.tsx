@@ -1,3 +1,4 @@
+import { Button, VStack } from "native-base";
 import React, { createContext, useContext, useState, useCallback } from "react";
 import {
   Modal as RNModal,
@@ -7,35 +8,85 @@ import {
   Text,
 } from "react-native";
 
-type ModalContextType = {
+export type ModalConfigObject = {
+  title: string;
+  body: React.ReactNode;
+  actions: {
+    label: string;
+    onPress: () => void;
+  }[];
+};
+
+export type ModalType = "success" | "error" | "info";
+
+export type ModalContextType = {
   isVisible: boolean;
-  message: string;
-  type: "success" | "error" | "info";
-  showModal: (message: string, type: "success" | "error" | "info") => void;
+  showModal:
+    | ((message: string, type: ModalType) => void)
+    | ((config: ModalConfigObject) => void);
   hideModal: () => void;
 };
 
-const ModalContext = createContext<ModalContextType | undefined>(undefined);
+export interface ModalElementType extends ModalContextType {
+  body: React.ReactNode;
+  actions: {
+    label: string;
+    onPress: () => void;
+  }[];
+}
 
-export const useModal = () => {
+export interface ModalMessageType extends ModalContextType {
+  message: string;
+  type: ModalType;
+}
+
+export type ModalConfigType = ModalContextType &
+  (ModalConfigObject | ModalMessageType);
+
+const ModalContext = createContext<ModalConfigType>({
+  isVisible: false,
+  showModal: () => {},
+  hideModal: () => {},
+  message: "",
+  type: "info",
+} as ModalConfigType);
+
+export const useModal = <T extends ModalContextType>() => {
   const context = useContext(ModalContext);
   if (!context) {
     throw new Error("useModal must be used within a ModalProvider");
   }
-  return context;
+  return context as unknown as T;
 };
 
 export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<string | React.ReactNode>("");
   const [type, setType] = useState<"success" | "error" | "info">("info");
 
   const showModal = useCallback(
-    (message: string, type: "success" | "error" | "info") => {
-      setMessage(message);
-      setType(type);
+    (
+      message: string | ModalConfigObject,
+      type: "success" | "error" | "info"
+    ) => {
+      if (typeof message === "string") {
+        setMessage(message);
+        setType(type);
+      } else {
+        const { title, body, actions } = message as ModalConfigObject;
+        setMessage(
+          <VStack>
+            <Text>{title}</Text>
+            {body}
+            {actions.map((action) => (
+              <Button onPress={action.onPress}>{action.label}</Button>
+            ))}
+          </VStack>
+        );
+        setType("info");
+      }
       setIsVisible(true);
     },
     []
@@ -47,7 +98,9 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <ModalContext.Provider
-      value={{ isVisible, message, type, showModal, hideModal }}
+      value={
+        { isVisible, message, type, showModal, hideModal } as ModalConfigType
+      }
     >
       {children}
       <Modal />
@@ -56,7 +109,7 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
 };
 
 export const Modal = () => {
-  const { isVisible, message, type, hideModal } = useModal();
+  const { isVisible, message, type, hideModal } = useModal<ModalMessageType>();
 
   const getBackgroundColor = () => {
     switch (type) {

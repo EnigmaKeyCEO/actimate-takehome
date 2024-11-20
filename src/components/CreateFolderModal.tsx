@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Text, TextInput, Button, StyleSheet, Animated } from "react-native";
 import { useFolders } from "../hooks/useFolders";
-import { AnimatedModal } from "./AnimatedModal";
+import { AnimatedModal } from "./common/AnimatedModal";
 
 interface CreateFolderModalProps {
   isOpen: boolean;
@@ -17,7 +17,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   setInputValue = () => {},
 }) => {
   const [folderName, setFolderName] = useState("");
-  const { createFolder } = useFolders(parentId || undefined);
+  const { createFolder } = useFolders(parentId || "root");
   const [shakeAnim] = useState(new Animated.Value(0));
 
   const handleCreate = async () => {
