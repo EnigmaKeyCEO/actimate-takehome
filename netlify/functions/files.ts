@@ -106,6 +106,7 @@ const handlePost = async (event: any, headers: any) => {
       ? Buffer.from(event.body, "base64").toString("utf-8")
       : event.body;
 
+    console.debug("decodedBody", decodedBody);
     // Parse the multipart body manually
     const boundary = event.headers["content-type"].split("boundary=")[1];
     const parts = decodedBody.split(`--${boundary}`);

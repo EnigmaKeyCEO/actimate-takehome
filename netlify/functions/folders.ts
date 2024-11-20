@@ -85,38 +85,55 @@ const handleGet = async (event: any, headers: any) => {
 
 // Handler for POST requests to create a new folder
 const handlePost = async (event: any, headers: any) => {
-  const { name, parentId } = JSON.parse(event.body);
+  if (!event.body || event.httpMethod !== "POST") {
+    return {
+      statusCode: 400,
+      headers,
+      body: JSON.stringify({ message: "Invalid Request" }),
+    };
+  }
+  try {
+    console.debug("event.body", event.body);
+    const { name, parentId } = JSON.parse(event.body);
 
-  const folderId = uuidv4();
-  const timestamp = new Date().toISOString();
+    const folderId = uuidv4();
+    const timestamp = new Date().toISOString();
 
-  const folder: Folder = {
-    id: folderId,
-    name,
-    parentId: parentId || "root",
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  };
+    const folder: Folder = {
+      id: folderId,
+      name,
+      parentId: parentId || "root",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
 
-  const putParams = {
-    TableName: process.env.VITE_DYNAMODB_FOLDERS_TABLE_NAME!,
-    Item: {
-      id: { S: folder.id },
-      name: { S: folder.name },
-      parentId: { S: folder.parentId },
-      createdAt: { S: folder.createdAt },
-      updatedAt: { S: folder.updatedAt },
-    },
-  } as PutItemCommandInput;
+    const putParams = {
+      TableName: process.env.VITE_DYNAMODB_FOLDERS_TABLE_NAME!,
+      Item: {
+        id: { S: folder.id },
+        name: { S: folder.name },
+        parentId: { S: folder.parentId },
+        createdAt: { S: folder.createdAt },
+        updatedAt: { S: folder.updatedAt },
+      },
+    } as PutItemCommandInput;
 
-  const putCommand = new PutItemCommand(putParams);
-  await dynamoDb.send(putCommand);
+    const putCommand = new PutItemCommand(putParams);
+    await dynamoDb.send(putCommand);
 
-  return {
-    statusCode: 201,
-    headers,
-    body: JSON.stringify(folder),
-  };
+    return {
+      statusCode: 201,
+      headers,
+      body: JSON.stringify(folder),
+    };
+  } catch (error) {
+    console.error("Error creating folder:", error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ message: "Internal Server Error" }),
+    };
+  }
 };
 
 // Handler for PUT requests to update a folder
