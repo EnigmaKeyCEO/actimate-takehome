@@ -18,10 +18,18 @@ export function useFiles(folderId: string) {
     setError(null);
     try {
       const response = await getFiles(folderId, currentPage, currentSort);
-      if (response.files.length === 0) {
+      if (response.files?.length === 0) {
         setHasMore(false);
       } else {
-        setFiles((prevFiles) => [...prevFiles, ...response.files]);
+        setFiles((prevFiles) => {
+          if (currentPage === 1) {
+            return response.files;
+          } else {
+            return prevFiles
+              ? [...prevFiles, ...response.files]
+              : response.files;
+          }
+        });
       }
     } catch (err: any) {
       setError(err instanceof Error ? err : new Error("Unknown error"));
@@ -42,7 +50,9 @@ export function useFiles(folderId: string) {
     setError(null);
     try {
       const newFile = await uploadFile(folderId, fileData);
-      setFiles((prevFiles) => [newFile, ...prevFiles]);
+      setFiles((prevFiles) =>
+        prevFiles ? [newFile, ...prevFiles] : [newFile]
+      );
     } catch (err: any) {
       setError(err instanceof Error ? err : new Error("Unknown error"));
     } finally {
@@ -95,7 +105,7 @@ export function useFiles(folderId: string) {
   }, [folderId]);
 
   return {
-    files,
+    files: files || [],
     loading,
     error,
     loadMoreFiles,

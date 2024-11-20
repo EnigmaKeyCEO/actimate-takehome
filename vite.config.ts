@@ -95,7 +95,7 @@ export default defineConfig(({ mode }) => ({
       }
     },
     exclude: [
-      'inline-style-prefixer'
+      // 'inline-style-prefixer'
     ]
   },
   build: {

@@ -7,8 +7,9 @@ import {
   StyleSheet,
   Animated,
 } from "react-native";
-import type { Folder } from "../types";
-import { useFolders } from "../hooks/useFolders";
+import type { Folder } from "#/types";
+import { useFolders } from "#/hooks/useFolders";
+import { useModal } from "#/components/Modal";
 
 interface FolderListProps {
   folderId: string;
@@ -21,8 +22,9 @@ export const FolderList: React.FC<FolderListProps> = ({
   onFolderPress,
   footer,
 }) => {
-  const { folders } = useFolders(folderId);
+  const { folders, loading, error } = useFolders(folderId);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const { showModal } = useModal();
 
   const renderItem = React.useCallback(
     ({ item }: { item: Folder }) => (
@@ -46,6 +48,16 @@ export const FolderList: React.FC<FolderListProps> = ({
       useNativeDriver: true,
     }).start();
   }, [fadeAnim]);
+
+  React.useEffect(() => {
+    if (error) {
+      showModal(error.message, "error");
+    }
+  }, [error]);
+
+  // if (loading) {
+  //   return <Text>Loading...</Text>;
+  // }
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
@@ -84,7 +96,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   list: {
-    flex: 1
+    flex: 1,
   },
   folderItem: {
     padding: 16,

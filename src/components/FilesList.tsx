@@ -3,12 +3,12 @@ import { View, Text, Button, FlatList, ActivityIndicator } from "react-native";
 import useFiles from "../hooks/useFiles";
 
 interface FilesListProps {
-  folderId: string;
+  parentId: string;
 }
 
-export const FilesList: React.FC<FilesListProps> = ({ folderId }) => {
+export const FilesList: React.FC<FilesListProps> = ({ parentId }) => {
   const {
-    files,
+    files = [],
     loading,
     error,
     loadMoreFiles,
@@ -16,14 +16,24 @@ export const FilesList: React.FC<FilesListProps> = ({ folderId }) => {
     updateExistingFile,
     removeFile,
     sortFiles,
-  } = useFiles(folderId);
+  } = useFiles(parentId);
 
   if (loading && files.length === 0) {
     return <ActivityIndicator />;
   }
 
   if (error) {
-    return <Text>Error: {error.message}</Text>;
+    return (
+      <Text
+        style={{
+          color: "gray",
+          fontSize: 16,
+          textAlign: "center",
+        }}
+      >
+        Error: {error.message}
+      </Text>
+    );
   }
 
   return (
@@ -42,3 +52,5 @@ export const FilesList: React.FC<FilesListProps> = ({ folderId }) => {
     </View>
   );
 };
+
+export default FilesList;

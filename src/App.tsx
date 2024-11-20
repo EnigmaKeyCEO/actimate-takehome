@@ -15,6 +15,7 @@ import { NativeBaseProvider, extendTheme } from "native-base";
 import { FolderScreen } from "./screens/FolderScreen";
 import { FolderDetailScreen } from "./screens/FolderDetailScreen";
 import { Modal, ModalProvider } from "#/components/Modal";
+import { FolderProvider } from "#/providers/FolderProvider";
 
 const theme = extendTheme({
   config: {
@@ -44,17 +45,19 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <NativeBaseProvider theme={theme} config={config}>
-        <ModalProvider>
-          <SafeAreaView style={{ flex: 1 }}>
-            <Router future={{ v7_relativeSplatPath: true }}>
-              <Routes>
-                <Route path="/" element={<FolderScreen />} />
-                <Route path="/folder/:id" element={<FolderDetailScreen />} />
-              </Routes>
-            </Router>
-            <Modal />
-          </SafeAreaView>
-        </ModalProvider>
+        <FolderProvider>
+          <ModalProvider>
+            <SafeAreaView style={{ flex: 1 }}>
+              <Router future={{ v7_relativeSplatPath: true }}>
+                <Routes>
+                  <Route path="/" element={<FolderScreen />} />
+                  <Route path="/folder/:parentId" element={<FolderScreen />} />
+                </Routes>
+              </Router>
+              <Modal />
+            </SafeAreaView>
+          </ModalProvider>
+        </FolderProvider>
       </NativeBaseProvider>
     </SafeAreaProvider>
   );
