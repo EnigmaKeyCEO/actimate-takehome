@@ -63,6 +63,7 @@
     "@expo/vector-icons": "^14.0.4",
     "@originjs/vite-plugin-commonjs": "^1.0.3",
     "@react-native/metro-config": "^0.76.2",
+    "@types/multiparty": "^4.2.1",
     "@types/react": "~18.2.45",
     "@vitejs/plugin-react": "^4.3.3",
     "babel-plugin-module-resolver": "^5.0.2",

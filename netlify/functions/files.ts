@@ -5,6 +5,8 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
   CopyObjectCommand,
+  PutObjectCommandInput,
+  PutObjectCommandOutput,
 } from "@aws-sdk/client-s3";
 import {
   DeleteItemCommand,
@@ -99,29 +101,83 @@ const handleGet = async (event: any, headers: any) => {
 const handlePost = async (event: any, headers: any) => {
   console.log("POST request received:", JSON.stringify(event, null, 2));
   try {
-    const formData = JSON.parse(event.body);
-    const { file, folderId } = formData;
+    // Ensure the body is base64-decoded if `isBase64Encoded` is true
+    const decodedBody = event.isBase64Encoded
+      ? Buffer.from(event.body, "base64").toString("utf-8")
+      : event.body;
 
-    const fileId = uuidv4();
-    const key = `${folderId}/${file.name}`;
+    // Parse the multipart body manually
+    const boundary = event.headers["content-type"].split("boundary=")[1];
+    const parts = decodedBody.split(`--${boundary}`);
 
-    // Upload file to S3
-    const putParams = {
-      Bucket: process.env.VITE_S3_BUCKET_NAME!,
-      Key: key,
-      Body: Buffer.from(file.content, "base64"),
-      ContentType: file.type,
+    let base64Image = "";
+    for (const part of parts) {
+      if (
+        part.includes("Content-Disposition") &&
+        part.includes('name="file"')
+      ) {
+        // Extract the base64 content
+        base64Image = part.split("\r\n\r\n")[1]?.trim();
+        break;
+      }
+    }
+
+    if (!base64Image) {
+      throw new Error("Base64 image string not found in the request body.");
+    }
+
+    // Convert the base64 string into a Buffer for S3 upload
+    const fileBuffer = Buffer.from(base64Image, "base64");
+
+    // S3 Upload Parameters
+    const s3Params = {
+      Bucket: process.env.VITE_S3_BUCKET_NAME,
+      Key: `uploads/${Date.now()}-image.webp`, // Example key
+      Body: fileBuffer,
+      ContentType: "image/webp", // Adjust based on your use case
+      ACL: "public-read", // Optional: Makes the file publicly accessible
+    } as PutObjectCommandInput;
+
+    // Upload to S3
+    const resultHolder = {
+      uploadResult: null,
+      s3Error: null,
+    } as {
+      uploadResult: PutObjectCommandOutput | null;
+      s3Error: any;
     };
 
-    const putCommand = new PutObjectCommand(putParams);
-    await S3.send(putCommand);
+    try {
+      resultHolder.uploadResult = await S3.send(
+        new PutObjectCommand(s3Params)
+      );
+    } catch (s3Error: any) {
+      console.error("Error uploading file to S3:", s3Error);
+      resultHolder.s3Error = s3Error;
+    }
+
+    if (resultHolder.s3Error) {
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({
+          message: "Error uploading file to S3",
+          details: resultHolder.s3Error,
+        }),
+      };
+    }
+
+    const fields = event.fields;
+    const file = event.files[0];
 
     // Create file record in DynamoDB
     const fileItem: FileItem = {
-      id: fileId,
-      folderId: folderId || "root",
-      key,
-      url: `https://${process.env.VITE_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`,
+      id: uuidv4(),
+      folderId: fields.folderId[0] || "root",
+      key: s3Params.Key!,
+      url: `https://${process.env.VITE_S3_BUCKET_NAME}.s3.${
+        process.env.VITE_AWS_REGION
+      }.amazonaws.com/${s3Params.Key!}`,
       name: file.name,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -228,7 +284,7 @@ const handlePut = async (event: any, headers: any) => {
       ":name": { S: updateData.name || existingFile.name },
       ":key": { S: newKey },
       ":url": {
-        S: `https://${process.env.VITE_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${newKey}`,
+        S: `https://${process.env.VITE_S3_BUCKET_NAME}.s3.${process.env.VITE_AWS_REGION}.amazonaws.com/${newKey}`,
       },
       ":updatedAt": { S: updatedAt },
     },
