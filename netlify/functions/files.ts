@@ -1,7 +1,18 @@
 import { Handler } from "@netlify/functions";
 import { S3, dynamoDb } from "./awsConfig";
-import { GetObjectCommand, PutObjectCommand, DeleteObjectCommand, CopyObjectCommand } from "@aws-sdk/client-s3";
-import { DeleteItemCommand, GetItemCommand, PutItemCommand, UpdateItemCommand, UpdateItemCommandInput } from "@aws-sdk/client-dynamodb";
+import {
+  GetObjectCommand,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  CopyObjectCommand,
+} from "@aws-sdk/client-s3";
+import {
+  DeleteItemCommand,
+  GetItemCommand,
+  PutItemCommand,
+  UpdateItemCommand,
+  UpdateItemCommandInput,
+} from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { FileItem } from "../../src/types/File";
 import { v4 as uuidv4 } from "uuid";
@@ -77,62 +88,77 @@ const handleGet = async (event: any, headers: any) => {
     headers,
     body: JSON.stringify({
       files,
-      lastKey: result.LastEvaluatedKey ? JSON.stringify(result.LastEvaluatedKey) : null,
+      lastKey: result.LastEvaluatedKey
+        ? JSON.stringify(result.LastEvaluatedKey)
+        : null,
     }),
   };
 };
 
 // Handler for POST requests to upload a new file
 const handlePost = async (event: any, headers: any) => {
-  const formData = JSON.parse(event.body);
-  const { file, folderId } = formData;
+  console.log("POST request received:", JSON.stringify(event, null, 2));
+  try {
+    const formData = JSON.parse(event.body);
+    const { file, folderId } = formData;
 
-  const fileId = uuidv4();
-  const key = `${folderId}/${file.name}`;
+    const fileId = uuidv4();
+    const key = `${folderId}/${file.name}`;
 
-  // Upload file to S3
-  const putParams = {
-    Bucket: process.env.VITE_S3_BUCKET_NAME!,
-    Key: key,
-    Body: Buffer.from(file.content, "base64"),
-    ContentType: file.type,
-  };
+    // Upload file to S3
+    const putParams = {
+      Bucket: process.env.VITE_S3_BUCKET_NAME!,
+      Key: key,
+      Body: Buffer.from(file.content, "base64"),
+      ContentType: file.type,
+    };
 
-  const putCommand = new PutObjectCommand(putParams);
-  await S3.send(putCommand);
+    const putCommand = new PutObjectCommand(putParams);
+    await S3.send(putCommand);
 
-  // Create file record in DynamoDB
-  const fileItem: FileItem = {
-    id: fileId,
-    folderId: folderId || "root",
-    key,
-    url: `https://${process.env.VITE_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`,
-    name: file.name,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+    // Create file record in DynamoDB
+    const fileItem: FileItem = {
+      id: fileId,
+      folderId: folderId || "root",
+      key,
+      url: `https://${process.env.VITE_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`,
+      name: file.name,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
 
-  const putItemParams = {
-    TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
-    Item: {
-      id: { S: fileItem.id },
-      folderId: { S: fileItem.folderId },
-      key: { S: fileItem.key },
-      url: { S: fileItem.url },
-      name: { S: fileItem.name },
-      createdAt: { S: fileItem.createdAt },
-      updatedAt: { S: fileItem.updatedAt },
-    },
-  };
+    const putItemParams = {
+      TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
+      Item: {
+        id: { S: fileItem.id },
+        folderId: { S: fileItem.folderId },
+        key: { S: fileItem.key },
+        url: { S: fileItem.url },
+        name: { S: fileItem.name },
+        createdAt: { S: fileItem.createdAt },
+        updatedAt: { S: fileItem.updatedAt },
+      },
+    };
 
-  const putItemCommand = new PutItemCommand(putItemParams);
-  await dynamoDb.send(putItemCommand);
+    const putItemCommand = new PutItemCommand(putItemParams);
+    await dynamoDb.send(putItemCommand);
 
-  return {
-    statusCode: 201,
-    headers,
-    body: JSON.stringify(fileItem),
-  };
+    return {
+      statusCode: 201,
+      headers,
+      body: JSON.stringify(fileItem),
+    };
+  } catch (error) {
+    console.error(
+      "Error uploading file to S3:",
+      JSON.stringify(error, null, 2)
+    );
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ message: "Internal Server Error" }),
+    };
+  }
 };
 
 // Handler for PUT requests to update a file
@@ -212,7 +238,9 @@ const handlePut = async (event: any, headers: any) => {
   const updateCommand = new UpdateItemCommand(updateParams);
   const updateResult = await dynamoDb.send(updateCommand);
 
-  const updatedFile: FileItem = unmarshall(updateResult.Attributes!) as FileItem;
+  const updatedFile: FileItem = unmarshall(
+    updateResult.Attributes!
+  ) as FileItem;
 
   return {
     statusCode: 200,
