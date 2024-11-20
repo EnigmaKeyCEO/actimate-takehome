@@ -7,18 +7,27 @@ import {
   ActivityIndicator,
   Text,
   TouchableOpacity,
+  Modal,
+  TextInput,
+  Button,
 } from "react-native";
 import { useNavigate, useParams } from "react-router-native";
 import { FolderActions } from "../components/FolderActions";
 import { useFolders } from "../hooks/useFolders";
 import { Folder } from "../types";
 import { useModal } from "#/components/Modal";
+import * as IP from "expo-image-picker";
+import { API_BASE_URL } from "../api/api";
+import { AnimatedModal } from "#/components/AnimatedModal";
+import { useTheme } from "native-base";
 
 export function FolderScreen() {
   const { folderId } = useParams<{ folderId: string }>();
   const [showFolderModal, setShowFolderModal] = useState(false);
+  const [showUploadFileModal, setShowUploadFileModal] = useState(false);
   const navigate = useNavigate();
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const theme = useTheme();
 
   const {
     folders,
@@ -30,6 +39,7 @@ export function FolderScreen() {
   } = useFolders(folderId);
   const { showModal } = useModal();
   const [folderName, setFolderName] = useState("");
+  const [folderNameError, setFolderNameError] = useState<string | null>(null);
 
   const handleFolderPress = React.useCallback(
     (folder: Folder) => {
@@ -38,14 +48,28 @@ export function FolderScreen() {
     [navigate]
   );
 
+  const handleAddFolder = React.useCallback(() => {
+    setShowFolderModal(true);
+  }, []);
+
   const handleCreateFolder = React.useCallback(async () => {
+    // Validate folder name
+    const isValidName = /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(folderName);
+    if (!isValidName) {
+      setFolderNameError(
+        "Invalid folder name. Use letters, numbers, underscores, or dollar signs."
+      );
+      return;
+    }
+
     setShowFolderModal(false);
+    setFolderNameError(null);
     try {
       await createFolder({
         name: folderName,
         parentId: folderId || undefined,
-        createdAt: Date.now().toString(),
-        updatedAt: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
       showModal("Folder created successfully", "success");
     } catch (err) {
@@ -53,7 +77,20 @@ export function FolderScreen() {
       showModal("Failed to create folder", "error");
     }
     setFolderName("");
-  }, [setShowFolderModal, setFolderName]);
+  }, [
+    setShowFolderModal,
+    setFolderName,
+    createFolder,
+    folderName,
+    folderId,
+    showModal,
+  ]);
+
+  const handleCancelCreateFolder = React.useCallback(() => {
+    setShowFolderModal(false);
+    setFolderName("");
+    setFolderNameError(null);
+  }, []);
 
   const handleDeleteFolder = React.useCallback(
     async (id: string) => {
@@ -62,10 +99,58 @@ export function FolderScreen() {
         showModal("Folder deleted", "success");
       } catch (err) {
         console.error("Error deleting folder:", err);
+        showModal("Failed to delete folder", "error");
       }
     },
     [deleteFolder, showModal]
   );
+
+  const handleUploadFile = React.useCallback(async () => {
+    try {
+      const result = await IP.launchImageLibraryAsync({
+        mediaTypes: IP.MediaTypeOptions.All,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+        base64: true,
+      });
+
+      if (!result.canceled) {
+        const { uri, type, base64 } = result.assets[0];
+        const fileName = uri.split("/").pop() || "file";
+
+        const file = {
+          name: fileName,
+          type: type || "image/jpeg",
+          content: base64,
+        };
+
+        const payload = {
+          file,
+          folderId: folderId || "root",
+        };
+
+        const response = await fetch(`${API_BASE_URL}/files`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (response.ok) {
+          showModal("File uploaded successfully", "success");
+          // TODO: refresh the folder or file list here
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to upload file");
+        }
+      }
+    } catch (err) {
+      console.error("Error uploading file:", err);
+      showModal("Failed to upload file", "error");
+    }
+  }, [folderId, showModal]);
 
   const errorTextElement = React.useMemo(() => {
     if (!error) return null;
@@ -93,7 +178,9 @@ export function FolderScreen() {
     if (error) {
       showModal(
         errorTextElement?.props.children[0].toString().includes(error.message)
-          ? "Unknown Error"
+          ? //TODO: fix this, it's gross, but it works for now...
+            // (it's the first child of the first child of the errorTextElement, grab that text, make it white)
+            "Unknown Error"
           : React.Children.map(errorTextElement?.props.children, (child) => {
               if (typeof child === "string") {
                 return child;
@@ -109,7 +196,7 @@ export function FolderScreen() {
         "error"
       );
     }
-  }, [error]);
+  }, [error, errorTextElement, showModal]);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -151,9 +238,43 @@ export function FolderScreen() {
       {/* FolderActions Fixed at Bottom */}
       <View style={styles.folderActionsContainer}>
         <FolderActions
-          onAddFolder={() => setShowFolderModal(true)}
+          onAddFolder={handleAddFolder}
+          onUploadFile={handleUploadFile}
         />
       </View>
+
+      {/* Add Folder Modal */}
+      {showFolderModal && <View style={styles.modalOverlay}></View>}
+      <AnimatedModal
+        isOpen={showFolderModal}
+        onClose={handleCancelCreateFolder}
+        containerStyle={styles.modalContainer}
+      >
+        <Text style={styles.modalTitle}>Create New Folder</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Folder Name"
+          value={folderName}
+          onChangeText={setFolderName}
+          autoCapitalize="none"
+        />
+        {folderNameError && (
+          <Text style={styles.errorText}>{folderNameError}</Text>
+        )}
+        <View style={styles.modalButtons}>
+          <Button
+            color={theme.colors.error[500]}
+            title="Cancel"
+            onPress={handleCancelCreateFolder}
+          />
+          <Button
+            color={theme.colors.primary[500]}
+            title="Create"
+            onPress={handleCreateFolder}
+          />
+        </View>
+        <View style={{ height: 20 }} />
+      </AnimatedModal>
     </Animated.View>
   );
 }
@@ -211,5 +332,44 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: "#ccc",
     backgroundColor: "#fff",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  modalContainer: {
+    width: "80%",
+    padding: 20,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    marginBottom: 10,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  errorText: {
+    color: "red",
+    marginBottom: 10,
+    textAlign: "center",
   },
 });

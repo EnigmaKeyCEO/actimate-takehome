@@ -121,13 +121,14 @@ const handlePost = async (event: any, headers: any) => {
 
 // Handler for PUT requests to update a folder
 const handlePut = async (event: any, headers: any) => {
-  const { id, updateData } = JSON.parse(event.body);
+  const { id, name, updateData } = JSON.parse(event.body);
 
   // Fetch existing folder
   const getParams = {
     TableName: process.env.VITE_DYNAMODB_FOLDERS_TABLE_NAME!,
     Key: {
       id: { S: id },
+      name: { S: name },
     },
   };
 
