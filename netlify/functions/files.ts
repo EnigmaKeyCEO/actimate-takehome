@@ -28,8 +28,6 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const apiBaseUrl = process.env.API_BASE_URL || "https://your-api-base-url.com";
-
     switch (event.httpMethod) {
       case "GET":
         return await handleGet(event, headers);
