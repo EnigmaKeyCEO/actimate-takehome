@@ -6,10 +6,10 @@ import {
   PutItemCommand,
   UpdateItemCommand,
   QueryCommand,
-  UpdateItemCommandInput,
+  PutItemCommandInput,
 } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
-import { Folder } from "../../src/types/Folder";
+import { CreateFolderInput, Folder } from "../../src/types/Folder";
 import { v4 as uuidv4 } from "uuid";
 
 export const handler: Handler = async (event) => {
@@ -20,241 +20,202 @@ export const handler: Handler = async (event) => {
   };
 
   if (event.httpMethod === "OPTIONS") {
+    // Handle CORS preflight
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({}),
+      body: "",
     };
   }
 
-  try {
-    switch (event.httpMethod) {
-      case "GET":
-        return await handleGet(event, headers);
-      case "POST":
-        return await handlePost(event, headers);
-      case "PUT":
-        return await handlePut(event, headers);
-      case "DELETE":
-        return await handleDelete(event, headers);
-      default:
-        return {
-          statusCode: 405,
-          headers,
-          body: JSON.stringify({ message: "Method Not Allowed" }),
-        };
-    }
-  } catch (error) {
-    console.error("Unhandled error:", error);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ message: "Internal Server Error" }),
-    };
-  }
-};
+  const tableName = process.env.VITE_DYNAMODB_FOLDERS_TABLE_NAME!;
 
-// Handler for GET requests to list folders
-const handleGet = async (event: any, headers: any) => {
-  const parentId = event.queryStringParameters?.parentId || "root";
-  const lastKey = event.queryStringParameters?.lastKey;
-
-  const params = {
-    TableName: process.env.VITE_DYNAMODB_FOLDERS_TABLE_NAME!,
-    IndexName: "parentId-index", // Assuming you have a GSI for parentId
-    KeyConditionExpression: "parentId = :parentId",
-    ExpressionAttributeValues: {
-      ":parentId": { S: String(parentId) }, // Ensure string type
-    },
-    ScanIndexForward: true,
-    Limit: 20,
-    ExclusiveStartKey: lastKey ? JSON.parse(lastKey) : undefined,
-  };
-
-  const command = new QueryCommand(params);
-  const result = await dynamoDb.send(command);
-  const folders: Folder[] = result.Items
-    ? result.Items.map((item) => unmarshall(item) as Folder)
-    : [];
-
-  return {
-    statusCode: 200,
-    headers,
-    body: JSON.stringify({
-      folders,
-      lastKey: result.LastEvaluatedKey
-        ? JSON.stringify(result.LastEvaluatedKey)
-        : null,
-    }),
-  };
-};
-
-// Handler for POST requests to create a new folder
-const handlePost = async (event: any, headers: any) => {
-  console.log(
-    "POST request received for folders:",
-    JSON.stringify(event, null, 2)
-  );
-  try {
-    const data = JSON.parse(event.body);
-
-    const { name, parentId } = data;
-
-    if (!name) {
-      throw new Error("Folder name is required");
-    }
-
-    const folderId = uuidv4();
-    const timestamp = new Date().toISOString();
-
+  // Helper function to get folder by ID
+  const getFolderById = async (id: string): Promise<Folder | null> => {
     const params = {
-      TableName: process.env.VITE_DYNAMODB_FOLDERS_TABLE_NAME!,
-      Item: {
-        id: { S: folderId },
-        name: { S: String(name) }, // Ensure string type
-        parentId: { S: String(parentId || "root") }, // Default to "root" if not provided
-        createdAt: { S: timestamp },
-        updatedAt: { S: timestamp },
-      },
-    };
-
-    const command = new PutItemCommand(params);
-    await dynamoDb.send(command);
-
-    return {
-      statusCode: 201,
-      headers,
-      body: JSON.stringify({
-        message: "Folder created successfully",
-        folderId,
-      }),
-    };
-  } catch (error: any) {
-    console.error("Error in handlePost for folders:", error);
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ message: error.message }),
-    };
-  }
-};
-
-// Similar implementations for handlePut and handleDelete with type checks and logging
-const handlePut = async (event: any, headers: any) => {
-  console.log(
-    "PUT request received for folders:",
-    JSON.stringify(event, null, 2)
-  );
-  try {
-    const { id, updateData } = JSON.parse(event.body);
-
-    if (!id) {
-      throw new Error("Folder ID is required");
-    }
-
-    // Check if folder exists
-    const getParams = {
-      TableName: process.env.VITE_DYNAMODB_FOLDERS_TABLE_NAME!,
+      TableName: tableName,
       Key: {
         id: { S: id },
       },
     };
 
-    const getCommand = new GetItemCommand(getParams);
-    const getResult = await dynamoDb.send(getCommand);
+    try {
+      const command = new GetItemCommand(params);
+      const result = await dynamoDb.send(command);
+      if (!result.Item) {
+        return null;
+      }
+      return unmarshall(result.Item) as Folder;
+    } catch (error) {
+      console.error("Error fetching folder by ID:", error);
+      throw new Error("Error fetching folder by ID");
+    }
+  };
 
-    if (!getResult.Item) {
+  // Helper function to fetch all folders (for building breadcrumb)
+  const queryFolders = async (parentId: string, sortField: string, sortDirection: string) => {
+    const params = {
+      TableName: tableName,
+      KeyConditionExpression: "parentId = :parentId",
+      ExpressionAttributeValues: {
+        ":parentId": { S: parentId },
+      },
+      ScanIndexForward: sortDirection === "asc", // Sort ascending or descending
+      limit: 20,
+    };
+
+    try {
+      const command = new QueryCommand(params);
+      const result = await dynamoDb.send(command);
+      const folders = result.Items ? result.Items.map((item) => unmarshall(item) as Folder) : [];
+      return folders;
+    } catch (error) {
+      console.error("Error querying folders:", error);
+      throw new Error("Error querying folders");
+    }
+  };
+
+  // Main handler logic
+  switch (event.httpMethod) {
+    case "GET":
+      if (event.path && event.path.startsWith("/folders/")) {
+        const folderId = event.path.split("/").pop() || "root";
+        try {
+          const folder = await getFolderById(folderId);
+          if (!folder) {
+            return {
+              statusCode: 404,
+              headers,
+              body: JSON.stringify({ message: "Folder not found" }),
+            };
+          }
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify(folder),
+          };
+        } catch (error: any) {
+          return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ message: error.message }),
+          };
+        }
+      } else {
+        // Handle GET requests without ID (e.g., list folders)
+        const folderId = event.queryStringParameters?.folderId || "root";
+        const sortField = event.queryStringParameters?.sortField || "name";
+        const sortDirection = event.queryStringParameters?.sortDirection || "asc";
+        const page = parseInt(event.queryStringParameters?.page || "1", 10);
+        const limit = parseInt(event.queryStringParameters?.limit || "20", 10);
+
+        // Implement pagination if needed
+        try {
+          const folders = await queryFolders(folderId, sortField, sortDirection);
+          const paginatedFolders = folders.slice(0, limit); // Simple pagination
+          const lastKey = folders.length > limit ? folders[limit - 1].id : undefined;
+
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              folders: paginatedFolders,
+              lastKey,
+            }),
+          };
+        } catch (error: any) {
+          return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ message: error.message }),
+          };
+        }
+      }
+
+    case "POST":
+      // Handle creating a new folder
+      try {
+        const data: CreateFolderInput = JSON.parse(event.body!);
+        const newFolder: Folder = {
+          id: uuidv4(),
+          name: data.name,
+          parentId: data.parentId || "root",
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+          // Add other necessary fields
+        };
+
+        const params = {
+          TableName: tableName,
+          Item: {
+            id: { S: newFolder.id },
+            name: { S: newFolder.name },
+            parentId: { S: newFolder.parentId },
+            createdAt: { S: newFolder.createdAt },
+            updatedAt: { S: newFolder.updatedAt },
+            // Add other necessary fields
+          },
+        } as PutItemCommandInput;
+
+        const command = new PutItemCommand(params);
+        await dynamoDb.send(command);
+
+        return {
+          statusCode: 201,
+          headers,
+          body: JSON.stringify(newFolder),
+        };
+      } catch (error: any) {
+        console.error("Error creating folder:", error);
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ message: "Error creating folder" }),
+        };
+      }
+
+    case "DELETE":
+      // Handle deleting a folder
+      if (event.path && event.path.startsWith("/folders/")) {
+        const folderId = event.path.split("/").pop() || "root";
+        const params = {
+          TableName: tableName,
+          Key: {
+            id: { S: folderId },
+          },
+        };
+
+        try {
+          const command = new DeleteItemCommand(params);
+          await dynamoDb.send(command);
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({ message: "Folder deleted successfully" }),
+          };
+        } catch (error: any) {
+          console.error("Error deleting folder:", error);
+          return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ message: "Error deleting folder" }),
+          };
+        }
+      } else {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ message: "Folder ID is required for deletion" }),
+        };
+      }
+
+    // Add other HTTP methods (PUT, etc.) as needed
+
+    default:
       return {
-        statusCode: 404,
+        statusCode: 405,
         headers,
-        body: JSON.stringify({ message: "Folder not found" }),
+        body: JSON.stringify({ message: "Method Not Allowed" }),
       };
-    }
-
-    // Build update expression
-    const updateExpression: string[] = [];
-    const expressionAttributeValues: Record<string, any> = {};
-    const expressionAttributeNames: Record<string, string> = {};
-
-    if (updateData.name) {
-      updateExpression.push("#name = :name");
-      expressionAttributeValues[":name"] = { S: String(updateData.name) };
-      expressionAttributeNames["#name"] = "name";
-    }
-
-    if (updateData.parentId) {
-      updateExpression.push("parentId = :parentId");
-      expressionAttributeValues[":parentId"] = {
-        S: String(updateData.parentId),
-      };
-    }
-
-    // Always update the updatedAt timestamp
-    updateExpression.push("updatedAt = :updatedAt");
-    expressionAttributeValues[":updatedAt"] = { S: new Date().toISOString() };
-
-    const updateParams = {
-      TableName: process.env.VITE_DYNAMODB_FOLDERS_TABLE_NAME!,
-      Key: {
-        id: { S: id },
-      },
-      UpdateExpression: `SET ${updateExpression.join(", ")}`,
-      ExpressionAttributeValues: expressionAttributeValues,
-      ExpressionAttributeNames:
-        Object.keys(expressionAttributeNames).length > 0
-          ? expressionAttributeNames
-          : undefined,
-      ReturnValues: "ALL_NEW",
-    } as UpdateItemCommandInput;
-
-    const updateCommand = new UpdateItemCommand(updateParams);
-    await dynamoDb.send(updateCommand);
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ message: "Folder updated successfully" }),
-    };
-  } catch (error: any) {
-    console.error("Error in handlePut for folders:", error);
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ message: error.message }),
-    };
-  }
-};
-
-const handleDelete = async (event: any, headers: any) => {
-  console.log(
-    "DELETE request received for folders:",
-    JSON.stringify(event, null, 2)
-  );
-  try {
-    const { id } = JSON.parse(event.body);
-
-    if (!id) {
-      throw new Error("Folder ID is required");
-    }
-
-    const deleteParams = {
-      TableName: process.env.VITE_DYNAMODB_FOLDERS_TABLE_NAME!,
-      Key: { id: { S: id } },
-    };
-
-    const deleteCommand = new DeleteItemCommand(deleteParams);
-    await dynamoDb.send(deleteCommand);
-
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ message: "Folder deleted successfully" }),
-    };
-  } catch (error: any) {
-    console.error("Error in handleDelete for folders:", error);
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ message: error.message }),
-    };
   }
 };
