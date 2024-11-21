@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { FileItem, SortOptions } from "#/types";
-import { getFiles } from "#/api";
+import { getFiles, uploadFile as apiUploadNewFile } from "#/api";
 
 export function useFiles(folderId: string) {
   const [files, setFiles] = useState<FileItem[]>([]); // Initialized as empty array
@@ -68,7 +68,7 @@ export function useFiles(folderId: string) {
   const uploadNewFile = useCallback(
     async (fileData: FormData) => {
       try {
-        await uploadNewFile(fileData);
+        await apiUploadNewFile(folderId, fileData);
         setPage(1);
         setHasMore(true);
         await fetchFiles(1, sortOptions);
