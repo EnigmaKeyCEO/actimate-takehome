@@ -109,7 +109,8 @@ const handlePost = async (event: any, headers: any) => {
   try {
     let parsedBody;
     if (event.isBase64Encoded) {
-      const decodedBody = Buffer.from(event.body, 'base64').toString();
+      const decodedBody = Buffer.from(event.body, "base64").toString();
+      console.log("Decoded body:", decodedBody);
       parsedBody = JSON.parse(decodedBody);
     } else {
       parsedBody = JSON.parse(event.body); 
