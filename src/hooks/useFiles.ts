@@ -1,9 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { FileItem, SortOptions } from "#/types";
-import { getFiles, uploadFile as apiUploadNewFile } from "#/api";
+import {
+  getFiles,
+  uploadFile as apiUploadNewFile,
+  updateFile as apiCreateFile,
+  updateFile as apiUpdateFile,
+} from "#/api";
+import { useFolders } from "#/hooks/useFolders";
 
-export function useFiles(folderId: string) {
-  const [files, setFiles] = useState<FileItem[]>([]);
+export function useFiles() {
+  const [files, _setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const [sortOptions, setSortOptions] = useState<SortOptions>({
@@ -14,6 +20,28 @@ export function useFiles(folderId: string) {
   const [hasMore, setHasMore] = useState<boolean>(true);
 
   const LIMIT = process.env.NODE_ENV === "development" ? 5 : 20;
+
+  const { parentId: folderId } = useFolders();
+
+  const setFiles = useCallback(
+    (newFiles: FileItem[] | ((prevFiles: FileItem[]) => FileItem[])) => {
+      if (typeof newFiles !== "object") {
+        throw new Error("newFiles must be an array of FileItem");
+      }
+      let prevFilesArray: FileItem[] = [];
+      if (newFiles instanceof Function) {
+        prevFilesArray = newFiles(files);
+      } else {
+        prevFilesArray = files;
+      }
+      const allFiles = [...prevFilesArray, ...newFiles];
+      const uniqueFilesMap = new Map<string, FileItem>();
+      allFiles.forEach((file) => uniqueFilesMap.set(file.id, file));
+      const uniqueNewFiles = Array.from(uniqueFilesMap.values());
+      _setFiles(uniqueNewFiles);
+    },
+    [files]
+  );
 
   const fetchFiles = useCallback(
     async (currentSort: SortOptions, currentLastKey: string | null) => {
@@ -26,12 +54,7 @@ export function useFiles(folderId: string) {
           : [];
         const fetchedLastKey = response.lastKey || null;
 
-        setFiles((prevFiles) => {
-          const allFiles = [...prevFiles, ...fetchedFiles];
-          const uniqueFilesMap = new Map<string, FileItem>();
-          allFiles.forEach((file) => uniqueFilesMap.set(file.id, file));
-          return Array.from(uniqueFilesMap.values());
-        });
+        setFiles(fetchedFiles);
         setLastKey(fetchedLastKey);
         setHasMore(fetchedFiles.length === LIMIT);
       } catch (err: any) {
@@ -65,6 +88,22 @@ export function useFiles(folderId: string) {
     setFiles((prevFiles) => prevFiles.filter((file) => file.id !== id));
   }, []);
 
+  const createFile = useCallback(
+    async (file: FileItem) => {
+      await apiCreateFile(folderId, file);
+      setFiles([...files, file]);
+    },
+    [files]
+  );
+
+  const updateFile = useCallback(
+    async (file: FileItem) => {
+      await apiUpdateFile(folderId, file);
+      setFiles([...files, file]);
+    },
+    [files]
+  );
+
   const uploadNewFile = useCallback(
     async (fileData: FormData) => {
       try {
@@ -88,6 +127,8 @@ export function useFiles(folderId: string) {
     loadMoreFiles,
     uploadNewFile,
     removeFile,
+    createFile,
+    updateFile,
     sortFiles,
     hasMore,
   };

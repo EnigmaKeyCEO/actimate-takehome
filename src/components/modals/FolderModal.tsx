@@ -10,7 +10,7 @@ interface FolderModalProps {
   error?: string | null;
 }
 
-export const FolderModal: React.FC<FolderModalProps> = ({
+export const CreateFolderModal: React.FC<FolderModalProps> = ({
   isOpen,
   onClose,
   onCreate,

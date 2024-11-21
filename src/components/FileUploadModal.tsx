@@ -1,8 +1,12 @@
 import React, { useState } from "react";
 import { Modal, View, Button, Text, StyleSheet } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
 import { uploadFile } from "#/api";
 import { FileUpload } from "#/types";
+import useFiles from "#/hooks/useFiles";
+import { useFolders } from "#/hooks/useFolders";
+import { useModal } from "#/components/Modal";
 
 interface FileUploadModalProps {
   isOpen: boolean;
@@ -20,6 +24,10 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
   );
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
+
+  const { parentId } = useFolders();
+  const { uploadNewFile } = useFiles();
+  const { showModal } = useModal();
 
   const pickFile = async () => {
     try {
@@ -46,23 +54,32 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append("folderId", folderId);
-      formData.append("fileName", file.name);
-      formData.append(
-        "contentType",
-        file.mimeType || "application/octet-stream"
-      );
+      
 
-      const fileBlob = new Blob([file.uri], {
-        type: file.mimeType || "application/octet-stream",
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        base64: true,
       });
-
-      formData.append("file", fileBlob, file.name);
-
-      await uploadFile(folderId, formData);
-
-      // Handle successful upload (e.g., refresh file list, close modal)
+  
+      if (
+        !result.canceled &&
+        result.assets &&
+        result.assets.length > 0 &&
+        result.assets[0].base64
+      ) {
+        const formData = new FormData();
+        formData.append("file", result.assets[0].base64);
+        formData.append("name", result.assets[0].fileName || "");
+        formData.append("parentId", parentId);
+        formData.append("createdAt", new Date().toISOString());
+        formData.append("updatedAt", new Date().toISOString());
+        try {
+          await uploadNewFile(formData);
+        } catch (error: any) {
+          showModal(error.message, "error");
+        }
+      }
       onClose();
     } catch (err) {
       setError("Failed to upload the file.");

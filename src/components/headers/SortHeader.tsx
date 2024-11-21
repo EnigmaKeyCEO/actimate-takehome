@@ -42,17 +42,18 @@ export const SortHeader: React.FC<SortHeaderProps> = ({
   const sortFields: SortField[] = ["name", "createdAt", "updatedAt"];
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.headerTitle}>Sort By</Text>
-      <TouchableOpacity
-        onPress={toggleMenu}
-        style={styles.menuButton}
-        accessibilityLabel="Sort Options Menu"
-        accessibilityRole="button"
-      >
-        <Ionicons name="menu" size={24} color="black" />
-      </TouchableOpacity>
-
+    <>
+      <View style={styles.container}>
+        <Text style={styles.headerTitle}>Actimate Take Home Challenge</Text>
+        <TouchableOpacity
+          onPress={toggleMenu}
+          style={styles.menuButton}
+          accessibilityLabel="Sort Options Menu"
+          accessibilityRole="button"
+        >
+          <Ionicons name="menu" size={24} color="black" />
+        </TouchableOpacity>
+      </View>
       <Modal
         visible={menuVisible}
         transparent
@@ -101,7 +102,7 @@ export const SortHeader: React.FC<SortHeaderProps> = ({
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </View>
+    </>
   );
 };
 

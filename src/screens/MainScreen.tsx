@@ -10,10 +10,11 @@ import { FolderList } from "#/components/folders/FolderList";
 import { FilesList } from "#/components/files/FilesList";
 import { SortHeader } from "#/components/headers/SortHeader";
 import { SectionHeader } from "#/components/headers/SectionHeader";
-import { FolderModal } from "#/components/modals/FolderModal";
+import { CreateFolderModal } from "#/components/modals/FolderModal";
 import * as IP from "expo-image-picker";
 import { debounce } from "lodash";
 import { Breadcrumb } from "#/components/Breadcrumb";
+import { FileUploadModal } from "#/components/FileUploadModal";
 
 export function FolderScreen(passedProps: { folderId?: string }) {
   const { folderId = passedProps.folderId || "root" } = useParams<{
@@ -22,8 +23,10 @@ export function FolderScreen(passedProps: { folderId?: string }) {
   const navigate = useNavigate();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const { showModal } = useModal();
+  const { parentId } = useFolders(folderId);
 
   const [showFolderModal, setShowFolderModal] = useState(false);
+  const [showFileUploadModal, setShowFileUploadModal] = useState(false);
 
   // Define sortOptions state
   const [sortOptions, setSortOptions] = useState<SortOptions>({
@@ -41,7 +44,7 @@ export function FolderScreen(passedProps: { folderId?: string }) {
     refreshFolders,
     hasMoreFolders,
     fetchSingleFolder,
-  } = useFolders(folderId);
+  } = useFolders(parentId);
 
   const {
     files,
@@ -50,43 +53,22 @@ export function FolderScreen(passedProps: { folderId?: string }) {
     loadMoreFiles: doLoadMoreFiles,
     uploadNewFile,
     removeFile,
+    updateFile,
+    createFile,
     sortFiles,
     hasMore: hasMoreFiles,
-  } = useFiles(folderId);
+  } = useFiles();
 
-  const handleFolderPress = useCallback(
-    (folder: Folder) => {
-      navigate(`/folder/${folder.id}`);
-    },
-    [navigate]
-  );
-
-  const handleCreateFolder = useCallback(
+  const onCreateFolder = useCallback(
     async (folderName: Folder["name"]) => {
       try {
-        await createFolder({
-          name: folderName,
-          parentId: folderId || "root",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
         setShowFolderModal(false);
+        showModal(`Successfully created "${folderName}"`, "success");
       } catch (error: any) {
         showModal(error.message, "error");
       }
     },
     [createFolder, folderId, showModal]
-  );
-
-  const handleDeleteFolder = useCallback(
-    async (folderId: string) => {
-      try {
-        await deleteFolder(folderId);
-      } catch (error: any) {
-        showModal(error.message, "error");
-      }
-    },
-    [deleteFolder, showModal]
   );
 
   const handleUploadFile = useCallback(async () => {
@@ -106,6 +88,10 @@ export function FolderScreen(passedProps: { folderId?: string }) {
     ) {
       const formData = new FormData();
       formData.append("file", result.assets[0].base64);
+      formData.append("name", result.assets[0].fileName || "");
+      formData.append("parentId", parentId);
+      formData.append("createdAt", new Date().toISOString());
+      formData.append("updatedAt", new Date().toISOString());
       try {
         await uploadNewFile(formData);
       } catch (error: any) {
@@ -235,6 +221,8 @@ export function FolderScreen(passedProps: { folderId?: string }) {
             error={filesError?.message}
             loadMoreFiles={handleLoadMoreFiles}
             removeFile={removeFile}
+            updateFile={updateFile}
+            createFile={createFile}
           />
         )}
       </View>
@@ -243,15 +231,21 @@ export function FolderScreen(passedProps: { folderId?: string }) {
       <View style={styles.folderActionsContainer}>
         <FolderActions
           onAddFolder={() => setShowFolderModal(true)}
-          onUploadFile={handleUploadFile}
+          onUploadFile={() => setShowFileUploadModal(true)}
         />
       </View>
 
       {/* Add Folder Modal */}
-      <FolderModal
+      <CreateFolderModal
         isOpen={showFolderModal}
         onClose={() => setShowFolderModal(false)}
-        onCreate={handleCreateFolder}
+        onCreate={onCreateFolder}
+      />
+
+      <FileUploadModal
+        isOpen={showFileUploadModal}
+        onClose={() => setShowFileUploadModal(false)}
+        folderId={folderId}
       />
     </Animated.View>
   );

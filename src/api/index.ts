@@ -1,171 +1,174 @@
-import { CreateFolderInput, FileItem, UpdateFileInput } from "#/types";
-import { Folder, Image, SortOptions } from "../types";
+import { Folder, FileItem } from "#/types";
+import { API_BASE_URL } from "./config";
 
-export const API_BASE_URL =
-  process.env.VITE_API_BASE_URL || "https://actimate-takehome.netlify.app/api";
-
-export const LIMIT = process.env.NODE_ENV === "development" ? 5 : 20;
-
-// Helper function to handle fetch requests
-const handle = async (response: Response, ...more: any[]) => {
+export const getFolders = async (
+  folderId: string,
+  page: number,
+  sortOptions: any
+) => {
   try {
-    if (more && process.env.NODE_ENV === "development") {
-      console.log("Request:", JSON.stringify(more, null, 2));
-    }
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "API Error", {
-        cause: errorData,
-      });
-    }
-    return response.json();
-  } catch (err: any) {
-    console.error(
-      "Error handling response:",
-      err.message,
-      JSON.stringify(err.cause, null, 2)
+    const response = await fetch(
+      `${API_BASE_URL}/folders?parentId=${folderId}&page=${page}&sort=${sortOptions.field}&direction=${sortOptions.direction}`
     );
-    throw err;
+    if (!response.ok) {
+      throw new Error("Failed to fetch folders");
+    }
+    const folders = await response.json();
+    if (process.env.environment === "development") {
+      console.log("Fetched folders:", folders);
+    }
+    return folders;
+  } catch (error) {
+    console.error("Error fetching folders:", error);
+    throw error;
   }
 };
 
-// Folders
-export const getFolders = async (
-  parentId: string,
-  page: number,
-  sort: SortOptions
-): Promise<{ folders: Folder[]; lastKey?: any }> => {
-  const url = new URL(`${API_BASE_URL}/folders`);
-  url.searchParams.append("parentId", parentId);
-  url.searchParams.append("sortField", sort.field);
-  url.searchParams.append("sortDirection", sort.direction);
-  url.searchParams.append("page", page.toString());
-  url.searchParams.append("limit", LIMIT.toString());
-
-  const response = await fetch(url.toString(), {
-    method: "GET",
-  });
-  return handle(response, url);
-};
-
-export const createFolder = async (
-  data: CreateFolderInput
-): Promise<Folder> => {
-  const url = new URL(`${API_BASE_URL}/folders`);
-  console.log("Creating folder with data:", data); // Log the input data
+export const createFolder = async (data: any) => {
   try {
-    const response = await fetch(url.toString(), {
+    if (process.env.environment === "development") {
+      console.log("Creating folder with data:", data);
+    }
+    const response = await fetch(`${API_BASE_URL}/folders`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
     });
-
     if (!response.ok) {
-      const errorData = await response.json();
-      const errorMessage = errorData.message || `API Error: ${response.status}`;
-      console.error(`Error creating folder: ${errorMessage}`, errorData); // Log the error details
-      throw new Error(errorMessage);
+      throw new Error("Failed to create folder");
     }
-
     const createdFolder = await response.json();
-    console.log("Folder created successfully:", createdFolder); // Log the created folder
+    if (process.env.environment === "development") {
+      console.log("Folder created successfully:", createdFolder);
+    }
     return createdFolder;
-  } catch (error: any) {
-    console.error("Error Creating folder:", error); // Log the error
-    throw error; // Re-throw the error to be handled by the caller
+  } catch (error) {
+    console.error("Error creating folder:", error);
+    throw error;
   }
 };
 
-export const updateFolder = async (
-  id: string,
-  updateData: Partial<Folder>
-): Promise<Folder> => {
-  const response = await fetch(`${API_BASE_URL}/folders/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(updateData),
-  });
-  return handle(response);
-};
-
-export const deleteFolder = async (id: string): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/folders/${id}`, {
-    method: "DELETE",
-  });
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to delete folder");
-  }
-};
-
-// New: Get Folder by ID
-export const getFolderById = async (id: string): Promise<Folder> => {
-  const url = new URL(`${API_BASE_URL}/folders/${id}`);
-
-  const response = await fetch(url.toString(), {
-    method: "GET",
-  });
-  return handle(response, url);
-};
-
-// Files
 export const getFiles = async (
   folderId: string,
-  lastKey: string | null = null,
-  sort: SortOptions
-): Promise<{ files: FileItem[]; lastKey?: any }> => {
-  const url = new URL(`${API_BASE_URL}/files`);
-  url.searchParams.append("folderId", folderId);
-  url.searchParams.append("sortField", sort.field);
-  url.searchParams.append("sortDirection", sort.direction);
-  url.searchParams.append("lastKey", lastKey || "");
-  url.searchParams.append("limit", LIMIT.toString());
-
-  const response = await fetch(url.toString(), {
-    method: "GET",
-  });
-  return handle(response, url);
-};
-
-export const uploadFile = async (folderId: string, formData: FormData): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/files`, {
-    method: "POST",
-    body: formData,
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to upload file");
+  lastKey: string | null,
+  sortOptions: any
+) => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/files?folderId=${folderId}&lastKey=${lastKey}&sort=${sortOptions.field}&direction=${sortOptions.direction}`
+    );
+    if (!response.ok) {
+      throw new Error("Failed to fetch files");
+    }
+    const files = await response.json();
+    if (process.env.environment === "development") {
+      console.log("Fetched files:", files);
+    }
+    return files;
+  } catch (error) {
+    console.error("Error fetching files:", error);
+    throw error;
   }
 };
 
-export const updateFile = async (
-  id: string,
-  updateData: UpdateFileInput
-): Promise<FileItem> => {
-  const response = await fetch(`${API_BASE_URL}/files/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(updateData),
-  });
-  return handle(response);
+export const uploadFile = async (folderId: string, fileData: FormData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/files`, {
+      method: "POST",
+      body: fileData,
+    });
+    if (!response.ok) {
+      throw new Error("Failed to upload file");
+    }
+    const uploadedFile = await response.json();
+    if (process.env.environment === "development") {
+      console.log("File uploaded successfully:", uploadedFile);
+    }
+    return uploadedFile;
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    throw error;
+  }
 };
 
-export const deleteFile = async (id: string): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/files/${id}`, {
-    method: "DELETE",
-  });
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to delete file");
+export const updateFile = async (folderId: string, file: FileItem) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/files/${file.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(file),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to update file");
+    }
+    const updatedFile = await response.json();
+    if (process.env.environment === "development") {
+      console.log("File updated successfully:", updatedFile);
+    }
+    return updatedFile;
+  } catch (error) {
+    console.error("Error updating file:", error);
+    throw error;
+  }
+};
+
+export const deleteFolder = async (folderId: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/folders/${folderId}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) {
+      throw new Error("Failed to delete folder");
+    }
+    if (process.env.environment === "development") {
+      console.log("Folder deleted successfully");
+    }
+  } catch (error) {
+    console.error("Error deleting folder:", error);
+    throw error;
+  }
+};
+
+export const updateFolder = async (folderId: string, data: any) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/folders/${folderId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to update folder");
+    }
+    const updatedFolder = await response.json();
+    if (process.env.environment === "development") {
+      console.log("Folder updated successfully:", updatedFolder);
+    }
+    return updatedFolder;
+  } catch (error) {
+    console.error("Error updating folder:", error);
+    throw error;
+  }
+};
+
+export const getFolderById = async (folderId: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/folders/${folderId}`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch folder");
+    }
+    const folder = await response.json();
+    if (process.env.environment === "development") {
+      console.log("Fetched folder:", folder);
+    }
+    return folder;
+  } catch (error) {
+    console.error("Error fetching folder:", error);
+    throw error;
   }
 };

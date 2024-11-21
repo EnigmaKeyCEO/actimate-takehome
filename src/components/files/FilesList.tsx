@@ -1,44 +1,148 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { FlatList, View, Text, StyleSheet } from "react-native";
-import { useModal } from "../Modal"; // Removed ModalMessageType import
-import { Button } from "native-base";
+import { useModal } from "../Modal";
+import { FileItemComponent } from "./FileItemComponent";
 import { FileItem } from "../../types/File";
+import { FileForm } from "#/components/files/FileForm";
+import { LineItem } from "#/components/common/LineItem";
+import { Image } from "native-base";
 
 interface FilesListProps {
   files: FileItem[];
   loadMoreFiles: () => void;
   removeFile: (id: string) => void;
-  loading?: boolean; // Made optional
-  error?: string | null; // Made optional
+  updateFile: (file: FileItem) => void;
+  createFile: (file: FileItem) => void;
+  loading?: boolean;
+  error?: string | null;
 }
 
 export const FilesList: React.FC<FilesListProps> = ({
   files,
   loadMoreFiles,
   removeFile,
+  updateFile,
+  createFile,
   loading,
   error,
 }) => {
-  const { showModal } = useModal(); // Removed generic type argument
+  const { showModal, hideModal } = useModal();
 
-  const renderItem = ({ item }: { item: FileItem }) => (
-    <View style={styles.itemContainer}>
-      <Text style={styles.fileName}>{item.name}</Text>
-      <Button
-        onPress={() => showModal(`You pressed on ${item.name}`, "info")}
-        accessibilityRole="button"
-        accessibilityLabel={`Press to interact with ${item.name}`}
-      >
-        Press
-      </Button>
-    </View>
+  const handleOnPress = (file: FileItem) => {
+    showModal({
+      title: file.name,
+      body: (
+        <Image
+          source={{ uri: file.url }}
+          style={{ width: "100%", height: 200 }}
+          resizeMode="contain"
+        />
+      ),
+      actions: [{ label: "Close", onPress: () => {} }],
+    });
+  };
+
+  // Handler to update a file
+  const handleUpdate = useCallback(
+    (item: FileItem) => {
+      let updatedName = item.name;
+
+      showModal({
+        title: "Update File",
+        body: (
+          <FileForm
+            file={item}
+            onChangeName={(name) => {
+              updatedName = name;
+            }}
+          />
+        ),
+        actions: [
+          { label: "Cancel", onPress: hideModal },
+          {
+            label: "Update",
+            onPress: async () => {
+              try {
+                await updateFile({ ...item, name: updatedName });
+                hideModal();
+              } catch (error: any) {
+                console.error("Error updating file:", error);
+                showModal({
+                  title: "Error",
+                  body: <Text>Failed to update file.</Text>,
+                  actions: [{ label: "OK", onPress: hideModal }],
+                });
+              }
+            },
+          },
+        ],
+      });
+    },
+    [showModal, hideModal, updateFile]
+  );
+
+  // Handler to delete a file
+  const handleDelete = useCallback(
+    (item: FileItem) => {
+      showModal({
+        title: "Delete File",
+        body: <Text>Are you sure you want to delete this file?</Text>,
+        actions: [
+          { label: "Cancel", onPress: hideModal },
+          {
+            label: "Delete",
+            onPress: async () => {
+              try {
+                await removeFile(item.id);
+                hideModal();
+              } catch (error: any) {
+                console.error("Error deleting file:", error);
+                showModal({
+                  title: "Error",
+                  body: <Text>Failed to delete file.</Text>,
+                  actions: [{ label: "OK", onPress: hideModal }],
+                });
+              }
+            },
+          },
+        ],
+      });
+    },
+    [showModal, hideModal, removeFile]
+  );
+
+  // Memoized renderItem to prevent unnecessary re-renders
+  const renderItem = useCallback(
+    ({ item }: { item: FileItem }) => (
+      <LineItem
+        type="file"
+        key={item.id}
+        item={item}
+        onPress={() => handleOnPress(item)}
+        onUpdate={() => handleUpdate(item)}
+        onDelete={() => handleDelete(item)}
+      />
+    ),
+    [handleOnPress, handleUpdate, handleDelete]
+  );
+
+  // Remove duplicate files. TODO: again, unify this solution with the one in FolderList.tsx and use the same hook
+  const uniqueFiles = useMemo(
+    () =>
+      files.reduce((acc, file) => {
+        if (!acc.find((f) => f.id === file.id)) {
+          acc.push(file);
+        }
+        return acc;
+      }, [] as FileItem[]),
+    [files]
   );
 
   return (
     <View style={styles.container}>
-      {files?.length || 0 > 0 ? (
+      {uniqueFiles.length > 0 ? (
         <FlatList
-          data={files}
+          data={uniqueFiles}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
@@ -49,6 +153,8 @@ export const FilesList: React.FC<FilesListProps> = ({
       ) : (
         <Text style={styles.centeredMiddleText}>No Files Found...</Text>
       )}
+      {loading && <Text style={styles.loadingText}>Loading...</Text>}
+      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 };
@@ -60,16 +166,22 @@ const styles = StyleSheet.create({
   listContainer: {
     padding: 16,
   },
-  itemContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  fileName: {
-    fontSize: 16,
-  },
   centeredMiddleText: {
     textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+    color: "#666",
+  },
+  loadingText: {
+    textAlign: "center",
+    marginTop: 10,
+    fontSize: 14,
+    color: "#007AFF",
+  },
+  errorText: {
+    textAlign: "center",
+    marginTop: 10,
+    fontSize: 14,
+    color: "red",
   },
 });

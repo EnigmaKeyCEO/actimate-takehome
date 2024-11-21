@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { FlatList, View, Text, StyleSheet, TextInput } from "react-native";
 import { useModal } from "../Modal";
-import { Button } from "native-base";
-import { FolderItem } from "#/components/folders/FolderItem";
 import { Folder } from "#/types/Folder";
-import { useNavigate } from "react-router-native";
 import { useFolders } from "#/hooks/useFolders";
+import { LineItem } from "#/components/common/LineItem";
+import { LoadingIndicator } from "#/components/common/LoadingIndicator";
 
 interface FolderListProps {
   folders: Folder[];
@@ -13,74 +12,91 @@ interface FolderListProps {
 
 export const FolderList: React.FC<FolderListProps> = ({ folders }) => {
   const { showModal, hideModal } = useModal();
-  const navigate = useNavigate();
-  const { deleteFolder, updateFolder } = useFolders("root"); // Adjust parentId as needed
+  const {
+    loading,
+    deleteFolder,
+    updateFolder,
+    enterFolder,
+    loadMoreFolders,
+    refreshFolders,
+  } = useFolders();
 
-  const renderItem = ({ item }: { item: Folder }) => (
-    <FolderItem
-      key={`${item.parentId}-${item.id}`}
-      folder={item}
-      onPress={() => {
-        navigate(`/folder/${item.id}`);
-      }}
-      onUpdate={() => {
-        let updatedName = item.name;
+  const handleOnPress = (folder: Folder) => {
+    enterFolder(folder.id);
+  };
 
-        showModal({
-          title: "Update Folder",
-          body: (
-            <FolderForm
-              folder={item}
-              onChangeName={(name) => {
-                updatedName = name;
-              }}
-            />
-          ),
-          actions: [
-            { label: "Cancel", onPress: hideModal },
-            {
-              label: "Update",
-              onPress: async () => {
-                try {
-                  await updateFolder(item.id, { name: updatedName });
-                  hideModal();
-                } catch (error: any) {
-                  console.error("Error updating folder:", error);
-                }
-              },
-            },
-          ],
-        });
-      }}
-      onCreate={() => {
-        console.log("Create subfolder functionality not implemented yet.");
-      }}
-      onDelete={() => {
-        showModal({
-          title: "Delete Folder",
-          body: <Text>Are you sure you want to delete this folder?</Text>,
-          actions: [
-            { label: "Cancel", onPress: hideModal },
-            {
-              label: "Delete",
-              onPress: async () => {
-                try {
-                  await deleteFolder(item.id);
-                  hideModal();
-                } catch (error: any) {
-                  console.error("Error deleting folder:", error);
-                  showModal({
-                    title: "Error",
-                    body: <Text>Failed to delete folder.</Text>,
-                    actions: [{ label: "OK", onPress: hideModal }],
-                  });
-                }
-              },
-            },
-          ],
-        });
-      }}
-    />
+  const handleOnCreate = (parentId: string) => {
+    showModal("Create subfolder functionality not implemented yet.", "info");
+  };
+
+  const handleOnUpdate = async (folder: Folder) => {
+    let updatedName = folder.name;
+
+    showModal({
+      title: "Update Folder",
+      body: (
+        <FolderForm
+          folder={folder}
+          onChangeName={(name) => {
+            updatedName = name;
+          }}
+        />
+      ),
+      actions: [
+        { label: "Cancel", onPress: hideModal },
+        {
+          label: "Update",
+          onPress: async () => {
+            try {
+              await updateFolder(folder.id, { name: updatedName });
+              hideModal();
+            } catch (error: any) {
+              console.error("Error updating folder:", error);
+            }
+          },
+        },
+      ],
+    });
+  };
+  const handleOnDelete = async (folderId: string) => {
+    showModal({
+      title: "Delete Folder",
+      body: <Text>Are you sure you want to delete this folder?</Text>,
+      actions: [
+        { label: "Cancel", onPress: hideModal },
+        {
+          label: "Delete",
+          onPress: async () => {
+            try {
+              await deleteFolder(folderId);
+              hideModal();
+            } catch (error: any) {
+              console.error("Error deleting folder:", error);
+              showModal({
+                title: "Error",
+                body: <Text>Failed to delete folder.</Text>,
+                actions: [{ label: "OK", onPress: hideModal }],
+              });
+            }
+          },
+        },
+      ],
+    });
+  };
+
+  const renderItem = React.useCallback(
+    ({ item }: { item: Folder }) => (
+      <LineItem
+        type="folder"
+        key={`${item.parentId}-${item.id}`}
+        item={item}
+        onPress={handleOnPress}
+        onUpdate={handleOnUpdate}
+        onCreate={handleOnCreate}
+        onDelete={handleOnDelete}
+      />
+    ),
+    [handleOnDelete, handleOnUpdate]
   );
 
   return (
@@ -89,6 +105,11 @@ export const FolderList: React.FC<FolderListProps> = ({ folders }) => {
       renderItem={renderItem}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.listContainer}
+      onEndReached={loadMoreFolders}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={loading ? <LoadingIndicator /> : null}
+      refreshing={loading && folders.length === 0}
+      onRefresh={refreshFolders}
     />
   );
 };
@@ -99,7 +120,7 @@ interface FolderFormProps {
 }
 
 const FolderForm: React.FC<FolderFormProps> = ({ folder, onChangeName }) => {
-  const [name, setName] = useState(folder.name);
+  const [name, setName] = React.useState(folder.name);
 
   const handleNameChange = (text: string) => {
     setName(text);

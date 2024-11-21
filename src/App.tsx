@@ -44,10 +44,10 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <NativeBaseProvider theme={theme} config={config}>
-        <FolderProvider>
-          <ModalProvider>
-            <SafeAreaView style={{ flex: 1 }}>
-              <Router future={{ v7_relativeSplatPath: true }}>
+        <Router future={{ v7_relativeSplatPath: true }}>
+          <FolderProvider>
+            <ModalProvider>
+              <SafeAreaView style={{ flex: 1 }}>
                 <Routes>
                   <Route path="/" element={<FolderScreen />} />
                   {/* TODO: come up with better routing solution, works for now */}
@@ -57,11 +57,11 @@ export default function App() {
                     element={<FolderScreen folderId=":folderId" />}
                   />
                 </Routes>
-              </Router>
-              <Modal />
-            </SafeAreaView>
-          </ModalProvider>
-        </FolderProvider>
+                <Modal />
+              </SafeAreaView>
+            </ModalProvider>
+          </FolderProvider>
+        </Router>
       </NativeBaseProvider>
     </SafeAreaProvider>
   );
