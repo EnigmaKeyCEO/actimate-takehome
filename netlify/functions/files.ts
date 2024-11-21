@@ -9,6 +9,7 @@ import {
   PutObjectCommandOutput,
 } from "@aws-sdk/client-s3";
 import {
+  ComparisonOperator,
   DeleteItemCommand,
   GetItemCommand,
   PutItemCommand,
@@ -19,6 +20,7 @@ import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { FileItem } from "../../src/types/File";
 import { v4 as uuidv4 } from "uuid";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { LIMIT } from "../../src/api";
 
 export const handler: Handler = async (event) => {
   const headers = {
@@ -70,12 +72,14 @@ const handleGet = async (event: any, headers: any) => {
   const params = {
     TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
     IndexName: "folderId-index",
-    // KeyConditionExpression: "folderId = :folderId",
-    // ExpressionAttributeValues: {
-    //   ":folderId": { S: folderId || "root" },
-    // },
+    KeyConditions: {
+      folderId: {
+        ComparisonOperator: "EQ" as ComparisonOperator,
+        AttributeValueList: [{ S: folderId || "root" }],
+      },
+    },
     ScanIndexForward: true,
-    Limit: 20,
+    Limit: LIMIT,
     ExclusiveStartKey: lastKey ? JSON.parse(lastKey) : undefined,
   };
 
@@ -149,9 +153,7 @@ const handlePost = async (event: any, headers: any) => {
     };
 
     try {
-      resultHolder.uploadResult = await S3.send(
-        new PutObjectCommand(s3Params)
-      );
+      resultHolder.uploadResult = await S3.send(new PutObjectCommand(s3Params));
     } catch (s3Error: any) {
       console.error("Error uploading file to S3:", s3Error);
       resultHolder.s3Error = s3Error;
