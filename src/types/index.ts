@@ -7,7 +7,7 @@ export type SortField = SortOptions["field"];
 
 export type { Folder } from './Folder';
 export type { Image } from './Image';
-export type { FileItem, CreateFileInput, UpdateFileInput } from './File';
+export type { FileUpload, FileItem, CreateFileInput, UpdateFileInput } from './File';
 export type { CreateFolderInput } from './Folder';
 
 export interface PaginationOptions {

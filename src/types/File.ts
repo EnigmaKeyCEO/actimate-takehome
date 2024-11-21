@@ -19,3 +19,9 @@ export interface UpdateFileInput {
   name?: string;
   folderId?: string;
 }
+
+export interface FileUpload {
+  uri: string;
+  name: string;
+  type: string;
+}

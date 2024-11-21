@@ -119,7 +119,11 @@ const handleGet = async (event: any, headers: any) => {
             DBResult.file = Item ? (unmarshall(Item) as FileItem) : null;
             DBResult.success = true;
           } catch (error) {
-            console.warn("Error getting file from DynamoDB:", error);
+            console.warn(`
+              don't worry too much about this, it's probably just a new file
+
+              Error getting file from DynamoDB:
+            `, error);
           }
 
           if (!DBResult.file) {
@@ -201,7 +205,7 @@ const handlePost = async (event: any, headers: any) => {
 
     // Generate a unique file ID and S3 key
     const fileId = uuidv4();
-    const s3Key = `uploads/${Date.now()}-${fileId}-${fileName}`;
+    const s3Key = `root/${Date.now()}-${fileId}-${fileName}`;
 
     // Create S3 PutObjectCommand
     const putCommand = new PutObjectCommand({
@@ -217,7 +221,6 @@ const handlePost = async (event: any, headers: any) => {
     const dynamoParams = {
       TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
       Item: {
-        id: { S: fileId },
         folderId: { S: String(folderId) },
         key: { S: s3Key },
         name: { S: fileName },

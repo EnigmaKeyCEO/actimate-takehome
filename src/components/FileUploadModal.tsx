@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Modal, View, Button, Text, StyleSheet } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { uploadFile } from "#/api";
+import { FileUpload } from "#/types";
 
 interface FileUploadModalProps {
   isOpen: boolean;
@@ -14,66 +15,77 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
   onClose,
   folderId,
 }) => {
-  const [uploading, setUploading] = useState(false);
+  const [file, setFile] = useState<DocumentPicker.DocumentPickerAsset | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
-  const handleFileUpload = async () => {
-    setUploading(true);
+  const pickFile = async () => {
+    try {
+      const pickedFiles = await DocumentPicker.getDocumentAsync({
+        type: "*/*",
+        copyToCacheDirectory: true,
+      });
+      const result = pickedFiles.assets?.[0];
+      if (result) {
+        setFile(result);
+      }
+    } catch (err) {
+      setError("Failed to pick a file.");
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!file) {
+      setError("No file selected.");
+      return;
+    }
+
+    setIsUploading(true);
     setError(null);
 
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: "image/*", // Restrict to images initially
-        copyToCacheDirectory: true,
+      const formData = new FormData();
+      formData.append("folderId", folderId);
+      formData.append("fileName", file.name);
+      formData.append(
+        "contentType",
+        file.mimeType || "application/octet-stream"
+      );
+
+      const fileBlob = new Blob([file.uri], {
+        type: file.mimeType || "application/octet-stream",
       });
 
-      if (result.canceled === false && result.assets.length > 0) {
-        const asset = result.assets[0];
-        const fileName = asset.name;
-        const contentType = asset.mimeType || "application/octet-stream";
+      formData.append("file", fileBlob, file.name);
 
-        const formData = new FormData();
-        formData.append("folderId", folderId);
-        formData.append("fileName", fileName);
-        formData.append("contentType", contentType);
-        formData.append("file", {
-          uri: asset.uri,
-          name: fileName,
-          type: contentType,
-        } as any);
+      await uploadFile(folderId, formData);
 
-        console.log("Uploading file with FormData:", {
-          folderId,
-          fileName,
-          contentType,
-          uri: asset.uri,
-        }); // Debugging log
-
-        const data = await uploadFile(folderId, formData);
-        console.log("File uploaded successfully:", data);
-        onClose(); // Close modal after successful upload
-      } else {
-        setError("File selection was canceled.");
-      }
-    } catch (err: any) {
-      console.error("File upload error:", err);
-      setError(err.message || "An error occurred during file upload.");
+      // Handle successful upload (e.g., refresh file list, close modal)
+      onClose();
+    } catch (err) {
+      setError("Failed to upload the file.");
     } finally {
-      setUploading(false);
+      setIsUploading(false);
     }
   };
 
   return (
-    <Modal visible={isOpen} animationType="slide">
+    <Modal visible={isOpen} transparent>
       <View style={styles.container}>
-        <Text style={styles.title}>Upload Image</Text>
-        {error && <Text style={styles.errorText}>{error}</Text>}
-        <Button
-          title={uploading ? "Uploading..." : "Select Image"}
-          onPress={handleFileUpload}
-          disabled={uploading}
-        />
-        <Button title="Cancel" onPress={onClose} />
+        <View style={styles.modal}>
+          <Text style={styles.title}>Upload File</Text>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+          <Button title="Pick a File" onPress={pickFile} />
+          {file && <Text>{file.name}</Text>}
+          <Button
+            title={isUploading ? "Uploading..." : "Upload"}
+            onPress={handleUpload}
+            disabled={isUploading}
+          />
+          <Button title="Cancel" onPress={onClose} />
+        </View>
       </View>
     </Modal>
   );
@@ -84,6 +96,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 20,
+  },
+  modal: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    elevation: 5,
   },
   title: {
     fontSize: 24,

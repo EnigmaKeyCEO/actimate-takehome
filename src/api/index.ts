@@ -131,15 +131,19 @@ export const getFiles = async (
   return handle(response, url);
 };
 
-export const uploadFile = async (
-  folderId: string,
-  formData: FormData
-): Promise<FileItem> => {
+export const uploadFile = async (folderId: string, formData: FormData): Promise<void> => {
   const response = await fetch(`${API_BASE_URL}/files`, {
     method: "POST",
     body: formData,
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
-  return handle(response);
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to upload file");
+  }
 };
 
 export const updateFile = async (

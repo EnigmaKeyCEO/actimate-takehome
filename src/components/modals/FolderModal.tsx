@@ -34,6 +34,24 @@ export const FolderModal: React.FC<FolderModalProps> = ({
       setFolderNameError(
         "Invalid folder name. Use letters, spaces, numbers, underscores, or dollar signs."
       );
+      // Trigger shake animation
+      Animated.sequence([
+        Animated.timing(shakeAnim, {
+          toValue: 10,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeAnim, {
+          toValue: -10,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeAnim, {
+          toValue: 0,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+      ]).start();
       return;
     }
     onCreate(folderName);
