@@ -30,6 +30,12 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
       if (result.canceled === false && result.assets.length > 0) {
         const formData = new FormData();
         const asset = result.assets[0];
+        formData.append("folderId", folderId);
+        formData.append("fileName", asset.name);
+        formData.append(
+          "contentType",
+          asset.mimeType || "application/octet-stream"
+        );
         formData.append("file", {
           uri: asset.uri,
           name: asset.name,
