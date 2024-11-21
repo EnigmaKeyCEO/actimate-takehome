@@ -95,7 +95,8 @@ const handleGet = async (event: any, headers: any) => {
           const getParams = {
             TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
             Key: {
-              id: { S: fileItem.id },
+              folderId: { S: fileItem.folderId },
+              name: { S: fileItem.name },
             },
           };
           const getCommand = new GetItemCommand(getParams);
