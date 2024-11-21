@@ -115,14 +115,14 @@ export const getFolderById = async (id: string): Promise<Folder> => {
 // Files
 export const getFiles = async (
   folderId: string,
-  page: number,
+  lastKey: string | null = null,
   sort: SortOptions
 ): Promise<{ files: FileItem[]; lastKey?: any }> => {
   const url = new URL(`${API_BASE_URL}/files`);
   url.searchParams.append("folderId", folderId);
   url.searchParams.append("sortField", sort.field);
   url.searchParams.append("sortDirection", sort.direction);
-  url.searchParams.append("page", page.toString());
+  url.searchParams.append("lastKey", lastKey || "");
   url.searchParams.append("limit", LIMIT.toString());
 
   const response = await fetch(url.toString(), {

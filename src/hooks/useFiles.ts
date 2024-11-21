@@ -4,36 +4,29 @@ import { getFiles, uploadFile as apiUploadNewFile } from "#/api";
 
 export function useFiles(folderId: string) {
   const [files, setFiles] = useState<FileItem[]>([]); // Initialized as empty array
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const [sortOptions, setSortOptions] = useState<SortOptions>({
     field: "name",
     direction: "asc",
   });
-  const [page, setPage] = useState<number>(1);
+  const [lastKey, setLastKey] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
+  const LIMIT = process.env.NODE_ENV === "development" ? 5 : 20;
+
   const fetchFiles = useCallback(
-    async (currentPage: number, currentSort: SortOptions) => {
+    async (currentSort: SortOptions, currentLastKey: string | null) => {
       setLoading(true);
       setError(null);
       try {
-        const response = await getFiles(folderId, currentPage, currentSort);
-        const fetchedFiles = Array.isArray(response.files)
-          ? response.files
-          : []; // Ensure array
+        const response = await getFiles(folderId, -(currentLastKey || 0), currentSort);
+        const fetchedFiles = Array.isArray(response.files) ? response.files : [];
+        const fetchedLastKey = response.lastKey || null;
 
-        if (fetchedFiles.length === 0) {
-          setHasMore(false);
-        } else {
-          setFiles((prevFiles) => {
-            if (currentPage === 1) {
-              return fetchedFiles;
-            } else {
-              return [...prevFiles, ...fetchedFiles];
-            }
-          });
-        }
+        setFiles((prevFiles) => [...prevFiles, ...fetchedFiles]);
+        setLastKey(fetchedLastKey);
+        setHasMore(fetchedFiles.length === LIMIT);
       } catch (err: any) {
         setError(err instanceof Error ? err : new Error("Unknown error"));
       } finally {
@@ -45,17 +38,15 @@ export function useFiles(folderId: string) {
 
   useEffect(() => {
     setFiles([]); // Reset files when folderId or sortOptions change
-    setPage(1);
+    setLastKey(null);
     setHasMore(true);
-    fetchFiles(1, sortOptions);
+    fetchFiles(sortOptions, null);
   }, [folderId, sortOptions, fetchFiles]);
 
   const loadMoreFiles = useCallback(() => {
     if (loading || !hasMore) return;
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchFiles(nextPage, sortOptions);
-  }, [loading, hasMore, page, sortOptions, fetchFiles]);
+    fetchFiles(sortOptions, lastKey);
+  }, [loading, hasMore, fetchFiles, sortOptions, lastKey]);
 
   const sortFiles = useCallback((newSortOptions: SortOptions) => {
     setSortOptions(newSortOptions);
@@ -69,15 +60,16 @@ export function useFiles(folderId: string) {
     async (fileData: FormData) => {
       try {
         await apiUploadNewFile(folderId, fileData);
-        setPage(1);
+        setFiles([]);
+        setLastKey(null);
         setHasMore(true);
-        await fetchFiles(1, sortOptions);
+        await fetchFiles(sortOptions, null);
       } catch (error) {
         console.error("Error uploading new file:", error);
         throw error;
       }
     },
-    [fetchFiles, sortOptions]
+    [fetchFiles, sortOptions, folderId]
   );
 
   return {
