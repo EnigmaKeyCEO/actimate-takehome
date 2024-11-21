@@ -119,11 +119,14 @@ const handleGet = async (event: any, headers: any) => {
             DBResult.file = Item ? (unmarshall(Item) as FileItem) : null;
             DBResult.success = true;
           } catch (error) {
-            console.warn(`
+            console.warn(
+              `
               don't worry too much about this, it's probably just a new file
 
               Error getting file from DynamoDB:
-            `, error);
+            `,
+              error
+            );
           }
 
           if (!DBResult.file) {
@@ -140,7 +143,12 @@ const handleGet = async (event: any, headers: any) => {
               },
             };
             const putCommand = new PutItemCommand(putParams);
-            await dynamoDb.send(putCommand);
+            try {
+              await dynamoDb.send(putCommand);
+              console.log("File metadata stored in DynamoDB:", putParams.Item);
+            } catch (error) {
+              console.error("Error storing file metadata in DynamoDB:", error);
+            }
           }
 
           files.push(fileItem);
@@ -222,7 +230,7 @@ const handlePost = async (event: any, headers: any) => {
       TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
       Item: {
         folderId: { S: String(folderId) },
-        key: { S: s3Key },
+        // key: { S: s3Key }, // TODO: add this back in, it's needed for the file upload modal, but may be causing an error, so test without it first
         name: { S: fileName },
         url: {
           S: `https://${process.env.VITE_AWS_BUCKET_NAME}.s3.amazonaws.com/${s3Key}`,
@@ -233,8 +241,12 @@ const handlePost = async (event: any, headers: any) => {
     };
 
     const putDynamoCommand = new PutItemCommand(dynamoParams);
-    await dynamoDb.send(putDynamoCommand);
-    console.log("File metadata stored in DynamoDB:", dynamoParams.Item);
+    try {
+      await dynamoDb.send(putDynamoCommand);
+      console.log("File metadata stored in DynamoDB:", dynamoParams.Item);
+    } catch (error) {
+      console.error("Error storing file metadata in DynamoDB:", error);
+    }
 
     return {
       statusCode: 200,
