@@ -78,7 +78,7 @@ const handleGet = async (event: any, headers: any) => {
     IndexName: "folderId-index",
     KeyConditionExpression: "folderId = :folderId",
     ExpressionAttributeValues: {
-      ":folderId": { S: String(folderId) }, // Ensure folderId is a string
+      ":folderId": String(folderId),
     },
     ScanIndexForward: true,
     Limit: 20,

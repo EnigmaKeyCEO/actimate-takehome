@@ -31,12 +31,12 @@ const handle = async (response: Response, ...more: any[]) => {
 
 // Folders
 export const getFolders = async (
-  parentId: string,
+  folderId: string,
   page: number,
   sort: SortOptions
 ): Promise<{ folders: Folder[]; lastKey?: any }> => {
   const url = new URL(`${API_BASE_URL}/folders`);
-  url.searchParams.append("parentId", parentId);
+  url.searchParams.append("folderId", folderId);
   url.searchParams.append("sortField", sort.field);
   url.searchParams.append("sortDirection", sort.direction);
   url.searchParams.append("page", page.toString());
@@ -90,12 +90,12 @@ export const deleteFolder = async (id: string): Promise<void> => {
 
 // Files
 export const getFiles = async (
-  parentId: string,
+  folderId: string,
   page: number,
   sort: SortOptions
 ): Promise<{ files: FileItem[]; lastKey?: any }> => {
   const url = new URL(`${API_BASE_URL}/files`);
-  url.searchParams.append("parentId", parentId);
+  url.searchParams.append("folderId", folderId);
   url.searchParams.append("sortField", sort.field);
   url.searchParams.append("sortDirection", sort.direction);
   url.searchParams.append("page", page.toString());
