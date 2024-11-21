@@ -18,6 +18,7 @@ import { v4 as uuidv4 } from "uuid";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
+// Handler for GET requests to list files
 export const handler: Handler = async (event) => {
   const headers = {
     "Access-Control-Allow-Origin": "*",
@@ -26,11 +27,11 @@ export const handler: Handler = async (event) => {
   };
 
   if (event.httpMethod === "OPTIONS") {
-    return {
+    return Promise.resolve({
       statusCode: 200,
       headers,
       body: JSON.stringify({}),
-    };
+    });
   }
 
   try {
@@ -44,19 +45,19 @@ export const handler: Handler = async (event) => {
       case "DELETE":
         return await handleDelete(event, headers);
       default:
-        return {
+        return Promise.resolve({
           statusCode: 405,
           headers,
           body: JSON.stringify({ message: "Method Not Allowed" }),
-        };
+        });
     }
   } catch (error) {
     console.error("Unhandled error:", error);
-    return {
+    return Promise.resolve({
       statusCode: 500,
       headers,
       body: JSON.stringify({ message: "Internal Server Error" }),
-    };
+    });
   }
 };
 
@@ -107,40 +108,11 @@ const handleGet = async (event: any, headers: any) => {
 const handlePost = async (event: any, headers: any) => {
   console.log("POST request received:", JSON.stringify(event, null, 2));
   try {
-    let parsedBody;
-    if (event.isBase64Encoded) {
-      const decodedBody = Buffer.from(event.body, "base64").toString();
-      console.log("Decoded body:", decodedBody);
-      // Parse multipart form data
-      const boundary = event.headers['content-type'].split('boundary=')[1];
-      const parts = decodedBody.split(`--${boundary}`);
-      
-      // Initialize variables to store form fields
-      let folderId, fileName, contentType;
-
-      // Process each part
-      for (const part of parts) {
-        if (part.includes('Content-Disposition')) {
-          const lines = part.split('\r\n');
-          const contentDisposition = lines.find(line => line.includes('Content-Disposition'));
-          
-          if (contentDisposition) {
-            if (contentDisposition.includes('name="folderId"')) {
-              folderId = lines[lines.length - 2];
-            } else if (contentDisposition.includes('name="fileName"')) {
-              fileName = lines[lines.length - 2];
-            } else if (contentDisposition.includes('name="contentType"')) {
-              contentType = lines[lines.length - 2];
-            }
-          }
-        }
-      }
-
-      // Create parsed body object
-      parsedBody = JSON.parse(decodedBody);
-    } else {
-      parsedBody = JSON.parse(event.body); 
+    if (!event.body) {
+      throw new Error("Request body is missing.");
     }
+
+    const parsedBody = JSON.parse(event.body);
     const { folderId, fileName, contentType } = parsedBody;
 
     if (!folderId || !fileName || !contentType) {
@@ -188,6 +160,7 @@ const handlePost = async (event: any, headers: any) => {
         message: "Pre-signed URL generated successfully",
         fileId,
         signedUrl,
+        key: s3Key,
       }),
     };
   } catch (error: any) {
