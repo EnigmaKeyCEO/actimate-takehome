@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import type { FileItem, SortOptions } from "../types";
-import { getFiles, uploadFile, updateFile, deleteFile } from "../api";
+import { FileItem, SortOptions } from "#/types";
+import { getFiles } from "#/api";
 
 export function useFiles(folderId: string) {
-  const [files, setFiles] = useState<FileItem[]>([]);
+  const [files, setFiles] = useState<FileItem[]>([]); // Initialized as empty array
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   const [sortOptions, setSortOptions] = useState<SortOptions>({
@@ -19,7 +19,9 @@ export function useFiles(folderId: string) {
       setError(null);
       try {
         const response = await getFiles(folderId, currentPage, currentSort);
-        const fetchedFiles = Array.isArray(response.files) ? response.files : [];
+        const fetchedFiles = Array.isArray(response.files)
+          ? response.files
+          : []; // Ensure array
 
         if (fetchedFiles.length === 0) {
           setHasMore(false);
@@ -42,7 +44,7 @@ export function useFiles(folderId: string) {
   );
 
   useEffect(() => {
-    setFiles([]);
+    setFiles([]); // Reset files when folderId or sortOptions change
     setPage(1);
     setHasMore(true);
     fetchFiles(1, sortOptions);
@@ -55,12 +57,9 @@ export function useFiles(folderId: string) {
     fetchFiles(nextPage, sortOptions);
   }, [loading, hasMore, page, sortOptions, fetchFiles]);
 
-  const sortFiles = useCallback(
-    (newSortOptions: SortOptions) => {
-      setSortOptions(newSortOptions);
-    },
-    []
-  );
+  const sortFiles = useCallback((newSortOptions: SortOptions) => {
+    setSortOptions(newSortOptions);
+  }, []);
 
   const removeFile = useCallback((id: string) => {
     setFiles((prevFiles) => prevFiles.filter((file) => file.id !== id));
@@ -68,10 +67,15 @@ export function useFiles(folderId: string) {
 
   const uploadNewFile = useCallback(
     async (fileData: FormData) => {
-      await uploadNewFile(fileData);
-      setPage(1);
-      setHasMore(true);
-      await fetchFiles(1, sortOptions);
+      try {
+        await uploadNewFile(fileData);
+        setPage(1);
+        setHasMore(true);
+        await fetchFiles(1, sortOptions);
+      } catch (error) {
+        console.error("Error uploading new file:", error);
+        throw error;
+      }
     },
     [fetchFiles, sortOptions]
   );

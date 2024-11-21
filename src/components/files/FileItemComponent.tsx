@@ -17,6 +17,74 @@ export const FileItemComponent: React.FC<{
   onRemove: (id: string) => void;
 }> = ({ file, onRemove }) => {
   const { showModal, hideModal } = useModal<ModalElementType>();
+
+  const handleRename = () => {
+    hideModal();
+    showModal?.({
+      title: "Update File Name",
+      body: (
+        <Input
+          defaultValue={file.name}
+          onSubmitEditing={(e) => {
+            // TODO: Implement update
+            hideModal();
+          }}
+        />
+      ),
+      actions: [
+        {
+          label: "Cancel",
+          onPress: hideModal,
+        },
+      ],
+    });
+  };
+
+  const handleDelete = () => {
+    hideModal();
+    showModal?.({
+      title: "Confirm Delete",
+      body: "Are you sure you want to delete this file?",
+      actions: [
+        {
+          label: "Cancel",
+          onPress: hideModal,
+        },
+        {
+          label: "Delete",
+          onPress: () => {
+            onRemove(file.id);
+            hideModal();
+          },
+        },
+      ],
+    });
+  };
+
+  const fileOptionsContent = (
+    <VStack space={3}>
+      <Button colorScheme="blue" onPress={handleRename}>
+        Rename
+      </Button>
+      <Button colorScheme="red" onPress={handleDelete}>
+        Delete
+      </Button>
+    </VStack>
+  );
+
+  const showFileOptions = () => {
+    showModal?.({
+      title: "File Options",
+      body: fileOptionsContent,
+      actions: [
+        {
+          label: "Close",
+          onPress: hideModal,
+        },
+      ],
+    });
+  };
+
   return (
     <View
       style={{
@@ -43,68 +111,7 @@ export const FileItemComponent: React.FC<{
           <Text fontSize="sm" color="gray.600" mt={1} numberOfLines={2}>{file.description}</Text>
         )} */}
       </View>
-
-      <IconButton
-        icon={<Icon name="more-vert" />}
-        onPress={() => {
-          showModal({
-            title: "File Options",
-            body: (
-              <VStack space={3}>
-                <Button
-                  colorScheme="blue"
-                  onPress={() => {
-                    hideModal();
-                    showModal({
-                      title: "Update File Name",
-                      body: (
-                        <Input
-                          defaultValue={file.name}
-                          onSubmitEditing={(e) => {
-                            // TODO: Implement update
-                            hideModal();
-                          }}
-                        />
-                      ),
-                    });
-                  }}
-                >
-                  Rename
-                </Button>
-
-                <Button
-                  colorScheme="red"
-                  onPress={() => {
-                    hideModal();
-                    showModal({
-                      title: "Confirm Delete",
-                      body: "Are you sure you want to delete this file?",
-                      footer: (
-                        <HStack space={2}>
-                          <Button variant="ghost" onPress={hideModal}>
-                            Cancel
-                          </Button>
-                          <Button
-                            colorScheme="red"
-                            onPress={() => {
-                              onRemove(file.id);
-                              hideModal();
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        </HStack>
-                      ),
-                    });
-                  }}
-                >
-                  Delete
-                </Button>
-              </VStack>
-            ),
-          });
-        }}
-      />
+      <IconButton icon={<Icon name="more-vert" />} onPress={showFileOptions} />
     </View>
   );
 };

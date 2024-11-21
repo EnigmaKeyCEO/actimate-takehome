@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { View, StyleSheet, Animated, useWindowDimensions } from "react-native";
 import { useNavigate, useParams } from "react-router-native";
 import { useTheme } from "native-base";
 import { FolderActions } from "#/components/actions/FolderActions";
 import { useFolders } from "#/hooks/useFolders";
 import { useFiles } from "#/hooks/useFiles";
-import { Folder, Image, SortOptions } from "#/types";
-import { useModal } from "#/components/Modal";
+import { Folder, SortOptions } from "#/types";
+import { ModalMessageType, useModal } from "#/components/Modal";
 import { FolderList } from "#/components/folders/FolderList";
 import { FilesList } from "#/components/files/FilesList";
 import { SortHeader } from "#/components/headers/SortHeader";
@@ -24,7 +24,7 @@ export function FolderScreen(passedProps: { parentId?: string }) {
   const navigate = useNavigate();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const theme = useTheme();
-  const { showModal } = useModal();
+  const { showModal } = useModal<ModalMessageType>();
   const { height } = useWindowDimensions();
 
   const [showFolderModal, setShowFolderModal] = useState(false);
@@ -44,6 +44,7 @@ export function FolderScreen(passedProps: { parentId?: string }) {
     deleteFolder,
     loadMoreFolders: doLoadMoreFolders,
     refreshFolders,
+    hasMoreFolders,
   } = useFolders(parentId);
 
   const {
@@ -65,8 +66,7 @@ export function FolderScreen(passedProps: { parentId?: string }) {
   );
 
   const handleCreateFolder = useCallback(
-    async (folderName: string) => {
-      // Create folder with the provided name
+    async (folderName: Folder["name"]) => {
       try {
         await createFolder({
           name: folderName,
@@ -74,60 +74,63 @@ export function FolderScreen(passedProps: { parentId?: string }) {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
-        showModal("Folder created successfully", "success");
-      } catch (err) {
-        console.error("Error creating folder:", err);
-        showModal("Failed to create folder", "error");
+        setShowFolderModal(false);
+      } catch (error: any) {
+        showModal(error.message, "error");
       }
-      setShowFolderModal(false);
-      setSortMenuOpen(false);
-      refreshFolders();
     },
-    [createFolder, parentId, showModal, refreshFolders]
+    [createFolder, showModal]
   );
 
-  const handleCancelCreateFolder = useCallback(() => {
-    setShowFolderModal(false);
-  }, []);
-
   const handleDeleteFolder = useCallback(
-    async (id: string) => {
+    async (folderId: string) => {
       try {
-        await deleteFolder(id);
-        showModal("Folder deleted", "success");
-      } catch (err) {
-        console.error("Error deleting folder:", err);
-        showModal("Failed to delete folder", "error");
+        await deleteFolder(folderId);
+      } catch (error: any) {
+        showModal(error.message, "error");
       }
     },
     [deleteFolder, showModal]
   );
 
   const handleUploadFile = useCallback(async () => {
-    try {
-      const result = await IP.launchImageLibraryAsync({
-        mediaTypes: IP.MediaTypeOptions.All,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-        base64: true,
-      });
+    // Implement your file upload logic here
+    // Example: Launch image picker and upload selected file
+    const result = await IP.launchImageLibraryAsync({
+      mediaTypes: IP.MediaTypeOptions.Images,
+      allowsEditing: true,
+      base64: true,
+    });
 
-      if (!result.canceled) {
-        const { uri, type, base64 } = result.assets[0];
-        const fileName = uri.split("/").pop() || "file";
-        const payload = new FormData();
-        payload.append("file", new File([base64!], fileName, { type }));
-
-        await uploadNewFile(payload);
-        showModal("File uploaded successfully", "success");
-        refreshFolders();
+    if (!result.canceled && result.assets[0].base64) {
+      const formData = new FormData();
+      formData.append("file", result.assets[0].base64);
+      try {
+        await uploadNewFile(formData);
+      } catch (error: any) {
+        showModal(error.message, "error");
       }
-    } catch (err) {
-      console.error("Error uploading file:", err);
-      showModal("Failed to upload file", "error");
     }
-  }, [uploadNewFile, showModal, refreshFolders]);
+  }, [uploadNewFile, showModal]);
+
+  // Debounced handlers to prevent rapid calls
+  const handleLoadMoreFolders = useCallback(
+    debounce(() => {
+      if (hasMoreFolders && !foldersLoading && !foldersError) {
+        doLoadMoreFolders();
+      }
+    }, 300),
+    [hasMoreFolders, foldersLoading, foldersError, doLoadMoreFolders]
+  );
+
+  const handleLoadMoreFiles = useCallback(
+    debounce(() => {
+      if (hasMoreFiles && !filesLoading && !filesError) {
+        doLoadMoreFiles();
+      }
+    }, 300),
+    [hasMoreFiles, filesLoading, filesError, doLoadMoreFiles]
+  );
 
   // Handle errors for both folders and files
   useEffect(() => {
@@ -138,7 +141,6 @@ export function FolderScreen(passedProps: { parentId?: string }) {
     }
   }, [foldersError, filesError, showModal]);
 
-  // Animate on mount
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
@@ -147,60 +149,38 @@ export function FolderScreen(passedProps: { parentId?: string }) {
     }).start();
   }, [fadeAnim]);
 
-  // Sort files when sortOptions change
   useEffect(() => {
     sortFiles(sortOptions);
   }, [sortOptions, sortFiles]);
 
-  // Toggle sort direction
-  const toggleSortDirection = useCallback((field: SortOptions["field"]) => {
-    setSortMenuOpen(false);
-    setSortOptions((prev: SortOptions) => {
-      return {
-        field,
-        direction: prev.direction === "asc" ? "desc" : "asc",
-      };
+  const sortedFolders = useMemo(() => {
+    return folders.sort((a, b) => {
+      if (sortOptions.direction === "asc") {
+        return a.name.localeCompare(b.name);
+      } else {
+        return b.name.localeCompare(a.name);
+      }
     });
-  }, []);
-
-  // Handle loading more folders
-  const handleLoadMoreFolders = useCallback(
-    debounce(() => {
-      if (!foldersLoading && !foldersError && folders.length % LIMIT === 0) {
-        doLoadMoreFolders();
-      }
-    }, 300),
-    [foldersLoading, foldersError, folders.length, doLoadMoreFolders]
-  );
-
-  // Handle loading more files
-  const handleLoadMoreFiles = useCallback(
-    debounce(() => {
-      if (
-        !filesLoading &&
-        hasMoreFiles &&
-        files.length % LIMIT === 0 &&
-        !filesError
-      ) {
-        doLoadMoreFiles();
-      }
-    }, 300),
-    [filesLoading, hasMoreFiles, files.length, doLoadMoreFiles, filesError]
-  );
+  }, [folders, sortOptions]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       {/* Sort Header */}
       <SortHeader
         sortOptions={sortOptions}
-        onSortChange={toggleSortDirection}
+        onSortChange={(field) => {
+          setSortOptions((prev) => ({
+            field,
+            direction: prev.direction === "asc" ? "desc" : "asc",
+          }));
+        }}
       />
 
       {/* Section List for Folders */}
       <View style={styles.section}>
         <SectionHeader title="Folders" />
         <FolderList
-          folders={folders}
+          folders={sortedFolders}
           loading={foldersLoading}
           error={foldersError ? foldersError.message : null}
           onFolderPress={handleFolderPress}
@@ -233,7 +213,7 @@ export function FolderScreen(passedProps: { parentId?: string }) {
       {/* Add Folder Modal */}
       <FolderModal
         isOpen={showFolderModal}
-        onClose={handleCancelCreateFolder}
+        onClose={() => setShowFolderModal(false)}
         onCreate={handleCreateFolder}
         error={foldersError ? foldersError.message : null}
       />

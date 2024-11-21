@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { Animated, FlatList, StyleSheet } from 'react-native';
 import { Folder } from '#/types';
-import { useModal } from '#/components/Modal'; // TODO: move to common or context or provider... somewhere i can remember, damn
+import { ModalMessageType, useModal } from '#/components/Modal'; // TODO: move to common or context or provider... somewhere i can remember, damn
 import { FolderItem } from './FolderItem';
 import { LoadingIndicator } from '#/components/common/LoadingIndicator';
 import { View } from 'native-base';
@@ -26,7 +26,7 @@ export const FolderList: React.FC<FolderListProps> = ({
   footer,
 }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const { showModal } = useModal();
+  const { showModal } = useModal<ModalMessageType>();
 
   useEffect(() => {
     if (error) {
@@ -42,12 +42,15 @@ export const FolderList: React.FC<FolderListProps> = ({
     }).start();
   }, [fadeAnim]);
 
-  const renderItem = ({ item }: { item: Folder }) => (
-    <FolderItem
-      folder={item}
-      onPress={onFolderPress}
-      onDelete={onDeleteFolder}
-    />
+  const renderItem = useCallback(
+    ({ item }: { item: Folder }) => (
+      <FolderItem
+        folder={item}
+        onPress={onFolderPress}
+        onDelete={onDeleteFolder}
+      />
+    ),
+    [onFolderPress, onDeleteFolder]
   );
 
   return (
@@ -57,7 +60,9 @@ export const FolderList: React.FC<FolderListProps> = ({
       keyExtractor={(item) => item.id}
       onEndReached={loadMoreFolders}
       onEndReachedThreshold={0.5}
-      ListFooterComponent={loading ? <LoadingIndicator /> : footer ?? <View style={{ height: 16 }} />}
+      ListFooterComponent={
+        loading ? <LoadingIndicator /> : footer ?? <View style={{ height: 16 }} />
+      }
       contentContainerStyle={styles.listContainer}
       style={styles.list}
     />

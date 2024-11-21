@@ -17,17 +17,18 @@ export type ModalConfigObject = {
   }[];
 };
 
+export type ModalConfigFunction = (config: ModalConfigObject) => void;
+export type ModalMessageFunction = (message: string, type: ModalType) => void;
+
 export type ModalType = "success" | "error" | "info";
 
-export type ModalContextType = {
+export type ModalContextBaseType = {
   isVisible: boolean;
-  showModal:
-    | ((message: string, type: ModalType) => void)
-    | ((config: ModalConfigObject) => void);
   hideModal: () => void;
 };
 
-export interface ModalElementType extends ModalContextType {
+export interface ModalElementType extends ModalContextBaseType {
+  showModal: ModalConfigFunction;
   body: React.ReactNode;
   actions: {
     label: string;
@@ -35,23 +36,25 @@ export interface ModalElementType extends ModalContextType {
   }[];
 }
 
-export interface ModalMessageType extends ModalContextType {
+export interface ModalMessageType extends ModalContextBaseType {
+  showModal: ModalMessageFunction;
   message: string;
   type: ModalType;
 }
 
-export type ModalConfigType = ModalContextType &
-  (ModalConfigObject | ModalMessageType);
+export type ModalContextType =
+  | (ModalContextBaseType & ModalConfigObject)
+  | (ModalContextBaseType & ModalMessageType);
 
-const ModalContext = createContext<ModalConfigType>({
+const ModalContext = createContext<ModalContextType>({
   isVisible: false,
-  showModal: () => {},
+  showModal: null as any,
   hideModal: () => {},
   message: "",
   type: "info",
-} as ModalConfigType);
+});
 
-export const useModal = <T extends ModalContextType>() => {
+export const useModal = <T extends ModalContextBaseType>() => {
   const context = useContext(ModalContext);
   if (!context) {
     throw new Error("useModal must be used within a ModalProvider");
@@ -69,7 +72,7 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
   const showModal = useCallback(
     (
       message: string | ModalConfigObject,
-      type: "success" | "error" | "info"
+      type: "success" | "error" | "info" = "info"
     ) => {
       if (typeof message === "string") {
         setMessage(message);
@@ -98,9 +101,13 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <ModalContext.Provider
-      value={
-        { isVisible, message, type, showModal, hideModal } as ModalConfigType
-      }
+      value={{
+        isVisible,
+        message: message as any, // TODO: fix this!
+        type,
+        showModal: showModal as any, // TODO: fix this!
+        hideModal,
+      }}
     >
       {children}
       <Modal />
@@ -109,7 +116,8 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
 };
 
 export const Modal = () => {
-  const { isVisible, message, type, hideModal } = useModal<ModalMessageType>();
+  // TODO: fix this type thing!
+  const { isVisible, message, type, hideModal } = useModal<any>();
 
   const getBackgroundColor = () => {
     switch (type) {
@@ -136,7 +144,9 @@ export const Modal = () => {
             { backgroundColor: getBackgroundColor() },
           ]}
         >
-          <Text style={styles.modalText}>{message}</Text>
+          <Text style={styles.modalText}>
+            {typeof message === "string" ? message : <>{message}</>}
+          </Text>
           <TouchableOpacity onPress={hideModal} style={styles.closeButton}>
             <Text style={styles.closeButtonText}>Close</Text>
           </TouchableOpacity>

@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import { Animated, FlatList, StyleSheet } from "react-native";
 import { FileItem } from "#/types";
-import { useModal } from "#/components/Modal";
+import { ModalMessageType, useModal } from "#/components/Modal";
 import { LoadingIndicator } from "#/components/common/LoadingIndicator";
 import { FileItemComponent } from "./FileItemComponent";
 import { View } from "native-base";
@@ -22,7 +22,7 @@ export const FilesList: React.FC<FilesListProps> = ({
   error,
 }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const { showModal } = useModal();
+  const { showModal, hideModal } = useModal<ModalMessageType>();
 
   useEffect(() => {
     if (error) {
@@ -38,8 +38,11 @@ export const FilesList: React.FC<FilesListProps> = ({
     }).start();
   }, [fadeAnim]);
 
-  const renderItem = ({ item }: { item: FileItem }) => (
-    <FileItemComponent file={item} onRemove={removeFile} />
+  const renderItem = useCallback(
+    ({ item }: { item: FileItem }) => (
+      <FileItemComponent file={item} onRemove={removeFile} />
+    ),
+    [removeFile]
   );
 
   return (
@@ -49,7 +52,9 @@ export const FilesList: React.FC<FilesListProps> = ({
       keyExtractor={(item) => item.id}
       onEndReached={loadMoreFiles}
       onEndReachedThreshold={0.5}
-      ListFooterComponent={loading ? <LoadingIndicator /> : <View style={{ height: 16 }} />}
+      ListFooterComponent={
+        loading ? <LoadingIndicator /> : <View style={{ height: 16 }} />
+      }
       contentContainerStyle={styles.listContainer}
       style={styles.list}
     />
@@ -63,4 +68,4 @@ const styles = StyleSheet.create({
   list: {
     flexGrow: 0,
   },
-}); 
+});

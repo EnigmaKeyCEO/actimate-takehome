@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useContext } from "react";
-import type { Folder, SortOptions, CreateFolderInput } from "../types";
+import { useState, useEffect, useCallback } from "react";
+import { CreateFolderInput, Folder, SortOptions } from "#/types";
 import {
   getFolders as apiFetchFolders,
   createFolder as apiCreateFolder,
@@ -7,7 +7,7 @@ import {
 } from "#/api";
 
 export function useFolders(parentId: string) {
-  const [folders, setFolders] = useState<Folder[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]); // Initialized as empty array
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const [sortOptions, setSortOptions] = useState<SortOptions>({
@@ -28,7 +28,9 @@ export function useFolders(parentId: string) {
           currentPage,
           currentSort
         );
-        const fetchedFolders = Array.isArray(response.folders) ? response.folders : [];
+        const fetchedFolders = Array.isArray(response.folders)
+          ? response.folders
+          : []; // Ensure array
 
         if (fetchedFolders.length === 0) {
           setHasMore(false);
@@ -52,7 +54,7 @@ export function useFolders(parentId: string) {
   );
 
   useEffect(() => {
-    setFolders([]);
+    setFolders([]); // Reset folders when parentId or sortOptions change
     setPage(1);
     setHasMore(true);
     setLastKey(null);
@@ -79,7 +81,9 @@ export function useFolders(parentId: string) {
       const newFolder = await apiCreateFolder(folderData as CreateFolderInput);
       setFolders((prev) => [newFolder, ...prev]);
     } catch (err: any) {
-      setError(err instanceof Error ? err : new Error("Failed to create folder"));
+      setError(
+        err instanceof Error ? err : new Error("Failed to create folder")
+      );
       throw err;
     }
   }, []);
@@ -89,7 +93,9 @@ export function useFolders(parentId: string) {
       await apiDeleteFolder(id);
       setFolders((prev) => prev.filter((folder) => folder.id !== id));
     } catch (err: any) {
-      setError(err instanceof Error ? err : new Error("Failed to delete folder"));
+      setError(
+        err instanceof Error ? err : new Error("Failed to delete folder")
+      );
       throw err;
     }
   }, []);
@@ -102,7 +108,6 @@ export function useFolders(parentId: string) {
     deleteFolder,
     loadMoreFolders,
     refreshFolders,
+    hasMoreFolders: hasMore,
   };
 }
-
-export default useFolders;
