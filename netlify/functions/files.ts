@@ -85,9 +85,7 @@ const handleGet = async (event: any, headers: any) => {
       Prefix: folderId === "root" ? "" : `${folderId}/`,
     };
     const listCommand = new ListObjectsV2Command(listParams);
-    console.warn("S3 result incoming...");
     const s3Result = await S3.send(listCommand);
-    console.warn("S3 result:", s3Result);
     const files: FileItem[] = [];
     if (s3Result.Contents) {
       for (const s3Object of s3Result.Contents) {
