@@ -17,6 +17,7 @@ import { FileItem } from "../../src/types/File";
 import { v4 as uuidv4 } from "uuid";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import multipart from "aws-lambda-multipart-parser";
 
 // Handler for GET requests to list files
 export const handler: Handler = async (event) => {
@@ -108,15 +109,30 @@ const handleGet = async (event: any, headers: any) => {
 const handlePost = async (event: any, headers: any) => {
   console.log("POST request received:", JSON.stringify(event, null, 2));
   try {
+    let parsedBody: any;
+
     if (!event.body) {
       throw new Error("Request body is missing.");
     }
 
-    const parsedBody = JSON.parse(event.body);
-    const { folderId, fileName, contentType } = parsedBody;
+    if (event.isBase64Encoded) {
+      // 'file' is the field name for the uploaded file
+      parsedBody = multipart.parse(event, "file");
+    } else {
+      parsedBody = JSON.parse(event.body);
+    }
 
-    if (!folderId || !fileName || !contentType) {
-      throw new Error("folderId, fileName, and contentType are required.");
+    console.log("Parsed body:", parsedBody);
+
+    const folderId = parsedBody.folderId;
+    const fileName = parsedBody.fileName;
+    const contentType = parsedBody.contentType;
+    const file = parsedBody.file; // Assuming 'file' contains the uploaded file
+
+    if (!folderId || !fileName || !contentType || !file) {
+      throw new Error(
+        "folderId, fileName, contentType, and file are required."
+      );
     }
 
     // Generate a unique file ID and S3 key
