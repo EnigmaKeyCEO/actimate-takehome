@@ -1,71 +1,57 @@
-import React, { useEffect, useRef, useCallback } from "react";
-import { Animated, FlatList, StyleSheet } from "react-native";
-import { FileItem } from "#/types";
-import { ModalMessageType, useModal } from "#/components/Modal";
-import { LoadingIndicator } from "#/components/common/LoadingIndicator";
-import { FileItemComponent } from "./FileItemComponent";
-import { View } from "native-base";
+import React from 'react';
+import { FlatList, View, Text, StyleSheet } from 'react-native';
+import { useModal } from '../Modal'; // Removed ModalMessageType import
+import { Button } from 'native-base';
+import { FileItem } from '../../types/File';
 
 interface FilesListProps {
   files: FileItem[];
   loadMoreFiles: () => void;
   removeFile: (id: string) => void;
-  loading: boolean;
-  error?: string | null;
+  loading?: boolean; // Made optional
+  error?: string | null; // Made optional
 }
 
-export const FilesList: React.FC<FilesListProps> = ({
-  files,
-  loadMoreFiles,
-  removeFile,
-  loading,
-  error,
-}) => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const { showModal, hideModal } = useModal<ModalMessageType>();
+export const FilesList: React.FC<FilesListProps> = ({ files, loadMoreFiles, removeFile, loading, error }) => {
+  const { showModal } = useModal(); // Removed generic type argument
 
-  useEffect(() => {
-    if (error) {
-      showModal(error, "error");
-    }
-  }, [error, showModal]);
-
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
-
-  const renderItem = useCallback(
-    ({ item }: { item: FileItem }) => (
-      <FileItemComponent file={item} onRemove={removeFile} />
-    ),
-    [removeFile]
+  const renderItem = ({ item }: { item: FileItem }) => (
+    <View style={styles.itemContainer}>
+      <Text style={styles.fileName}>{item.name}</Text>
+      <Button
+        onPress={() => showModal(`You pressed on ${item.name}`, 'info')}
+        accessibilityRole="button"
+        accessibilityLabel={`Press to interact with ${item.name}`}
+      >
+        Press
+      </Button>
+    </View>
   );
 
   return (
-    <Animated.FlatList
+    <FlatList
       data={files}
       renderItem={renderItem}
       keyExtractor={(item) => item.id}
+      contentContainerStyle={styles.listContainer}
       onEndReached={loadMoreFiles}
       onEndReachedThreshold={0.5}
-      ListFooterComponent={
-        loading ? <LoadingIndicator /> : <View style={{ height: 16 }} />
-      }
-      contentContainerStyle={styles.listContainer}
-      style={styles.list}
+      ListFooterComponent={<View style={{ height: 16 }} />}
     />
   );
 };
 
 const styles = StyleSheet.create({
   listContainer: {
-    paddingBottom: 20, // Ensure space for footer
+    padding: 16,
   },
-  list: {
-    flexGrow: 0,
+  itemContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  fileName: {
+    fontSize: 16,
   },
 });

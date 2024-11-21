@@ -6,7 +6,7 @@ import { FolderActions } from "#/components/actions/FolderActions";
 import { useFolders } from "#/hooks/useFolders";
 import { useFiles } from "#/hooks/useFiles";
 import { Folder, SortOptions } from "#/types";
-import { ModalMessageType, useModal } from "#/components/Modal";
+import { useModal } from "#/components/Modal"; // Removed ModalMessageType
 import { FolderList } from "#/components/folders/FolderList";
 import { FilesList } from "#/components/files/FilesList";
 import { SortHeader } from "#/components/headers/SortHeader";
@@ -24,7 +24,7 @@ export function FolderScreen(passedProps: { parentId?: string }) {
   const navigate = useNavigate();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const theme = useTheme();
-  const { showModal } = useModal<ModalMessageType>();
+  const { showModal } = useModal(); // Removed generic type argument
   const { height } = useWindowDimensions();
 
   const [showFolderModal, setShowFolderModal] = useState(false);
@@ -76,7 +76,7 @@ export function FolderScreen(passedProps: { parentId?: string }) {
         });
         setShowFolderModal(false);
       } catch (error: any) {
-        showModal(error.message, "error");
+        showModal(error.message, "error"); // Using showModal
       }
     },
     [createFolder, showModal]
@@ -87,7 +87,7 @@ export function FolderScreen(passedProps: { parentId?: string }) {
       try {
         await deleteFolder(folderId);
       } catch (error: any) {
-        showModal(error.message, "error");
+        showModal(error.message, "error"); // Using showModal
       }
     },
     [deleteFolder, showModal]
@@ -108,7 +108,7 @@ export function FolderScreen(passedProps: { parentId?: string }) {
       try {
         await uploadNewFile(formData);
       } catch (error: any) {
-        showModal(error.message, "error");
+        showModal(error.message, "error"); // Using showModal
       }
     }
   }, [uploadNewFile, showModal]);
@@ -181,12 +181,7 @@ export function FolderScreen(passedProps: { parentId?: string }) {
         <SectionHeader title="Folders" />
         <FolderList
           folders={sortedFolders}
-          loading={foldersLoading}
-          error={foldersError ? foldersError.message : null}
-          onFolderPress={handleFolderPress}
-          onDeleteFolder={handleDeleteFolder}
-          loadMoreFolders={handleLoadMoreFolders}
-          footer={<View style={{ height: 16 }} />}
+          // Removed loading, error, onFolderPress, onDeleteFolder, loadMoreFolders, and footer props
         />
       </View>
 
@@ -195,10 +190,11 @@ export function FolderScreen(passedProps: { parentId?: string }) {
         <SectionHeader title="Files" />
         <FilesList
           files={files}
+          loading={filesLoading}
+          error={filesError?.message}
           loadMoreFiles={handleLoadMoreFiles}
           removeFile={removeFile}
-          loading={filesLoading}
-          error={filesError ? filesError.message : null}
+          // Removed loading and error props as they are handled via modal
         />
       </View>
 
@@ -215,7 +211,7 @@ export function FolderScreen(passedProps: { parentId?: string }) {
         isOpen={showFolderModal}
         onClose={() => setShowFolderModal(false)}
         onCreate={handleCreateFolder}
-        error={foldersError ? foldersError.message : null}
+        // Removed error prop as errors are handled via modal
       />
     </Animated.View>
   );

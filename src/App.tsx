@@ -50,6 +50,7 @@ export default function App() {
               <Router future={{ v7_relativeSplatPath: true }}>
                 <Routes>
                   <Route path="/" element={<FolderScreen />} />
+                  <Route path="/folder" element={<FolderScreen />} />
                   <Route
                     path="/folder/:parentId"
                     element={<FolderScreen parentId=":parentId" />}

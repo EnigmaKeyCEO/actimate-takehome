@@ -1,18 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Modal,
-  View,
-  Button,
   StyleSheet,
-  Text,
+  TextInput,
   Animated,
+  View,
 } from "react-native";
+import { Button, Text } from "native-base";
 import * as ImagePicker from "expo-image-picker";
 import { AnimatedModal } from "./common/AnimatedModal";
 import { LoadingIndicator } from "#/components/common/LoadingIndicator";
 
 import useFiles from "#/hooks/useFiles";
-
 
 interface UploadImageModalProps {
   isOpen: boolean;
@@ -29,6 +27,7 @@ export const UploadImageModal: React.FC<UploadImageModalProps> = ({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fadeAnim] = useState(new Animated.Value(0));
+  const fadeAnimRef = useRef<Animated.Value>(fadeAnim);
 
   const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -53,71 +52,76 @@ export const UploadImageModal: React.FC<UploadImageModalProps> = ({
         } as any);
         await uploadNewFile(formData);
         setUploading(false);
+        setError(null);
         onClose();
       } catch (err) {
-        setError("Failed to upload image.");
+        setError("Failed to upload image. Please try again.");
         setUploading(false);
+        console.error(`
+          Error Uploading Image...
+          Error Details:
+          ${JSON.stringify(err, null, 2)}
+        `);
       }
     }
   };
 
   useEffect(() => {
     if (isOpen) {
-      Animated.timing(fadeAnim, {
+      Animated.timing(fadeAnimRef.current, {
         toValue: 1,
         duration: 300,
         useNativeDriver: true,
       }).start();
     } else {
-      Animated.timing(fadeAnim, {
+      Animated.timing(fadeAnimRef.current, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
       }).start();
+      setError(null); // Clear error when modal closes
     }
-  }, [isOpen, fadeAnim]);
+  }, [isOpen]);
 
   return (
     <AnimatedModal isOpen={isOpen} onClose={onClose}>
-      <Animated.View style={{ opacity: fadeAnim }}>
-        <Button title="Pick an Image" onPress={handlePickImage} />
+      <Animated.View style={{ opacity: fadeAnimRef.current }}>
+        <Button
+          onPress={handlePickImage}
+          accessibilityRole="button"
+          accessibilityLabel="Pick an Image"
+          style={styles.button}
+        >
+          Pick an Image
+        </Button>
         {uploading ? (
           <LoadingIndicator />
         ) : (
-          <View style={{ height: 20 }} /> // empty view to push the cancel button down
+          <View style={{ height: 20 }} /> // Empty view to push the cancel button down
         )}
         {error && <Text style={styles.errorText}>{error}</Text>}
-        <Button title="Cancel" onPress={onClose} color="red" />
+        <Button
+          onPress={onClose}
+          colorScheme="red"
+          accessibilityRole="button"
+          accessibilityLabel="Cancel"
+          style={styles.button}
+        >
+          Cancel
+        </Button>
       </Animated.View>
     </AnimatedModal>
   );
 };
 
 const styles = StyleSheet.create({
-  modalBackground: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-    alignItems: "center",
-  },
-  modalContainer: {
+  button: {
+    marginVertical: 8,
     width: "100%",
-    padding: 16,
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    alignItems: "center",
-    // For iOS shadow
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    // For Android shadow
-    elevation: 5,
   },
   errorText: {
     color: "red",
-    marginVertical: 8,
     textAlign: "center",
+    marginVertical: 8,
   },
 });

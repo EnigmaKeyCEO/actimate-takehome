@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Text, TextInput, Button, StyleSheet, Animated, View } from "react-native";
+import { TextInput, StyleSheet, Animated, View } from "react-native";
+import { Button, Text } from "native-base";
 import { useFolders } from "../hooks/useFolders";
 import { AnimatedModal } from "./common/AnimatedModal";
 
@@ -19,6 +20,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   const [folderName, setFolderName] = useState("");
   const { createFolder } = useFolders(parentId || "root");
   const [shakeAnim] = useState(new Animated.Value(0));
+  const [error, setError] = useState<string | null>(null);
 
   const handleCreate = async () => {
     if (!folderName.trim()) {
@@ -39,6 +41,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
           useNativeDriver: true,
         }),
       ]).start();
+      setError("Folder name cannot be empty.");
       return;
     }
 
@@ -51,8 +54,10 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
       });
       setFolderName("");
       setInputValue("");
+      setError(null);
       onClose();
     } catch (err) {
+      setError("Failed to create folder. Please try again.");
       console.error(`
         Error Creating Folder...
         Error Details:
@@ -63,7 +68,9 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
 
   return (
     <AnimatedModal isOpen={isOpen} onClose={onClose}>
-      <Text style={styles.title}>Create New Folder</Text>
+      <Text style={styles.title} accessibilityRole="header">
+        Create New Folder
+      </Text>
       <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
         <TextInput
           style={styles.input}
@@ -71,11 +78,18 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
           value={folderName}
           onChangeText={setFolderName}
           autoFocus
+          accessibilityLabel="Folder Name Input"
+          accessibilityHint="Enter the name of the new folder"
         />
       </Animated.View>
+      {error && <Text style={styles.errorText}>{error}</Text>}
       <View style={styles.buttonContainer}>
-        <Button title="Create" onPress={handleCreate} />
-        <Button title="Cancel" onPress={onClose} color="red" />
+        <Button onPress={handleCreate} accessibilityRole="button" accessibilityLabel="Create Folder">
+          Create
+        </Button>
+        <Button onPress={onClose} colorScheme="red" accessibilityRole="button" accessibilityLabel="Cancel">
+          Cancel
+        </Button>
       </View>
     </AnimatedModal>
   );
@@ -98,5 +112,10 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
+  },
+  errorText: {
+    color: "red",
+    textAlign: "center",
+    marginBottom: 10,
   },
 });

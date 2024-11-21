@@ -63,6 +63,8 @@
     "@expo/vector-icons": "^14.0.4",
     "@originjs/vite-plugin-commonjs": "^1.0.3",
     "@react-native/metro-config": "^0.76.2",
+    "@testing-library/react-native": "^12.8.1",
+    "@types/jest": "^29.5.14",
     "@types/lodash": "^4.17.13",
     "@types/multiparty": "^4.2.1",
     "@types/react": "~18.2.45",

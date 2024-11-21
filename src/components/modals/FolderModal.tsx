@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, StyleSheet } from "react-native";
-import { Button, useTheme } from "native-base";
+import { StyleSheet, TextInput, Animated, View } from "react-native";
+import { Button, Text } from "native-base";
 import { AnimatedModal } from "../common/AnimatedModal";
 
 interface FolderModalProps {
@@ -18,7 +18,7 @@ export const FolderModal: React.FC<FolderModalProps> = ({
 }) => {
   const [folderName, setFolderName] = useState("");
   const [folderNameError, setFolderNameError] = useState<string | null>(null);
-  const theme = useTheme();
+  const [shakeAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
     if (!isOpen) {
@@ -45,14 +45,20 @@ export const FolderModal: React.FC<FolderModalProps> = ({
       onClose={onClose}
       containerStyle={styles.modalContainer}
     >
-      <Text style={styles.modalTitle}>Create New Folder</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Folder Name"
-        value={folderName}
-        onChangeText={setFolderName}
-        autoCapitalize="none"
-      />
+      <Text style={styles.modalTitle} accessibilityRole="header">
+        Create New Folder
+      </Text>
+      <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
+        <TextInput
+          style={styles.input}
+          placeholder="Folder Name"
+          value={folderName}
+          onChangeText={setFolderName}
+          autoCapitalize="none"
+          accessibilityLabel="Folder Name Input"
+          accessibilityHint="Enter the name of the new folder"
+        />
+      </Animated.View>
       {folderNameError && (
         <Text style={styles.errorText}>{folderNameError}</Text>
       )}
@@ -63,6 +69,8 @@ export const FolderModal: React.FC<FolderModalProps> = ({
           colorScheme="error"
           onPress={onClose}
           style={styles.button}
+          accessibilityRole="button"
+          accessibilityLabel="Cancel"
         >
           Cancel
         </Button>
@@ -70,6 +78,8 @@ export const FolderModal: React.FC<FolderModalProps> = ({
           onPress={handleCreate}
           style={styles.button}
           colorScheme="primary"
+          accessibilityRole="button"
+          accessibilityLabel="Create Folder"
         >
           Create
         </Button>
@@ -105,8 +115,8 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: "red",
-    marginBottom: 10,
     textAlign: "center",
+    marginBottom: 10,
   },
   button: {
     flex: 1,
