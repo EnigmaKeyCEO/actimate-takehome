@@ -1,40 +1,59 @@
-import React from "react";
-import { FlatList, View, Text, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { FlatList, View, Text, StyleSheet, TextInput } from "react-native";
 import { useModal } from "../Modal";
 import { Button } from "native-base";
 import { FolderItem } from "#/components/folders/FolderItem";
 import { Folder } from "#/types/Folder";
-import { useNavigate, useNavigation } from "react-router-native";
-import { deleteFolder } from "#/api";
+import { useNavigate } from "react-router-native";
+import { useFolders } from "#/hooks/useFolders";
 
 interface FolderListProps {
   folders: Folder[];
 }
 
-const FolderForm = ({ folder }: { folder: Folder }) => {
-  return <Text>Input Form Coming Soon</Text>;
-};
-
 export const FolderList: React.FC<FolderListProps> = ({ folders }) => {
   const { showModal, hideModal } = useModal();
-  const genericNavigate = useNavigate();
+  const navigate = useNavigate();
+  const { deleteFolder, updateFolder } = useFolders("root"); // Adjust parentId as needed
 
   const renderItem = ({ item }: { item: Folder }) => (
     <FolderItem
-      key={item.id}
+      key={`${item.parentId}-${item.id}`}
       folder={item}
       onPress={() => {
-        genericNavigate(`/folder/${item.id}`);
+        navigate(`/folder/${item.id}`);
       }}
       onUpdate={() => {
+        let updatedName = item.name;
+
         showModal({
           title: "Update Folder",
-          body: <FolderForm folder={item} />,
-          actions: [{ label: "Update", onPress: () => {} }],
+          body: (
+            <FolderForm
+              folder={item}
+              onChangeName={(name) => {
+                updatedName = name;
+              }}
+            />
+          ),
+          actions: [
+            { label: "Cancel", onPress: hideModal },
+            {
+              label: "Update",
+              onPress: async () => {
+                try {
+                  await updateFolder(item.id, { name: updatedName });
+                  hideModal();
+                } catch (error: any) {
+                  console.error("Error updating folder:", error);
+                }
+              },
+            },
+          ],
         });
       }}
       onCreate={() => {
-        console.log("how did you find this button, it's illogical");
+        console.log("Create subfolder functionality not implemented yet.");
       }}
       onDelete={() => {
         showModal({
@@ -50,7 +69,11 @@ export const FolderList: React.FC<FolderListProps> = ({ folders }) => {
                   hideModal();
                 } catch (error: any) {
                   console.error("Error deleting folder:", error);
-                  showModal("Failed to delete folder.", "error");
+                  showModal({
+                    title: "Error",
+                    body: <Text>Failed to delete folder.</Text>,
+                    actions: [{ label: "OK", onPress: hideModal }],
+                  });
                 }
               },
             },
@@ -70,6 +93,32 @@ export const FolderList: React.FC<FolderListProps> = ({ folders }) => {
   );
 };
 
+interface FolderFormProps {
+  folder: Folder;
+  onChangeName: (name: string) => void;
+}
+
+const FolderForm: React.FC<FolderFormProps> = ({ folder, onChangeName }) => {
+  const [name, setName] = useState(folder.name);
+
+  const handleNameChange = (text: string) => {
+    setName(text);
+    onChangeName(text);
+  };
+
+  return (
+    <View style={styles.formContainer}>
+      <Text style={styles.label}>Folder Name:</Text>
+      <TextInput
+        style={styles.input}
+        value={name}
+        onChangeText={handleNameChange}
+        placeholder="Enter folder name"
+      />
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   listContainer: {
     padding: 16,
@@ -81,6 +130,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   folderName: {
+    fontSize: 16,
+  },
+  formContainer: {
+    marginVertical: 16,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 4,
+    padding: 8,
     fontSize: 16,
   },
 });

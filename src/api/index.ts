@@ -31,12 +31,12 @@ const handle = async (response: Response, ...more: any[]) => {
 
 // Folders
 export const getFolders = async (
-  folderId: string,
+  parentId: string,
   page: number,
   sort: SortOptions
 ): Promise<{ folders: Folder[]; lastKey?: any }> => {
   const url = new URL(`${API_BASE_URL}/folders`);
-  url.searchParams.append("folderId", folderId);
+  url.searchParams.append("parentId", parentId);
   url.searchParams.append("sortField", sort.field);
   url.searchParams.append("sortDirection", sort.direction);
   url.searchParams.append("page", page.toString());
@@ -76,6 +76,20 @@ export const createFolder = async (
     console.error("Error Creating folder:", error); // Log the error
     throw error; // Re-throw the error to be handled by the caller
   }
+};
+
+export const updateFolder = async (
+  id: string,
+  updateData: Partial<Folder>
+): Promise<Folder> => {
+  const response = await fetch(`${API_BASE_URL}/folders/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(updateData),
+  });
+  return handle(response);
 };
 
 export const deleteFolder = async (id: string): Promise<void> => {

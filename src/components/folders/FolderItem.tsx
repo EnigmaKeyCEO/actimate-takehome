@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Menu, IconButton } from "native-base";
+import { Menu, IconButton, Icon, Pressable } from "native-base";
+import { MaterialIcons } from "@expo/vector-icons";
 import { Folder } from "#/types";
 
 interface FolderItemProps {
@@ -8,7 +9,7 @@ interface FolderItemProps {
   onPress: (folder: Folder) => void;
   onDelete: (folderId: string) => void;
   onUpdate: (folder: Folder) => void;
-  onCreate: (folderId: string) => void;
+  onCreate: (parentId: string) => void;
 }
 
 export const FolderItem: React.FC<FolderItemProps> = ({
@@ -39,15 +40,22 @@ export const FolderItem: React.FC<FolderItemProps> = ({
           </View>
         </View>
       </TouchableOpacity>
-      {/* <Menu
-        trigger={(triggerProps) => (
-          <IconButton {...triggerProps} icon="more-vert" variant="ghost" />
-        )}
+      <Menu
+        trigger={(triggerProps) => {
+          return (
+            <Pressable {...triggerProps}>
+              <IconButton
+                icon={<Icon as={MaterialIcons} name="more-vert" size="sm" />}
+                variant="ghost"
+              />
+            </Pressable>
+          );
+        }}
       >
         <Menu.Item onPress={() => onUpdate(folder)}>Edit</Menu.Item>
         <Menu.Item onPress={() => onCreate(folder.id)}>New Subfolder</Menu.Item>
         <Menu.Item onPress={() => onDelete(folder.id)}>Delete</Menu.Item>
-      </Menu> */}
+      </Menu>
     </View>
   );
 };

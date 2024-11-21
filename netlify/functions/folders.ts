@@ -121,12 +121,20 @@ const handlePost = async (event: any, headers: any) => {
     const command = new PutItemCommand(params);
     await dynamoDb.send(command);
 
+    const folder: Folder = {
+      id: folderId,
+      name: name,
+      parentId: parentId || "root",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+
     return {
       statusCode: 201,
       headers,
       body: JSON.stringify({
         message: "Folder created successfully",
-        folderId,
+        folder,
       }),
     };
   } catch (error: any) {
@@ -139,7 +147,7 @@ const handlePost = async (event: any, headers: any) => {
   }
 };
 
-// Similar implementations for handlePut and handleDelete with type checks and logging
+// Handler for PUT requests to update a folder
 const handlePut = async (event: any, headers: any) => {
   console.log(
     "PUT request received for folders:",
@@ -208,11 +216,16 @@ const handlePut = async (event: any, headers: any) => {
     } as UpdateItemCommandInput;
 
     const updateCommand = new UpdateItemCommand(updateParams);
-    await dynamoDb.send(updateCommand);
+    const updateResult = await dynamoDb.send(updateCommand);
+    const updatedFolder = unmarshall(updateResult.Attributes!) as Folder;
+
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ message: "Folder updated successfully" }),
+      body: JSON.stringify({
+        message: "Folder updated successfully",
+        folder: updatedFolder,
+      }),
     };
   } catch (error: any) {
     console.error("Error in handlePut for folders:", error);
@@ -224,6 +237,7 @@ const handlePut = async (event: any, headers: any) => {
   }
 };
 
+// Handler for DELETE requests to delete a folder
 const handleDelete = async (event: any, headers: any) => {
   console.log(
     "DELETE request received for folders:",

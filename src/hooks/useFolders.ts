@@ -5,6 +5,7 @@ import {
   getFolderById,
   createFolder as apiCreateFolder,
   deleteFolder as apiDeleteFolder,
+  updateFolder as apiUpdateFolder,
 } from "#/api";
 
 export function useFolders(parentId: string) {
@@ -19,7 +20,10 @@ export function useFolders(parentId: string) {
   const [hasMore, setHasMore] = useState<boolean>(true);
 
   const fetchFolders = useCallback(
-    async (currentPage: number = 1, currentSort: SortOptions = sortOptions) => {
+    async (
+      currentPage: number = 1,
+      currentSort: SortOptions = sortOptions
+    ) => {
       setLoading(true);
       setError(null);
       try {
@@ -74,7 +78,9 @@ export function useFolders(parentId: string) {
   const createFolder = useCallback(
     async (folderData: Partial<Folder>) => {
       try {
-        const newFolder = await apiCreateFolder(folderData as CreateFolderInput);
+        const newFolder = await apiCreateFolder(
+          folderData as CreateFolderInput
+        );
         setFolders((prev) => [newFolder, ...prev]);
       } catch (err: any) {
         setError(
@@ -83,7 +89,7 @@ export function useFolders(parentId: string) {
         throw err;
       }
     },
-    [apiCreateFolder]
+    []
   );
 
   const deleteFolder = useCallback(
@@ -98,7 +104,24 @@ export function useFolders(parentId: string) {
         throw err;
       }
     },
-    [apiDeleteFolder]
+    []
+  );
+
+  const updateFolder = useCallback(
+    async (id: string, updateData: Partial<Folder>) => {
+      try {
+        const updatedFolder = await apiUpdateFolder(id, updateData);
+        setFolders((prev) =>
+          prev.map((folder) => (folder.id === id ? updatedFolder : folder))
+        );
+      } catch (err: any) {
+        setError(
+          err instanceof Error ? err : new Error("Failed to update folder")
+        );
+        throw err;
+      }
+    },
+    []
   );
 
   const fetchSingleFolder = useCallback(
@@ -120,6 +143,7 @@ export function useFolders(parentId: string) {
     error,
     createFolder,
     deleteFolder,
+    updateFolder,
     loadMoreFolders,
     refreshFolders,
     hasMoreFolders: hasMore,

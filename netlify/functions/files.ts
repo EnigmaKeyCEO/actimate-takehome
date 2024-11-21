@@ -111,6 +111,32 @@ const handlePost = async (event: any, headers: any) => {
     if (event.isBase64Encoded) {
       const decodedBody = Buffer.from(event.body, "base64").toString();
       console.log("Decoded body:", decodedBody);
+      // Parse multipart form data
+      const boundary = event.headers['content-type'].split('boundary=')[1];
+      const parts = decodedBody.split(`--${boundary}`);
+      
+      // Initialize variables to store form fields
+      let folderId, fileName, contentType;
+
+      // Process each part
+      for (const part of parts) {
+        if (part.includes('Content-Disposition')) {
+          const lines = part.split('\r\n');
+          const contentDisposition = lines.find(line => line.includes('Content-Disposition'));
+          
+          if (contentDisposition) {
+            if (contentDisposition.includes('name="folderId"')) {
+              folderId = lines[lines.length - 2];
+            } else if (contentDisposition.includes('name="fileName"')) {
+              fileName = lines[lines.length - 2];
+            } else if (contentDisposition.includes('name="contentType"')) {
+              contentType = lines[lines.length - 2];
+            }
+          }
+        }
+      }
+
+      // Create parsed body object
       parsedBody = JSON.parse(decodedBody);
     } else {
       parsedBody = JSON.parse(event.body); 
