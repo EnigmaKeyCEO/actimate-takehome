@@ -65,13 +65,24 @@ export const handler: Handler = async (event) => {
 
 // Handler for GET requests to list files
 const handleGet = async (event: any, headers: any) => {
-  const folderId = event.queryStringParameters?.folderId || 'root';
+  const folderId = event.queryStringParameters?.folderId;
+  const lastKey = event.queryStringParameters?.lastKey;
+
+  if (!folderId) {
+    return {
+      statusCode: 400,
+      headers,
+      body: JSON.stringify({
+        message: "A parent folder is required, or send 'root' as folderId",
+      }),
+    };
+  }
 
   try {
     // List objects in the S3 bucket
     const listParams = {
       Bucket: process.env.VITE_AWS_BUCKET_NAME!,
-      Prefix: folderId === 'root' ? '' : `${folderId}/`,
+      // Prefix: folderId === "root" ? "" : `${folderId}/`, // Uncomment for folder-based organization
     };
     const listCommand = new ListObjectsV2Command(listParams);
     const s3Result = await S3.send(listCommand);
@@ -79,7 +90,7 @@ const handleGet = async (event: any, headers: any) => {
     const files: FileItem[] = [];
     if (s3Result.Contents) {
       for (const s3Object of s3Result.Contents) {
-        const fileName = s3Object.Key?.split('/').pop();
+        const fileName = s3Object.Key?.split("/").pop();
         if (fileName) {
           const fileItem: FileItem = {
             id: uuidv4(),
