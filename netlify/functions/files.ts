@@ -16,6 +16,7 @@ import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { FileItem } from "../../src/types/File";
 import { v4 as uuidv4 } from "uuid";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export const handler: Handler = async (event) => {
   const headers = {
@@ -102,98 +103,58 @@ const handleGet = async (event: any, headers: any) => {
   };
 };
 
-// Handler for POST requests to upload a new file
+// Handler for POST requests to generate a pre-signed URL for file upload
 const handlePost = async (event: any, headers: any) => {
   console.log("POST request received:", JSON.stringify(event, null, 2));
   try {
-    // Validate HTTP headers for content type
-    const contentType =
-      event.headers["content-type"] || event.headers["Content-Type"];
-    if (!contentType || !contentType.startsWith("multipart/form-data")) {
-      throw new Error("Invalid content type. Expected multipart/form-data.");
+    const body = JSON.parse(event.body);
+    const { folderId, fileName, contentType } = body;
+
+    if (!folderId || !fileName || !contentType) {
+      throw new Error("folderId, fileName, and contentType are required.");
     }
 
-    // Ensure the body is base64-decoded if `isBase64Encoded` is true
-    const decodedBody = event.isBase64Encoded
-      ? Buffer.from(event.body, "base64").toString("utf-8")
-      : event.body;
-
-    console.debug("decodedBody", decodedBody);
-
-    // Validate that decodedBody contains the required parts
-    const boundaryMatch = contentType.match(/boundary=(.+)$/);
-    if (!boundaryMatch) {
-      throw new Error("Boundary not found in content type.");
-    }
-    const boundary = boundaryMatch[1];
-    const parts = decodedBody.split(`--${boundary}`);
-
-    let base64Image = "";
-    for (const part of parts) {
-      if (
-        part.includes("Content-Disposition") &&
-        part.includes('name="file"')
-      ) {
-        // Extract the base64 content
-        const dataMatch = part.match(/\r\n\r\n([\s\S]+)\r\n$/);
-        if (dataMatch && dataMatch[1]) {
-          base64Image = dataMatch[1].trim();
-        }
-        break;
-      }
-    }
-
-    if (!base64Image) {
-      throw new Error("Base64 image string not found in the request body.");
-    }
-
-    // Convert the base64 string into a Buffer for S3 upload
-    const fileBuffer = Buffer.from(base64Image, "base64");
-
-    // Further validation: Check if fileBuffer is valid
-    if (!fileBuffer || fileBuffer.length === 0) {
-      throw new Error("Invalid file data.");
-    }
-
-    // S3 Upload Parameters
-    const s3Params = {
-      Bucket: process.env.VITE_S3_BUCKET_NAME!,
-      Key: `uploads/${Date.now()}-image.webp`, // Example key
-      Body: fileBuffer,
-      ContentType: "image/webp", // Adjust based on your use case
-    };
-
-    const uploadCommand = new PutObjectCommand(s3Params);
-    const uploadResult = await S3.send(uploadCommand);
-    console.log("File uploaded to S3:", uploadResult);
-
-    // DynamoDB PutItem Parameters
+    // Generate a unique file ID and S3 key
     const fileId = uuidv4();
+    const s3Key = `uploads/${Date.now()}-${fileId}-${fileName}`;
+
+    // Create S3 PutObjectCommand
+    const putCommand = new PutObjectCommand({
+      Bucket: process.env.VITE_AWS_BUCKET_NAME!,
+      Key: s3Key,
+      ContentType: contentType,
+    });
+
+    // Generate pre-signed URL valid for 1 hour
+    const signedUrl = await getSignedUrl(S3, putCommand, { expiresIn: 3600 });
+
+    // Store file metadata in DynamoDB
     const dynamoParams = {
       TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
       Item: {
         id: { S: fileId },
-        folderId: { S: "root" }, // Adjust based on your context
-        key: { S: s3Params.Key },
-        name: { S: `Image_${fileId}` }, // Example name
+        folderId: { S: String(folderId) },
+        key: { S: s3Key },
+        name: { S: fileName },
         url: {
-          S: `https://${process.env.VITE_S3_BUCKET_NAME}.s3.amazonaws.com/${s3Params.Key}`,
+          S: `https://${process.env.VITE_AWS_BUCKET_NAME}.s3.amazonaws.com/${s3Key}`,
         },
         createdAt: { S: new Date().toISOString() },
         updatedAt: { S: new Date().toISOString() },
       },
     };
 
-    const putCommand = new PutItemCommand(dynamoParams);
-    const putResult = await dynamoDb.send(putCommand);
-    console.log("File metadata stored in DynamoDB:", putResult);
+    const putDynamoCommand = new PutItemCommand(dynamoParams);
+    await dynamoDb.send(putDynamoCommand);
+    console.log("File metadata stored in DynamoDB:", dynamoParams.Item);
 
     return {
-      statusCode: 201,
+      statusCode: 200,
       headers,
       body: JSON.stringify({
-        message: "File uploaded successfully",
+        message: "Pre-signed URL generated successfully",
         fileId,
+        signedUrl,
       }),
     };
   } catch (error: any) {
@@ -239,8 +200,8 @@ const handlePut = async (event: any, headers: any) => {
     newKey = `${newFolderId}/${newName}`;
 
     const copyParams = {
-      Bucket: process.env.VITE_S3_BUCKET_NAME!,
-      CopySource: `${process.env.VITE_S3_BUCKET_NAME}/${existingFile.key}`,
+      Bucket: process.env.VITE_AWS_BUCKET_NAME!,
+      CopySource: `${process.env.VITE_AWS_BUCKET_NAME}/${existingFile.key}`,
       Key: newKey,
     };
 
@@ -248,7 +209,7 @@ const handlePut = async (event: any, headers: any) => {
     await S3.send(copyCommand);
 
     const deleteParams = {
-      Bucket: process.env.VITE_S3_BUCKET_NAME!,
+      Bucket: process.env.VITE_AWS_BUCKET_NAME!,
       Key: existingFile.key,
     };
 
@@ -273,7 +234,7 @@ const handlePut = async (event: any, headers: any) => {
       ":name": { S: updateData.name || existingFile.name },
       ":key": { S: newKey },
       ":url": {
-        S: `https://${process.env.VITE_S3_BUCKET_NAME}.s3.${process.env.VITE_AWS_REGION}.amazonaws.com/${newKey}`,
+        S: `https://${process.env.VITE_AWS_BUCKET_NAME}.s3.${process.env.VITE_AWS_REGION}.amazonaws.com/${newKey}`,
       },
       ":updatedAt": { S: updatedAt },
     },
@@ -314,7 +275,6 @@ const handleDelete = async (event: any, headers: any) => {
         id: { S: String(fileId) }, // Ensure string type
       },
     };
-
     console.debug(
       "DynamoDB DeleteItem params:",
       JSON.stringify(params, null, 2)
@@ -324,8 +284,17 @@ const handleDelete = async (event: any, headers: any) => {
     const result = await dynamoDb.send(command);
     console.log("File deleted from DynamoDB:", result);
 
-    // Optionally, delete the file from S3 as well
-    // ...
+    // Delete the file from S3 as well
+    const fileKey = await getFileKeyFromDynamoDB(fileId);
+    if (fileKey) {
+      const deleteS3Params = {
+        Bucket: process.env.VITE_AWS_BUCKET_NAME!,
+        Key: fileKey,
+      };
+      const deleteS3Command = new DeleteObjectCommand(deleteS3Params);
+      await S3.send(deleteS3Command);
+      console.log("File deleted from S3:", fileKey);
+    }
 
     return {
       statusCode: 200,
@@ -340,4 +309,23 @@ const handleDelete = async (event: any, headers: any) => {
       body: JSON.stringify({ message: error.message }),
     };
   }
+};
+
+const getFileKeyFromDynamoDB = async (fileId: string): Promise<string | null> => {
+  const getParams = {
+    TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
+    Key: {
+      id: { S: fileId },
+    },
+  };
+
+  const getCommand = new GetItemCommand(getParams);
+  const getResult = await dynamoDb.send(getCommand);
+
+  if (getResult.Item) {
+    const file: FileItem = unmarshall(getResult.Item) as FileItem;
+    return file.key;
+  }
+
+  return null;
 };
