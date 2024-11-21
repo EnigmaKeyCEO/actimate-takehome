@@ -4,6 +4,7 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
   CopyObjectCommand,
+  ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import {
   DeleteItemCommand,
@@ -64,45 +65,81 @@ export const handler: Handler = async (event) => {
 
 // Handler for GET requests to list files
 const handleGet = async (event: any, headers: any) => {
-  const folderId = event.queryStringParameters?.folderId;
-  const lastKey = event.queryStringParameters?.lastKey;
+  const folderId = event.queryStringParameters?.folderId || 'root';
 
-  if (!folderId) {
+  try {
+    // List objects in the S3 bucket
+    const listParams = {
+      Bucket: process.env.VITE_AWS_BUCKET_NAME!,
+      Prefix: folderId === 'root' ? '' : `${folderId}/`,
+    };
+    const listCommand = new ListObjectsV2Command(listParams);
+    const s3Result = await S3.send(listCommand);
+
+    const files: FileItem[] = [];
+    if (s3Result.Contents) {
+      for (const s3Object of s3Result.Contents) {
+        const fileName = s3Object.Key?.split('/').pop();
+        if (fileName) {
+          const fileItem: FileItem = {
+            id: uuidv4(),
+            folderId,
+            key: s3Object.Key!,
+            name: fileName,
+            url: `https://${process.env.VITE_AWS_BUCKET_NAME}.s3.amazonaws.com/${s3Object.Key}`,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+
+          // Check if the file exists in DynamoDB
+          const getParams = {
+            TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
+            Key: {
+              id: { S: fileItem.id },
+            },
+          };
+          const getCommand = new GetItemCommand(getParams);
+          const getResult = await dynamoDb.send(getCommand);
+
+          if (!getResult.Item) {
+            // Add file to DynamoDB if it doesn't exist
+            const putParams = {
+              TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
+              Item: {
+                id: { S: fileItem.id },
+                folderId: { S: fileItem.folderId },
+                key: { S: fileItem.key },
+                name: { S: fileItem.name },
+                url: { S: fileItem.url },
+                createdAt: { S: fileItem.createdAt },
+                updatedAt: { S: fileItem.updatedAt },
+              },
+            };
+            const putCommand = new PutItemCommand(putParams);
+            await dynamoDb.send(putCommand);
+          }
+
+          files.push(fileItem);
+        }
+      }
+    }
+
     return {
-      statusCode: 400,
+      statusCode: 200,
       headers,
-      body: JSON.stringify({ message: "folderId is required" }),
+      body: JSON.stringify({
+        files,
+        lastKey: null, // Adjust as needed for pagination
+      }),
+    };
+  } catch (error) {
+    console.error("Error listing files from S3:", error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ message: "Error listing files from S3" }),
     };
   }
-
-  const params = {
-    TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
-    IndexName: "folderId-index",
-    KeyConditionExpression: "folderId = :folderId",
-    ExpressionAttributeValues: {
-      ":folderId": String(folderId),
-    },
-    ScanIndexForward: true,
-    Limit: 20,
-    ExclusiveStartKey: lastKey ? JSON.parse(lastKey) : undefined,
-  };
-
-  const command = new QueryCommand(params);
-  const result = await dynamoDb.send(command);
-  const files: FileItem[] = result.Items
-    ? result.Items.map((item) => unmarshall(item) as FileItem)
-    : [];
-
-  return {
-    statusCode: 200,
-    headers,
-    body: JSON.stringify({
-      files,
-      lastKey: result.LastEvaluatedKey
-        ? JSON.stringify(result.LastEvaluatedKey)
-        : null,
-    }),
-  };
 };
 
 // Handler for POST requests to generate a pre-signed URL for file upload
