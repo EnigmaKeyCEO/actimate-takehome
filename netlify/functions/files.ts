@@ -107,8 +107,14 @@ const handleGet = async (event: any, headers: any) => {
 const handlePost = async (event: any, headers: any) => {
   console.log("POST request received:", JSON.stringify(event, null, 2));
   try {
-    const body = JSON.parse(event.body);
-    const { folderId, fileName, contentType } = body;
+    let parsedBody;
+    if (event.isBase64Encoded) {
+      const decodedBody = Buffer.from(event.body, 'base64').toString();
+      parsedBody = JSON.parse(decodedBody);
+    } else {
+      parsedBody = JSON.parse(event.body); 
+    }
+    const { folderId, fileName, contentType } = parsedBody;
 
     if (!folderId || !fileName || !contentType) {
       throw new Error("folderId, fileName, and contentType are required.");
@@ -311,7 +317,9 @@ const handleDelete = async (event: any, headers: any) => {
   }
 };
 
-const getFileKeyFromDynamoDB = async (fileId: string): Promise<string | null> => {
+const getFileKeyFromDynamoDB = async (
+  fileId: string
+): Promise<string | null> => {
   const getParams = {
     TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
     Key: {

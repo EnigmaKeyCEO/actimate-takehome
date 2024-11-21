@@ -7,13 +7,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "VITE_FIREBASE_PROJECT_ID": "actimate-takehome",
-        "VITE_FIREBASE_API_KEY": "AIzaSyABpSQKu6WDobk6APtvNpgszHnGz3nvTio",
-        "VITE_FIREBASE_AUTH_DOMAIN": "actimate-takehome.firebaseapp.com",
-        "VITE_FIREBASE_STORAGE_BUCKET": "actimate-takehome.firebasestorage.app",
-        "VITE_FIREBASE_MESSAGING_SENDER_ID": "164991721102",
-        "VITE_FIREBASE_APP_ID": "1:164991721102:web:9ff3b8b9e14f648d3873df",
-        "VITE_FIREBASE_MEASUREMENT_ID": "G-RQJFL21XKQ"
+        "VITE_API_BASE_URL": "https://0.0.0.0:3000/.netlify/functions"
       },
       "ios": {
         "simulator": true
@@ -21,12 +15,22 @@
     },
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "VITE_API_BASE_URL": "https://actimate-takehome.netlify.app/api"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "VITE_API_BASE_URL": "https://actimate-takehome.netlify.app/api"
+      }
     },
-    "production": {}
+    "production": {
+      "env": {
+        "VITE_API_BASE_URL": "https://actimate-takehome.netlify.app/api"
+      }
+    }
   },
   "submit": {
     "production": {}

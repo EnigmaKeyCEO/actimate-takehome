@@ -1,19 +1,6 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
-import {
-  View,
-  StyleSheet,
-  Animated,
-  useWindowDimensions,
-  ActivityIndicator,
-} from "react-native";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { View, StyleSheet, Animated, ActivityIndicator } from "react-native";
 import { useNavigate, useParams } from "react-router-native";
-import { useTheme } from "native-base";
 import { FolderActions } from "#/components/actions/FolderActions";
 import { useFolders } from "#/hooks/useFolders";
 import { useFiles } from "#/hooks/useFiles";
@@ -23,7 +10,6 @@ import { FolderList } from "#/components/folders/FolderList";
 import { FilesList } from "#/components/files/FilesList";
 import { SortHeader } from "#/components/headers/SortHeader";
 import { SectionHeader } from "#/components/headers/SectionHeader";
-import { LoadingIndicator } from "#/components/common/LoadingIndicator";
 import { FolderModal } from "#/components/modals/FolderModal";
 import * as IP from "expo-image-picker";
 import { debounce } from "lodash";
@@ -221,7 +207,8 @@ export function FolderScreen(passedProps: { folderId?: string }) {
         onSortChange={(field) => {
           setSortOptions((prev) => ({
             field,
-            direction: prev.direction === "asc" ? "desc" : "asc",
+            direction:
+              prev.field === field && prev.direction === "asc" ? "desc" : "asc",
           }));
         }}
       />
