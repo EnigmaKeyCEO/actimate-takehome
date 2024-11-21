@@ -12,7 +12,7 @@ const handle = async (response: Response, ...more: any[]) => {
     if (more && process.env.NODE_ENV === "development") {
       console.log("Request:", JSON.stringify(more, null, 2));
     }
-    if (!response.json) {
+    if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || "API Error", {
         cause: errorData,
@@ -73,7 +73,7 @@ export const createFolder = async (
     console.log("Folder created successfully:", createdFolder); // Log the created folder
     return createdFolder;
   } catch (error: any) {
-    console.error("Error CReating folder:", error); // Log the error
+    console.error("Error Creating folder:", error); // Log the error
     throw error; // Re-throw the error to be handled by the caller
   }
 };
@@ -86,6 +86,16 @@ export const deleteFolder = async (id: string): Promise<void> => {
     const errorData = await response.json();
     throw new Error(errorData.message || "Failed to delete folder");
   }
+};
+
+// New: Get Folder by ID
+export const getFolderById = async (id: string): Promise<Folder> => {
+  const url = new URL(`${API_BASE_URL}/folders/${id}`);
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+  });
+  return handle(response, url);
 };
 
 // Files

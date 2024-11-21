@@ -12,7 +12,7 @@ import {
 } from "react-router-dom";
 import { LogBox, Platform, SafeAreaView } from "react-native";
 import { NativeBaseProvider, extendTheme } from "native-base";
-import { FolderScreen } from "./screens/FolderScreen";
+import { FolderScreen } from "./screens/MainScreen";
 import { Modal, ModalProvider } from "#/components/Modal";
 import { FolderProvider } from "#/providers/FolderProvider";
 
@@ -50,10 +50,11 @@ export default function App() {
               <Router future={{ v7_relativeSplatPath: true }}>
                 <Routes>
                   <Route path="/" element={<FolderScreen />} />
+                  {/* TODO: come up with better routing solution, works for now */}
                   <Route path="/folder" element={<FolderScreen />} />
                   <Route
-                    path="/folder/:parentId"
-                    element={<FolderScreen parentId=":parentId" />}
+                    path="/folder/:folderId"
+                    element={<FolderScreen folderId=":folderId" />}
                   />
                 </Routes>
               </Router>
