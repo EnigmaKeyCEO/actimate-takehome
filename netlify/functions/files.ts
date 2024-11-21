@@ -82,11 +82,12 @@ const handleGet = async (event: any, headers: any) => {
     // List objects in the S3 bucket
     const listParams = {
       Bucket: process.env.VITE_AWS_BUCKET_NAME!,
-      // Prefix: folderId === "root" ? "" : `${folderId}/`, // Uncomment for folder-based organization
+      Prefix: folderId === "root" ? "" : `${folderId}/`,
     };
     const listCommand = new ListObjectsV2Command(listParams);
+    console.warn("S3 result incoming...");
     const s3Result = await S3.send(listCommand);
-
+    console.warn("S3 result:", s3Result);
     const files: FileItem[] = [];
     if (s3Result.Contents) {
       for (const s3Object of s3Result.Contents) {
@@ -106,21 +107,30 @@ const handleGet = async (event: any, headers: any) => {
           const getParams = {
             TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
             Key: {
-              folderId: { S: fileItem.folderId },
-              name: { S: fileItem.name },
+              folderId: { S: folderId.toString() },
+              name: { S: fileName.toString() },
             },
           };
           const getCommand = new GetItemCommand(getParams);
-          const getResult = await dynamoDb.send(getCommand);
+          const DBResult = {
+            success: false,
+            file: null as FileItem | null,
+          };
+          try {
+            const { Item = null } = await dynamoDb.send(getCommand);
+            DBResult.file = Item ? (unmarshall(Item) as FileItem) : null;
+            DBResult.success = true;
+          } catch (error) {
+            console.warn("Error getting file from DynamoDB:", error);
+          }
 
-          if (!getResult.Item) {
+          if (!DBResult.file) {
             // Add file to DynamoDB if it doesn't exist
             const putParams = {
               TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
               Item: {
                 id: { S: fileItem.id },
                 folderId: { S: fileItem.folderId },
-                key: { S: fileItem.key },
                 name: { S: fileItem.name },
                 url: { S: fileItem.url },
                 createdAt: { S: fileItem.createdAt },
