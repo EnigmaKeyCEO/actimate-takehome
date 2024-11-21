@@ -1,63 +1,62 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, View, TouchableOpacity } from 'react-native';
+import React from "react";
+import {
+  Modal as RNModal,
+  TouchableWithoutFeedback,
+  View,
+  StyleSheet,
+  Animated,
+} from "react-native";
 
 interface AnimatedModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  containerStyle?: object;
 }
 
 export const AnimatedModal: React.FC<AnimatedModalProps> = ({
   isOpen,
   onClose,
   children,
-  containerStyle,
 }) => {
-  const opacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (isOpen) {
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [isOpen, opacity]);
-
-  if (!isOpen) return null;
-
   return (
-    <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
-      <Animated.View style={[styles.container, containerStyle, { opacity }]}>
-        {children}
-      </Animated.View>
-    </TouchableOpacity>
+    <RNModal
+      transparent
+      visible={isOpen}
+      animationType="fade"
+      onRequestClose={onClose} // Handles Android back button
+    >
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.modalOverlay}>
+          <TouchableWithoutFeedback>
+            <Animated.View style={styles.modalContent}>
+              {children}
+            </Animated.View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </RNModal>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  container: {
-    width: '80%',
-    padding: 20,
-    backgroundColor: '#fff',
+  modalContent: {
+    backgroundColor: "#fff",
     borderRadius: 10,
+    padding: 20,
+    width: "80%",
+    maxWidth: 400,
+    // Add shadow for iOS
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    // Add elevation for Android
+    elevation: 5,
   },
 }); 

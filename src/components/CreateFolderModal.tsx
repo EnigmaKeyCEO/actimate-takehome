@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Text, TextInput, Button, StyleSheet, Animated } from "react-native";
+import { Text, TextInput, Button, StyleSheet, Animated, View } from "react-native";
 import { useFolders } from "../hooks/useFolders";
 import { AnimatedModal } from "./common/AnimatedModal";
 
@@ -23,9 +23,21 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   const handleCreate = async () => {
     if (!folderName.trim()) {
       Animated.sequence([
-        Animated.timing(shakeAnim, { toValue: 10, duration: 100, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: -10, duration: 100, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
+        Animated.timing(shakeAnim, {
+          toValue: 10,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeAnim, {
+          toValue: -10,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeAnim, {
+          toValue: 0,
+          duration: 100,
+          useNativeDriver: true,
+        }),
       ]).start();
       return;
     }
@@ -38,7 +50,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
         updatedAt: Date.now().toString(),
       });
       setFolderName("");
-      setInputValue?.("");
+      setInputValue("");
       onClose();
     } catch (err) {
       console.error(`
@@ -58,10 +70,13 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
           placeholder="Folder Name"
           value={folderName}
           onChangeText={setFolderName}
+          autoFocus
         />
       </Animated.View>
-      <Button title="Create" onPress={handleCreate} />
-      <Button title="Cancel" onPress={onClose} color="red" />
+      <View style={styles.buttonContainer}>
+        <Button title="Create" onPress={handleCreate} />
+        <Button title="Cancel" onPress={onClose} color="red" />
+      </View>
     </AnimatedModal>
   );
 };
@@ -79,5 +94,9 @@ const styles = StyleSheet.create({
     padding: 8,
     marginBottom: 12,
     borderRadius: 4,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
 });
