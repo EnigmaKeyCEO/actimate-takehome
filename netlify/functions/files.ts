@@ -72,11 +72,12 @@ const handleGet = async (event: any, headers: any) => {
   const params = {
     TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
     IndexName: "folderId-index",
-    KeyConditions: {
-      folderId: {
-        ComparisonOperator: "EQ" as ComparisonOperator,
-        AttributeValueList: [{ S: folderId || "root" }],
-      },
+    KeyConditionExpression: "folderId = :folderId",
+    ExpressionAttributeNames: {
+      ":folderId": "folderId",
+    },
+    ExpressionAttributeValues: {
+      ":folderId": { S: folderId || "root" },
     },
     ScanIndexForward: true,
     Limit: LIMIT,
