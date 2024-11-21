@@ -5,17 +5,20 @@ import {
   View,
   StyleSheet,
   Animated,
+  ViewStyle,
 } from "react-native";
 
 interface AnimatedModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  containerStyle?: ViewStyle;
 }
 
 export const AnimatedModal: React.FC<AnimatedModalProps> = ({
   isOpen,
   onClose,
+  containerStyle,
   children,
 }) => {
   return (
@@ -24,6 +27,7 @@ export const AnimatedModal: React.FC<AnimatedModalProps> = ({
       visible={isOpen}
       animationType="fade"
       onRequestClose={onClose} // Handles Android back button
+      style={containerStyle}
     >
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.modalOverlay}>

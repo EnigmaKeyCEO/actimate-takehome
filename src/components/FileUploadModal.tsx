@@ -23,24 +23,32 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
 
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*", // Allow all file types
+        type: "image/*", // Restrict to images initially
         copyToCacheDirectory: true,
       });
 
       if (result.canceled === false && result.assets.length > 0) {
-        const formData = new FormData();
         const asset = result.assets[0];
+        const fileName = asset.name;
+        const contentType = asset.mimeType || "application/octet-stream";
+
+        const formData = new FormData();
         formData.append("folderId", folderId);
-        formData.append("fileName", asset.name);
-        formData.append(
-          "contentType",
-          asset.mimeType || "application/octet-stream"
-        );
+        formData.append("fileName", fileName);
+        formData.append("contentType", contentType);
         formData.append("file", {
           uri: asset.uri,
-          name: asset.name,
-          type: asset.mimeType || "application/octet-stream", // Default type if not provided
+          name: fileName,
+          type: contentType,
         } as any);
+
+        console.log("Uploading file with FormData:", {
+          folderId,
+          fileName,
+          contentType,
+          uri: asset.uri,
+        }); // Debugging log
+
         const data = await uploadFile(folderId, formData);
         console.log("File uploaded successfully:", data);
         onClose(); // Close modal after successful upload
@@ -48,7 +56,7 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
         setError("File selection was canceled.");
       }
     } catch (err: any) {
-      console.error(err);
+      console.error("File upload error:", err);
       setError(err.message || "An error occurred during file upload.");
     } finally {
       setUploading(false);
@@ -58,10 +66,10 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
   return (
     <Modal visible={isOpen} animationType="slide">
       <View style={styles.container}>
-        <Text style={styles.title}>Upload File</Text>
+        <Text style={styles.title}>Upload Image</Text>
         {error && <Text style={styles.errorText}>{error}</Text>}
         <Button
-          title="Select File"
+          title={uploading ? "Uploading..." : "Select Image"}
           onPress={handleFileUpload}
           disabled={uploading}
         />
@@ -80,9 +88,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     marginBottom: 20,
+    textAlign: "center",
   },
   errorText: {
     color: "red",
     marginBottom: 10,
+    textAlign: "center",
   },
 });

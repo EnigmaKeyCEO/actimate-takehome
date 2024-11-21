@@ -138,9 +138,6 @@ export const uploadFile = async (
   const response = await fetch(`${API_BASE_URL}/files`, {
     method: "POST",
     body: formData,
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
   });
   return handle(response);
 };

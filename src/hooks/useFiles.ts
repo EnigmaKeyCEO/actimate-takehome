@@ -3,7 +3,7 @@ import { FileItem, SortOptions } from "#/types";
 import { getFiles, uploadFile as apiUploadNewFile } from "#/api";
 
 export function useFiles(folderId: string) {
-  const [files, setFiles] = useState<FileItem[]>([]); // Initialized as empty array
+  const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const [sortOptions, setSortOptions] = useState<SortOptions>({
@@ -20,11 +20,18 @@ export function useFiles(folderId: string) {
       setLoading(true);
       setError(null);
       try {
-        const response = await getFiles(folderId, -(currentLastKey || 0), currentSort);
-        const fetchedFiles = Array.isArray(response.files) ? response.files : [];
+        const response = await getFiles(folderId, currentLastKey, currentSort);
+        const fetchedFiles = Array.isArray(response.files)
+          ? response.files
+          : [];
         const fetchedLastKey = response.lastKey || null;
 
-        setFiles((prevFiles) => [...prevFiles, ...fetchedFiles]);
+        setFiles((prevFiles) => {
+          const allFiles = [...prevFiles, ...fetchedFiles];
+          const uniqueFilesMap = new Map<string, FileItem>();
+          allFiles.forEach((file) => uniqueFilesMap.set(file.id, file));
+          return Array.from(uniqueFilesMap.values());
+        });
         setLastKey(fetchedLastKey);
         setHasMore(fetchedFiles.length === LIMIT);
       } catch (err: any) {
@@ -33,14 +40,16 @@ export function useFiles(folderId: string) {
         setLoading(false);
       }
     },
-    [folderId]
+    [folderId, LIMIT]
   );
 
   useEffect(() => {
-    setFiles([]); // Reset files when folderId or sortOptions change
-    setLastKey(null);
-    setHasMore(true);
-    fetchFiles(sortOptions, null);
+    if (folderId) {
+      setFiles([]);
+      setLastKey(null);
+      setHasMore(true);
+      fetchFiles(sortOptions, null);
+    }
   }, [folderId, sortOptions, fetchFiles]);
 
   const loadMoreFiles = useCallback(() => {

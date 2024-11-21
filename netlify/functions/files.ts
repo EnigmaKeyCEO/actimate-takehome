@@ -184,7 +184,14 @@ const handlePost = async (event: any, headers: any) => {
     const folderId = parsedBody.folderId;
     const fileName = parsedBody.fileName;
     const contentType = parsedBody.contentType;
-    const file = parsedBody.file; // Assuming 'file' contains the uploaded file
+    const file = parsedBody.file;
+
+    console.debug("POST request decoded:", {
+      folderId,
+      fileName,
+      contentType,
+      file,
+    });
 
     if (!folderId || !fileName || !contentType || !file) {
       throw new Error(
