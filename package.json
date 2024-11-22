@@ -23,6 +23,7 @@
     "@aws-sdk/lib-dynamodb": "^3.351.0",
     "@aws-sdk/s3-request-presigner": "^3.693.0",
     "@aws-sdk/util-dynamodb": "^3.696.0",
+    "@expo/metro-config": "^0.19.4",
     "@expo/vector-icons": "^14.0.4",
     "@netlify/functions": "^2.8.2",
     "@react-native/assets-registry": "^0.76.2",
