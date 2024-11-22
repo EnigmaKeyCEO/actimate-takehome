@@ -38,8 +38,8 @@ const Route = Platform.OS === "web" ? BrowserRoute : NativeRoute;
 
 export default function App() {
   React.useEffect(() => {
-    LogBox.ignoreLogs([/Warning:/, /SSRProvider/]);
-    // LogBox.ignoreAllLogs();
+    // LogBox.ignoreLogs([/Warning:/, /SSRProvider/]); // better for debugging
+    LogBox.ignoreAllLogs();
   }, []);
 
   return (
