@@ -7,11 +7,12 @@ import {
   UpdateItemCommand,
   QueryCommand,
   UpdateItemCommandInput,
+  QueryCommandInput,
+  QueryCommandOutput,
 } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { Folder } from "../../src/types/Folder";
 import { v4 as uuidv4 } from "uuid";
-import { QueryCommandInput } from "@aws-sdk/lib-dynamodb";
 
 export const handler: Handler = async (event) => {
   const headers = {
@@ -66,9 +67,6 @@ const handleGet = async (event: any, headers: any) => {
     TableName: process.env.VITE_DYNAMODB_FOLDERS_TABLE_NAME!,
     IndexName: "parentId-index", // Assuming you have a GSI for parentId
     KeyConditionExpression: "parentId = :parentId",
-    ExpressionAttributeNames: {
-      "#name": "name",
-    },
     ExpressionAttributeValues: {
       ":parentId": { S: String(parentId) },
     },
@@ -81,15 +79,25 @@ const handleGet = async (event: any, headers: any) => {
       },
       SortField: {
         ComparisonOperator: "EQ",
-        AttributeValueList: [{ S: sort || "#name" }],
+        AttributeValueList: [{ S: sort || "name" }],
       },
     },
     ExclusiveStartKey: lastKey ? JSON.parse(lastKey) : undefined,
   } as QueryCommandInput;
 
+  let result: QueryCommandOutput;
   try {
     const command = new QueryCommand(params);
-    const result = await dynamoDb.send(command);
+    result = await dynamoDb.send(command);
+  } catch (error) {
+    console.error("Error listing folders from DynamoDB:", error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ message: "Error listing folders from DynamoDB" }),
+    };
+  }
+  try {
     const folders: Folder[] = result.Items
       ? result.Items.map((item) => unmarshall(item) as Folder)
       : [];
