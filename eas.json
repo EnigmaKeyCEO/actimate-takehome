@@ -65,7 +65,7 @@
       "extends": "base",
       "env": {
         "NODE_ENV": "production",
-        "VITE_API_BASE_URL": "https://develop--actimate-takehome.netlify.app/api"
+        "VITE_API_BASE_URL": "https://actimate-takehome.netlify.app/api"
       }
     }
   },
