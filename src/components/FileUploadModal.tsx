@@ -15,7 +15,9 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [file, setFile] = useState<DocumentPicker.DocumentPickerAsset | null>(
+  const [file, setFile] = useState<(DocumentPicker.DocumentPickerAsset & {
+    base64: string;
+  }) | null>(
     null
   );
   const [error, setError] = useState<string | null>(null);
@@ -27,13 +29,23 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
 
   const pickFile = async () => {
     try {
-      const pickedFiles = await DocumentPicker.getDocumentAsync({
-        type: "*/*",
-        copyToCacheDirectory: true,
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        base64: true,
       });
-      const result = pickedFiles.assets?.[0];
-      if (result) {
-        setFile(result);
+
+      if (
+        !result.canceled &&
+        result.assets &&
+        result.assets.length > 0 &&
+        result.assets[0].base64
+      ) {
+        setFile({
+          ...result.assets[0],
+          name: result.assets[0].fileName || "",
+          base64: result.assets[0].base64,
+        });
       }
     } catch (err) {
       setError("Failed to pick a file.");
@@ -50,23 +62,10 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
     setError(null);
 
     try {
-      
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        base64: true,
-      });
-  
-      if (
-        !result.canceled &&
-        result.assets &&
-        result.assets.length > 0 &&
-        result.assets[0].base64
-      ) {
+      if (file) {
         const formData = new FormData();
-        formData.append("file", result.assets[0].base64);
-        formData.append("name", result.assets[0].fileName || "");
+        formData.append("file", file.base64);
+        formData.append("name", file.name || "");
         formData.append("parentId", parentId);
         formData.append("createdAt", new Date().toISOString());
         formData.append("updatedAt", new Date().toISOString());
@@ -84,16 +83,23 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
     }
   };
 
+  const fileButtonTitle = file ? "Change File" : "Pick a File";
+  const uploadButtonTitle = isUploading ? "Uploading..." : "Upload";
+
+  React.useEffect(() => {
+    if (!error && isOpen && !file) {
+      pickFile();
+    }
+  }, [isOpen]);
+
   return (
     <Modal visible={isOpen} transparent>
       <View style={styles.container}>
         <View style={styles.modal}>
-          <Text style={styles.title}>Upload File</Text>
-          {error && <Text style={styles.errorText}>{error}</Text>}
-          <Button title="Pick a File" onPress={pickFile} />
+          <Button title={fileButtonTitle} onPress={pickFile} />
           {file && <Text>{file.name}</Text>}
           <Button
-            title={isUploading ? "Uploading..." : "Upload"}
+            title={uploadButtonTitle}
             onPress={handleUpload}
             disabled={isUploading}
           />
