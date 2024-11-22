@@ -7,6 +7,8 @@ import {
   deleteFolder as apiDeleteFolder,
   updateFolder as apiUpdateFolder,
 } from "#/api";
+import { useNavigate } from "react-router-dom";
+
 
 export const FolderContext = React.createContext<{
   parentId: string;
@@ -68,6 +70,8 @@ export const FolderProvider: React.FC<{ children: React.ReactNode }> = ({
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [parentId, setParentId] = useState<string>("root");
   const [currentFolderName, setCurrentFolderName] = useState<string>("root");
+
+  const navigate = useNavigate();
 
   const fetchFolders = useCallback(
     async (
@@ -190,7 +194,16 @@ export const FolderProvider: React.FC<{ children: React.ReactNode }> = ({
     setParentId(folderId);
     async function updateFolderName() {
       const folder = await fetchSingleFolder(folderId);
-      setCurrentFolderName(folder?.name || "root");
+      if (!folder) {
+        setError(new Error("Error Fetching Folder"));
+        return;
+      }
+      setCurrentFolderName(folder.name || "root");
+      try {
+        navigate(`/folder/${folderId}`);
+      } catch (err) {
+        setError(new Error("Error Navigating to Folder"));
+      }
     }
     updateFolderName();
   }, []);

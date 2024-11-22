@@ -41,7 +41,7 @@ export const FilesList: React.FC<FilesListProps> = () => {
           resizeMode="contain"
         />
       ),
-      actions: [{ label: "Close", onPress: () => {} }],
+      actions: [{ label: "Close", onPress: hideModal }],
     });
   };
 

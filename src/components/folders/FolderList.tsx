@@ -38,11 +38,12 @@ export const FolderList: React.FC<FolderListProps> = () => {
       try {
         await createFolder(parentId, folderName);
         showModal(`Successfully created "${folderName}"`, "success");
+        setIsCreating(false);
       } catch (error: any) {
         showModal(error.message, "error");
       }
     },
-    [createFolder, parentId, showModal]
+    [parentId, showModal]
   );
 
   const handleOnUpdate = async (folder: Folder) => {

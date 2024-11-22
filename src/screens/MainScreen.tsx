@@ -15,7 +15,7 @@ import { debounce } from "lodash";
 import { Breadcrumb } from "#/components/Breadcrumb";
 import { FileUploadModal } from "#/components/FileUploadModal";
 
-export function FolderScreen(passedProps: { folderId?: string }) {
+export function Screen(passedProps: { folderId?: string }) {
   const { folderId = passedProps.folderId || "root" } = useParams<{
     folderId?: string;
   }>();

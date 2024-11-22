@@ -12,7 +12,7 @@ import {
 } from "react-router-dom";
 import { LogBox, Platform, SafeAreaView } from "react-native";
 import { NativeBaseProvider, extendTheme } from "native-base";
-import { FolderScreen } from "./screens/MainScreen";
+import { Screen } from "./screens/MainScreen";
 import { Modal, ModalProvider } from "#/components/Modal";
 import { FolderProvider } from "#/providers/FolderProvider";
 
@@ -31,7 +31,7 @@ const config = {
   suppressColorAccessibilityWarning: true,
 };
 
-// quick and dirty way to handle web and native routing, but it works
+// Quick and dirty way to handle web and native routing, but it works
 const Router = Platform.OS === "web" ? BrowserRouter : NativeRouter;
 const Routes = Platform.OS === "web" ? BrowserRoutes : NativeRoutes;
 const Route = Platform.OS === "web" ? BrowserRoute : NativeRoute;
@@ -41,6 +41,7 @@ export default function App() {
     LogBox.ignoreLogs([/Warning:/, /SSRProvider/]);
     // LogBox.ignoreAllLogs();
   }, []);
+
   return (
     <SafeAreaProvider>
       <NativeBaseProvider theme={theme} config={config}>
@@ -49,12 +50,12 @@ export default function App() {
             <ModalProvider>
               <SafeAreaView style={{ flex: 1 }}>
                 <Routes>
-                  <Route path="/" element={<FolderScreen />} />
+                  <Route path="/" element={<Screen />} />
                   {/* TODO: come up with better routing solution, works for now */}
-                  <Route path="/folder" element={<FolderScreen />} />
+                  <Route path="/folder" element={<Screen />} />
                   <Route
                     path="/folder/:folderId"
-                    element={<FolderScreen folderId=":folderId" />}
+                    element={<Screen folderId=":folderId" />}
                   />
                 </Routes>
                 <Modal />
