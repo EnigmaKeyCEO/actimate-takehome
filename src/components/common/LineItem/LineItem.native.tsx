@@ -126,6 +126,14 @@ export const LineItem: React.FC<LineItemProps> = React.memo(
                       Delete
                     </Text>
                   </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={toggleActionMenu}
+                    accessibilityLabel="Cancel"
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.menuCancelText}>Cancel</Text>
+                  </TouchableOpacity>
                 </View>
               </TouchableWithoutFeedback>
             </View>
@@ -180,6 +188,7 @@ const styles = StyleSheet.create({
   labelText: {
     fontSize: 8,
     color: "#666",
+    textAlign: "right",
   },
   actionButton: {
     padding: 8,
@@ -205,7 +214,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
-    paddingBottom: 60,
+    paddingBottom: 30,
     paddingHorizontal: 16,
   },
   menuItem: {
@@ -216,5 +225,12 @@ const styles = StyleSheet.create({
   },
   deleteText: {
     color: "#F44336",
+  },
+  menuCancelText: {
+    color: "#666",
+    textAlign: "right",
+    marginRight: 16,
+    marginTop: 4,
+    marginBottom: 16,
   },
 });

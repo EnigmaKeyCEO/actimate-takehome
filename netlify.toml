@@ -5,7 +5,8 @@
 
 [dev]
   command = "npm run preview"
-  targetPort = 5173
+  functions = "netlify/functions"
+  targetPort = 8888
 
 [[redirects]]
   from = "/api/*"
@@ -21,3 +22,9 @@
   for = "/assets/*"
   [headers.values]
     "Content-Type" = "application/javascript"
+
+[functions]
+  directory = "functions/" # Custom directory for serverless functions
+  node_bundler = "esbuild" # Bundling method (`esbuild` or `zisi`)
+  external_node_modules = ["@aws-sdk"] # External Node.js modules
+  included_files = ["netlify/functions/*"] # Additional files to include
