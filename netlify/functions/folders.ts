@@ -7,6 +7,8 @@ import {
   UpdateItemCommand,
   QueryCommand,
   UpdateItemCommandInput,
+  QueryCommandInput,
+  QueryCommandOutput,
 } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { Folder } from "../../src/types/Folder";
@@ -58,6 +60,8 @@ export const handler: Handler = async (event) => {
 const handleGet = async (event: any, headers: any) => {
   const parentId = event.queryStringParameters?.parentId || "root";
   const lastKey = event.queryStringParameters?.lastKey;
+  const sort = event.queryStringParameters?.sort;
+  const direction = event.queryStringParameters?.direction;
 
   const params = {
     TableName: process.env.VITE_DYNAMODB_FOLDERS_TABLE_NAME!,
@@ -69,11 +73,32 @@ const handleGet = async (event: any, headers: any) => {
     ScanIndexForward: true,
     Limit: 20,
     ExclusiveStartKey: lastKey ? JSON.parse(lastKey) : undefined,
-  };
+    // TODO: Add query filter for sort and direction
+    // QueryFilter: {
+    //   SortDirection: {
+    //     ComparisonOperator: "EQ",
+    //     AttributeValueList: [{ S: direction || "ASC" }],
+    //   },
+    //   SortField: {
+    //     ComparisonOperator: "EQ",
+    //     AttributeValueList: [{ S: sort || "name" }],
+    //   },
+    // },
+  } as QueryCommandInput;
 
+  let result: QueryCommandOutput;
   try {
     const command = new QueryCommand(params);
-    const result = await dynamoDb.send(command);
+    result = await dynamoDb.send(command);
+  } catch (error) {
+    console.error("Error listing folders from DynamoDB:", error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ message: "Error listing folders from DynamoDB" }),
+    };
+  }
+  try {
     const folders: Folder[] = result.Items
       ? result.Items.map((item) => unmarshall(item) as Folder)
       : [];

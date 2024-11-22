@@ -1,4 +1,6 @@
 import { FileItem } from "#/types";
+// we know the config is native or web specific and i did not alias it.
+// @ts-ignore
 import { API_BASE_URL } from "./config";
 
 export const getFolders = async (
@@ -8,9 +10,11 @@ export const getFolders = async (
 ) => {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/folders?parentId=${folderId}${
+      `${API_BASE_URL}/folders?parentId=${folderId}&sort=${
+        sortOptions.field
+      }&direction=${sortOptions.direction}${
         lastKey ? `&lastKey=${lastKey}` : ""
-      }&sort=${sortOptions.field}&direction=${sortOptions.direction}`
+      }`
     );
     if (!response.ok) {
       throw new Error("Failed to fetch folders");

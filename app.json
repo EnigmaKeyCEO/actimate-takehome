@@ -12,8 +12,13 @@
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
-      "**/*"
+      "**/*",
+      "./assets/fonts/*",
+      "./assets/images/*"
     ],
+    "web": {
+      "bundler": "metro"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ceo.enigma.actimate",

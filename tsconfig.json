@@ -5,9 +5,9 @@
     "noUnusedParameters": true,
     "allowJs": true,
     "target": "ESNext",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "lib": ["DOM", "DOM.Iterable", "ESNext", "ES2022.Object", "ESNext.AsyncIterable"],
     "module": "ESNext",
-    "jsx": "react-jsx",
+    "jsx": "react-native",
     "baseUrl": ".",
     "paths": {
       "#/*": ["src/*"]
@@ -16,7 +16,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "outDir": "./dist",
   },
   "include": ["src", "index.d.ts"],
   "extensions": [

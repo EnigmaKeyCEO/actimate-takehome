@@ -17,6 +17,12 @@
     ".web.ts",
     ".web.tsx",
     ".web.js",
-    ".web.jsx"
+    ".web.jsx",
+    ".css",
+    "/index.d.ts",
+    "/index.ts",
+    "/index.tsx",
+    "/index.jsx",
+    "/index.jsx",
   ]
 }

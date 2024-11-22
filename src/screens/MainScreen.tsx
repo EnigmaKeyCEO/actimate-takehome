@@ -11,46 +11,35 @@ import { FilesList } from "#/components/files/FilesList";
 import { SortHeader } from "#/components/headers/SortHeader";
 import { SectionHeader } from "#/components/headers/SectionHeader";
 import { CreateFolderModal } from "#/components/modals/FolderModal";
-import { debounce } from "lodash";
 import { Breadcrumb } from "#/components/Breadcrumb";
 import { FileUploadModal } from "#/components/FileUploadModal";
 
-export function FolderScreen(passedProps: { folderId?: string }) {
+export function Screen(passedProps: { folderId?: string }) {
   const { folderId = passedProps.folderId || "root" } = useParams<{
     folderId?: string;
   }>();
   const navigate = useNavigate();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const { showModal } = useModal();
-  const { parentId } = useFolders(folderId);
-
+  
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [showFileUploadModal, setShowFileUploadModal] = useState(false);
-
-
+  
+  
   const {
-    folders,
     loading: foldersLoading,
     error: foldersError,
     createFolder,
-    loadMoreFolders: doLoadMoreFolders,
-    hasMoreFolders,
     fetchSingleFolder,
     sortOptions,
     setSortOptions,
-  } = useFolders(parentId);
+  } = useFolders(folderId);
   
 
   const {
-    files,
     loading: filesLoading,
     error: filesError,
-    loadMoreFiles: doLoadMoreFiles,
-    removeFile,
-    updateFile,
-    createFile,
     sortFiles,
-    hasMore: hasMoreFiles,
   } = useFiles();
 
   const onCreateFolder = useCallback(
@@ -68,25 +57,6 @@ export function FolderScreen(passedProps: { folderId?: string }) {
   const onUploadFile = useCallback(() => {
     setShowFileUploadModal(true);
   }, []);
-
-  // Debounced handlers to prevent rapid calls
-  const handleLoadMoreFolders = useCallback(
-    debounce(() => {
-      if (hasMoreFolders && !foldersLoading && !foldersError) {
-        doLoadMoreFolders();
-      }
-    }, 300),
-    [hasMoreFolders, foldersLoading, foldersError, doLoadMoreFolders]
-  );
-
-  const handleLoadMoreFiles = useCallback(
-    debounce(() => {
-      if (hasMoreFiles && !filesLoading && !filesError) {
-        doLoadMoreFiles();
-      }
-    }, 300),
-    [hasMoreFiles, filesLoading, filesError, doLoadMoreFiles]
-  );
 
   // Handle errors for both folders and files
   useEffect(() => {
@@ -106,6 +76,7 @@ export function FolderScreen(passedProps: { folderId?: string }) {
   }, [fadeAnim]);
 
   useEffect(() => {
+    // sortFolders(sortOptions);
     sortFiles(sortOptions);
   }, [sortOptions, sortFiles]);
 

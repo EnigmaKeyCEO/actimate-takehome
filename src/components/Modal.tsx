@@ -1,5 +1,12 @@
-import { Button, VStack } from "native-base";
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
+import { Box, Button, HStack, VStack } from "native-base";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 import {
   Modal as RNModal,
   View,
@@ -40,7 +47,10 @@ export interface ModalMessageType extends ModalContextBaseType {
 }
 
 export interface ModalContextType extends ModalElementType, ModalMessageType {
-  showModal: (messageOrConfig: string | ModalConfigObject, type?: ModalType) => void;
+  showModal: (
+    messageOrConfig: string | ModalConfigObject,
+    type?: ModalType
+  ) => void;
 }
 
 const ModalContext = createContext<ModalContextType>({
@@ -69,35 +79,31 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
   const [type, setType] = useState<ModalType>("info");
   const modalRef = useRef<View>(null);
 
-  const showConfigModal: ModalConfigFunction = useCallback(
-    (config) => {
-      setMessage(
-        <VStack>
-          <Text accessibilityRole="header" style={styles.modalTitle}>
-            {config.title}
-          </Text>
-          {config.body}
+  const showConfigModal: ModalConfigFunction = useCallback((config) => {
+    setMessage(
+      <VStack space={2} alignItems="center" justifyContent="center">
+        <Text accessibilityRole="header" style={styles.modalTitle}>
+          {config.title}
+        </Text>
+        {config.body}
+        <HStack space={2} alignItems="center" justifyContent="center">
           {config.actions.map((action, index) => (
             <Button key={index} onPress={action.onPress} accessible>
               {action.label}
             </Button>
           ))}
-        </VStack>
-      );
-      setType("info");
-      setIsVisible(true);
-    },
-    []
-  );
+        </HStack>
+      </VStack>
+    );
+    setType("info");
+    setIsVisible(true);
+  }, []);
 
-  const showMessageModal: ModalMessageFunction = useCallback(
-    (msg, msgType) => {
-      setMessage(msg);
-      setType(msgType);
-      setIsVisible(true);
-    },
-    []
-  );
+  const showMessageModal: ModalMessageFunction = useCallback((msg, msgType) => {
+    setMessage(msg);
+    setType(msgType);
+    setIsVisible(true);
+  }, []);
 
   const showModal: ModalContextType["showModal"] = useCallback(
     (messageOrConfig, msgType) => {
@@ -180,14 +186,16 @@ export const Modal = () => {
           <Text style={styles.modalText}>
             {typeof message === "string" ? message : <>{message}</>}
           </Text>
-          <TouchableOpacity
-            onPress={hideModal}
-            style={styles.closeButton}
-            accessibilityRole="button"
-            accessibilityLabel="Close Modal"
-          >
-            <Text style={styles.closeButtonText}>Close</Text>
-          </TouchableOpacity>
+          {typeof message === "string" && (
+            <TouchableOpacity
+              onPress={hideModal}
+              style={styles.closeButton}
+              accessibilityRole="button"
+              accessibilityLabel="Close Modal"
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </RNModal>
@@ -202,6 +210,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
+    flexDirection: "column",
     padding: 20,
     borderRadius: 10,
     width: "80%",
@@ -213,8 +222,14 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     // Add elevation for Android
     elevation: 5,
+    // center content
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
   },
   modalTitle: {
+    flexDirection: "row",
+    color: "white",
     fontSize: 20,
     marginBottom: 12,
     textAlign: "center",
