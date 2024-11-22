@@ -89,3 +89,5 @@ testAws.ts
 
 .DS_Store
 
+# Expo
+.expo/
