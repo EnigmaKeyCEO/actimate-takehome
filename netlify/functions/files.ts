@@ -116,7 +116,7 @@ const handleGet = async (event: any, headers: any) => {
           // Query DynamoDB using the GSI to check if the file exists
           const queryParams: QueryCommandInput = {
             TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
-            IndexName: "folderId-name-index", // Replace with your actual GSI name
+            IndexName: "folderId-name-index",
             KeyConditionExpression: "folderId = :folderId AND #name = :name",
             ExpressionAttributeNames: {
               "#name": "name", // Mapping reserved keyword
