@@ -4,6 +4,27 @@
 |------------|-------------|
 | [![Netlify Status](https://api.netlify.com/api/v1/badges/7d0fb964-5b89-4611-97b7-9c5e2876147c/deploy-status)](https://app.netlify.com/sites/actimate-takehome/deploys) | [![Netlify Status](https://api.netlify.com/api/v1/badges/7d0fb964-5b89-4611-97b7-9c5e2876147c/deploy-status?branch=develop)](https://app.netlify.com/sites/actimate-takehome/deploys) |
 
+## Production URL
+[https://actimate-takehome.netlify.app/](https://actimate-takehome.netlify.app/)
+
+## Development URL
+[https://develop--actimate-takehome.netlify.app/](https://develop--actimate-takehome.netlify.app/)
+
+
+## Table of Contents
+- [Introduction](#introduction)
+- [Features](#features)
+- [Setup Instructions](#setup-instructions)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Running the Application](#running-the-application)
+  - [Additional Documentation](#additional-documentation)
+- [Deployment](#deployment)
+- [Environment Variables](#environment-variables)
+- [Additional Notes](#additional-notes)
+- [License](#license)
+
+
 ## Introduction
 This project is a mobile application built with Expo (React Native) and TypeScript, allowing users to manage image folders and images with CRUD operations and pagination.
 
@@ -16,9 +37,42 @@ Initially, I misinterpreted the requirements and assumed that AWS services could
 I then began reconstructing the project using AWS and attempted to merge it with my existing Firebase-based project. Unfortunately, this merging process did not go smoothly. Despite the setbacks, my ultimate goal was to create a unified codebase that contains both the API and the app code, all written in TypeScript. I aimed for a single repository that could target iOS, web, and server platforms, leveraging the same API from a monorepo setup.
 
 ## Project Structure
-
-
-
+```
+actimate-takehome/
+├── src/
+│   ├── App.tsx              - Main application entry point
+│   ├── index.js             - Bootstraps the application
+│   ├── screens/             - Contains screen components
+│   │   └── MainScreen.tsx
+│   ├── components/          - Reusable UI components
+│   │   ├── actions/
+│   │   ├── modals/
+│   │   ├── headers/
+│   │   ├── folders/
+│   │   ├── files/
+│   │   ├── Breadcrumb.tsx
+│   │   └── Modal.tsx
+│   ├── hooks/               - Custom React hooks
+│   ├── providers/           - Context providers
+│   └── types/               - TypeScript type definitions
+├── README.md
+├── package.json
+├── .env
+├── assets/                  - Static assets like images and fonts
+├── netlify/
+│   └── functions/           - Serverless Lambda functions
+│       ├── awsConfig.ts     - AWS configuration
+│       ├── folders.ts       - Lambda function for folder operations
+│       └── files.ts         - Lambda function for file operations
+├── eas.json                 - EAS configuration
+├── netlify.toml             - Netlify configuration
+├── app.json                 - Expo configuration
+├── index.js                 - Bootstraps the application
+├── tsconfig.json            - TypeScript configuration
+├── tailwind.config.js       - Tailwind CSS configuration (for web)
+├── vite.config.ts           - Vite configuration (important for web)
+└── package.json             - Project dependencies and scripts
+```
 
 ## Setup Instructions
 
@@ -29,16 +83,20 @@ I then began reconstructing the project using AWS and attempted to merge it with
 - **EAS CLI**: Install using `npm install -g eas-cli`.
 
 ### Installation
-1. **Clone the repository**:
+1. **Global Packages**:
+   - **EAS CLI**: `npm install -g eas-cli`
+   - **Netlify CLI**: `npm install -g netlify-cli`
+
+2. **Clone the repository**:
    Open your terminal and run:
    ```bash
    git clone https://github.com/EnigmaKeyCEO/actimate-takehome.git
    ```
-2. **Navigate to the project directory**:
+3. **Navigate to the project directory**:
    ```bash
    cd actimate-takehome
    ```
-3. **Install dependencies**:
+4. **Install dependencies**:
    Run the following command to install all necessary packages:
    ```bash
    npm install
@@ -61,6 +119,12 @@ I then began reconstructing the project using AWS and attempted to merge it with
   ```bash
   npm run dev:ios
   ```
+
+### Additional Documentation
+- [Deployment Instructions](DEPLOY_README.md)
+- [Development Process](DEVELOP_README.md)
+- [Local Environment Setup](LOCAL_README.md)
+
 
 ## Deployment
 - **Develop Branch**: [https://develop--actimate-takehome.netlify.app/](https://develop--actimate-takehome.netlify.app/)
