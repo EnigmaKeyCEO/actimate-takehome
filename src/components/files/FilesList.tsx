@@ -6,7 +6,6 @@ import { FileForm } from "#/components/files/FileForm";
 import { LineItem } from "#/components/common/LineItem";
 import { Image } from "native-base";
 import useFiles from "#/hooks/useFiles";
-import { useFolders } from "#/hooks/useFolders";
 import { LoadingIndicator } from "#/components/common/LoadingIndicator";
 
 interface FilesListProps {}
@@ -17,7 +16,7 @@ export const FilesList: React.FC<FilesListProps> = () => {
   const { loadMoreFiles, files, loading, error, removeFile, updateFile } =
     useFiles();
 
-  const { VITE_AWS_ACCESS_KEY_ID, VITE_AWS_BUCKET_NAME } = process.env;
+  const { VITE_AWS_ACCESS_URL_KEY, VITE_AWS_BUCKET_NAME } = process.env;
 
   React.useEffect(() => {
     if (error && !loading && error instanceof Error) {
@@ -33,7 +32,7 @@ export const FilesList: React.FC<FilesListProps> = () => {
           source={{
             uri: file.url.replace(
               String(VITE_AWS_BUCKET_NAME),
-              `${String(VITE_AWS_ACCESS_KEY_ID)}.${String(
+              `${String(VITE_AWS_ACCESS_URL_KEY)}.${String(
                 VITE_AWS_BUCKET_NAME
               )}`
             ),

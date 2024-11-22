@@ -1,11 +1,15 @@
-# Image Folder Management Mobile Application
----
-
-## Deployment Status
+# ACTIMATE: <br />&nbsp;&nbsp;TAKE HOME CHALLENGE
 
 | Production | Development |
 |------------|-------------|
 | [![Netlify Status](https://api.netlify.com/api/v1/badges/7d0fb964-5b89-4611-97b7-9c5e2876147c/deploy-status)](https://app.netlify.com/sites/actimate-takehome/deploys) | [![Netlify Status](https://api.netlify.com/api/v1/badges/7d0fb964-5b89-4611-97b7-9c5e2876147c/deploy-status?branch=develop)](https://app.netlify.com/sites/actimate-takehome/deploys) |
+
+## Production URL
+[https://actimate-takehome.netlify.app/](https://actimate-takehome.netlify.app/)
+
+## Development URL
+[https://develop--actimate-takehome.netlify.app/](https://develop--actimate-takehome.netlify.app/)
+
 
 ## Introduction
 This project is a mobile application built with Expo (React Native) and TypeScript, allowing users to manage image folders and images with CRUD operations and pagination.
@@ -17,6 +21,37 @@ I wanted to share some insights from my experience building this project. Throug
 Initially, I misinterpreted the requirements and assumed that AWS services could be easily interchanged with Firebase. As a result, I built an entire project around Firebase. However, after revisiting the requirements, I realized that AWS and S3 were explicitly specified multiple times. This realization prompted me to reassess my approach.
 
 I then began reconstructing the project using AWS and attempted to merge it with my existing Firebase-based project. Unfortunately, this merging process did not go smoothly. Despite the setbacks, my ultimate goal was to create a unified codebase that contains both the API and the app code, all written in TypeScript. I aimed for a single repository that could target iOS, web, and server platforms, leveraging the same API from a monorepo setup.
+
+## Project Structure
+```
+actimate-takehome/
+├── src/
+│   ├── App.tsx              - Main application entry point
+│   ├── index.js             - Bootstraps the application
+│   ├── screens/             - Contains screen components
+│   │   └── MainScreen.tsx
+│   ├── components/          - Reusable UI components
+│   │   ├── actions/
+│   │   ├── modals/
+│   │   ├── headers/
+│   │   ├── folders/
+│   │   ├── files/
+│   │   ├── Breadcrumb.tsx
+│   │   └── Modal.tsx
+│   ├── hooks/               - Custom React hooks
+│   ├── providers/           - Context providers
+│   └── types/               - TypeScript type definitions
+├── README.md
+├── package.json
+├── .env
+├── assets/                  - Static assets like images and fonts
+├── netlify/
+│   └── functions/           - Serverless Lambda functions
+│       ├── folders.ts       - Lambda function for folder operations
+│       └── files.ts         - Lambda function for file operations
+├── assets/                  - Static assets like images and fonts
+└── package.json             - Project dependencies and scripts
+```
 
 ## Setup Instructions
 
@@ -73,7 +108,8 @@ VITE_API_BASE_URL=https://actimate-takehome.netlify.app/api
 VITE_AWS_ACCESS_KEY_ID=your_access_key_id
 VITE_AWS_SECRET_ACCESS_KEY=your_secret_access_key
 VITE_AWS_REGION=your_aws_region
-VITE_S3_BUCKET=your_s3_bucket
+VITE_AWS_BUCKET_NAME=your_s3_bucket
+VITE_AWS_ACCESS_URL_KEY=your_access_url_key
 ```
 
 ## Features
