@@ -5,6 +5,7 @@ const createExpoWebpackConfigAsync = require('@expo/webpack-config');
 const defaultConfig = getDefaultConfig(__dirname);
 
 const mergedConfig = mergeConfig(defaultConfig, {
+  mode: process.env.NODE_ENV === "development" ? "development" : "production",
   resolver: {
     ...defaultConfig.resolver,
     assetExts: [...defaultConfig.resolver.assetExts],
