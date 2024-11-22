@@ -72,17 +72,18 @@ const handleGet = async (event: any, headers: any) => {
     },
     ScanIndexForward: true,
     Limit: 20,
-    QueryFilter: {
-      SortDirection: {
-        ComparisonOperator: "EQ",
-        AttributeValueList: [{ S: direction || "ASC" }],
-      },
-      SortField: {
-        ComparisonOperator: "EQ",
-        AttributeValueList: [{ S: sort || "name" }],
-      },
-    },
     ExclusiveStartKey: lastKey ? JSON.parse(lastKey) : undefined,
+    // TODO: Add query filter for sort and direction
+    // QueryFilter: {
+    //   SortDirection: {
+    //     ComparisonOperator: "EQ",
+    //     AttributeValueList: [{ S: direction || "ASC" }],
+    //   },
+    //   SortField: {
+    //     ComparisonOperator: "EQ",
+    //     AttributeValueList: [{ S: sort || "name" }],
+    //   },
+    // },
   } as QueryCommandInput;
 
   let result: QueryCommandOutput;
