@@ -5,6 +5,7 @@ import {
   DeleteObjectCommand,
   CopyObjectCommand,
   ListObjectsV2Command,
+  __Client,
 } from "@aws-sdk/client-s3";
 import {
   DeleteItemCommand,
@@ -86,7 +87,11 @@ const handleGet = async (event: any, headers: any) => {
     };
     const listCommand = new ListObjectsV2Command(listParams);
     const s3Result = await S3.send(listCommand);
-    const files: FileItem[] = [];
+    // TODO: establish the type for the signedUrl in types/File.ts
+    const fileMetadata: (FileItem & {
+      putCommand: PutItemCommand | null;
+      signedUrl: string;
+    })[] = [];
     if (s3Result.Contents) {
       for (const s3Object of s3Result.Contents) {
         const fileName = s3Object.Key?.split("/").pop();
@@ -113,6 +118,7 @@ const handleGet = async (event: any, headers: any) => {
           const DBResult = {
             success: false,
             file: null as FileItem | null,
+            putCommand: null as PutItemCommand | null,
           };
           try {
             const { Item = null } = await dynamoDb.send(getCommand);
@@ -149,19 +155,46 @@ const handleGet = async (event: any, headers: any) => {
             } catch (error) {
               console.error("Error storing file metadata in DynamoDB:", error);
             }
+            DBResult.putCommand = putCommand;
           }
 
-          files.push(fileItem);
+          const pushItem = DBResult.file ? DBResult.file : fileItem;
+
+          fileMetadata.push({
+            ...pushItem,
+            putCommand: DBResult.putCommand,
+            signedUrl: "",
+          });
         }
       }
     }
+
+    // TODO: fix this type, like why does it not error in the POST handler but it does here?
+    const s3Client = S3 as __Client<any, any, any, any>;
+    // now we need to get the signed URL for each file
+    for (const obj of fileMetadata) {
+      const signedUrl = await getSignedUrl(s3Client, obj.putCommand!, {
+        expiresIn: 3600,
+      });
+      obj.signedUrl = signedUrl;
+    }
+
+    const files = fileMetadata.map((metadata) => ({
+      id: metadata.id,
+      folderId: metadata.folderId,
+      key: metadata.key,
+      name: metadata.name,
+      url: metadata.signedUrl,
+      createdAt: metadata.createdAt,
+      updatedAt: metadata.updatedAt,
+    }));
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         files,
-        lastKey: null, // Adjust as needed for pagination
+        lastKey: lastKey || fileMetadata[fileMetadata.length - 1].key,
       }),
     };
   } catch (error) {
