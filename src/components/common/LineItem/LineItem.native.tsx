@@ -11,7 +11,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { Folder } from "#/types/Folder";
 import { FileItem } from "#/types/File";
 // import Icon from "#/components/common/Icon";
-import { Icon } from "native-base";
+import { HStack, Icon, VStack } from "native-base";
 
 type ItemType = "folder" | "file";
 
@@ -56,19 +56,21 @@ export const LineItem: React.FC<LineItemProps> = React.memo(
     return (
       <View style={styles.container}>
         <TouchableOpacity style={styles.content} onPress={() => onPress(item)}>
-          <View style={styles.nameColumn}>
-            <Text style={styles.name}>{name}</Text>
-          </View>
-          <View style={styles.dateColumns}>
-            <View style={styles.dateColumn}>
-              <Text style={styles.dateText}>{updatedAt}</Text>
-              <Text style={styles.labelText}>Updated</Text>
+          <VStack space={2}>
+            <View style={styles.nameColumn}>
+              <Text style={styles.name}>{name}</Text>
             </View>
-            <View style={styles.dateColumn}>
-              <Text style={styles.dateText}>{createdAt}</Text>
-              <Text style={styles.labelText}>Created</Text>
-            </View>
-          </View>
+            <HStack style={styles.dateColumns} space={2} justifyContent="space-between">
+              <View style={styles.dateColumn}>
+                <Text style={styles.dateText}>{updatedAt}</Text>
+                <Text style={styles.labelText}>Updated</Text>
+              </View>
+              <View style={styles.dateColumn}>
+                <Text style={styles.dateText}>{createdAt}</Text>
+                <Text style={styles.labelText}>Created</Text>
+              </View>
+            </HStack>
+          </VStack>
         </TouchableOpacity>
 
         {/* Action Menu Button */}
@@ -150,7 +152,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   content: {
-    flexDirection: "row",
+    flexDirection: "column",
     flex: 1,
   },
   nameColumn: {
@@ -162,33 +164,36 @@ const styles = StyleSheet.create({
   },
   dateColumns: {
     flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    marginTop: 4,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderColor: "#cccccc66",
   },
   dateColumn: {
     marginLeft: 16,
-    alignItems: "flex-end",
-    justifyContent: "center",
   },
   dateText: {
-    fontSize: 14,
+    fontSize: 10,
   },
   labelText: {
-    fontSize: 12,
+    fontSize: 8,
     color: "#666",
   },
   actionButton: {
     padding: 8,
-    borderLeftWidth: 1,
-    borderColor: "#ccc",
-    marginLeft: 4,
-    paddingLeft: 8,
+    paddingRight: 16,
     alignItems: "center",
     justifyContent: "center",
+    position: "absolute",
+    right: 0,
+    top: 8,
   },
   notActuallyAnIcon: {
     fontSize: 22,
     textAlign: "right",
     fontWeight: "bold",
-    marginTop: 2,
   },
   modalOverlay: {
     flex: 1,
@@ -201,10 +206,10 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
     paddingBottom: 60,
+    paddingHorizontal: 16,
   },
   menuItem: {
     paddingVertical: 12,
-    paddingHorizontal: 20,
   },
   menuText: {
     fontSize: 16,

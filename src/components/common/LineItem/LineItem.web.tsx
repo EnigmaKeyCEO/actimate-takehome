@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Menu, IconButton, Icon, Pressable } from 'native-base';
+import { Menu, IconButton, Icon, HStack } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Folder } from '#/types/Folder';
 import { FileItem } from '#/types/File';
@@ -46,22 +46,35 @@ export const LineItem: React.FC<LineItemProps> = React.memo(({
         </View>
       </TouchableOpacity>
       <Menu
+        style={{marginRight: 16}}
         trigger={(triggerProps) => (
-          <Pressable {...triggerProps}>
-            <IconButton
-              icon={<Icon as={MaterialIcons} name="more-vert" size="sm" />}
-              variant="ghost"
-            />
-          </Pressable>
+          <IconButton
+            {...triggerProps}
+            icon={<Icon as={MaterialIcons} name="more-vert" size="sm" />}
+            variant="ghost"
+          />
         )}
       >
-        <Menu.Item onPress={() => onUpdate(item)}>Edit</Menu.Item>
         {type === 'folder' && onCreate && (
           <Menu.Item onPress={() => onCreate((item as Folder).id)}>
-            New Subfolder
+            <HStack space={2} alignItems="center">
+              <Icon as={MaterialIcons} name="create-new-folder" size="sm" />
+              <Text>New Subfolder</Text>
+            </HStack>
           </Menu.Item>
         )}
-        <Menu.Item onPress={() => onDelete(item.id)}>Delete</Menu.Item>
+        <Menu.Item onPress={() => onUpdate(item)}>
+          <HStack space={2} alignItems="center">
+            <Icon as={MaterialIcons} name="edit" size="sm" />
+            <Text>Edit</Text>
+          </HStack>
+        </Menu.Item>
+        <Menu.Item onPress={() => onDelete(item.id)}>
+          <HStack space={2} alignItems="center">
+            <Icon as={MaterialIcons} name="delete" size="sm" />
+            <Text>Delete</Text>
+          </HStack>
+        </Menu.Item>
       </Menu>
     </View>
   );

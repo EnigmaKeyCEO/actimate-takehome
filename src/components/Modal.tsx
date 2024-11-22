@@ -85,9 +85,7 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
         <Text accessibilityRole="header" style={styles.modalTitle}>
           {config.title}
         </Text>
-        <Box alignItems="center" justifyContent="center">
-          {config.body}
-        </Box>
+        {config.body}
         <HStack space={2} alignItems="center" justifyContent="center">
           {config.actions.map((action, index) => (
             <Button key={index} onPress={action.onPress} accessible>

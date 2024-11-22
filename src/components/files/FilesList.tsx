@@ -1,5 +1,11 @@
 import React, { useCallback, useMemo } from "react";
-import { FlatList, View, Text, StyleSheet } from "react-native";
+import {
+  FlatList,
+  View,
+  Text,
+  StyleSheet,
+  useWindowDimensions,
+} from "react-native";
 import { useModal } from "../Modal";
 import { FileItem } from "../../types/File";
 import { FileForm } from "#/components/files/FileForm";
@@ -12,11 +18,13 @@ interface FilesListProps {}
 
 export const FilesList: React.FC<FilesListProps> = () => {
   const { showModal, hideModal } = useModal();
-
+  const { height } = useWindowDimensions();
   const { loadMoreFiles, files, loading, error, removeFile, updateFile } =
     useFiles();
 
+  // TODO: move this to a shared hook, and implement a better way to handle the image URL
   const { VITE_AWS_ACCESS_URL_KEY, VITE_AWS_BUCKET_NAME } = process.env;
+  const [loaded, setLoaded] = React.useState(false);
 
   React.useEffect(() => {
     if (error && !loading && error instanceof Error) {
@@ -28,18 +36,22 @@ export const FilesList: React.FC<FilesListProps> = () => {
     showModal({
       title: file.name,
       body: (
-        <Image
-          source={{
-            uri: file.url.replace(
-              String(VITE_AWS_BUCKET_NAME),
-              `${String(VITE_AWS_ACCESS_URL_KEY)}.${String(
-                VITE_AWS_BUCKET_NAME
-              )}`
-            ),
-          }}
-          style={{ width: "100%", height: 200 }}
-          resizeMode="contain"
-        />
+        <>
+          <Image
+            source={{
+              uri: file.url.replace(
+                String(VITE_AWS_BUCKET_NAME),
+                `${String(VITE_AWS_ACCESS_URL_KEY)}.${String(
+                  VITE_AWS_BUCKET_NAME
+                )}`
+              ),
+            }}
+            style={{ width: "100%", height: height * 0.3 }}
+            resizeMode="contain"
+            onLoadEnd={() => setLoaded(true)}
+          />
+          {!loaded && <LoadingIndicator style={StyleSheet.absoluteFill} />}
+        </>
       ),
       actions: [{ label: "Close", onPress: hideModal }],
     });
