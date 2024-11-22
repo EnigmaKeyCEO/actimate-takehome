@@ -58,6 +58,7 @@ export const FolderList: React.FC<FolderListProps> = ({ folders }) => {
       ],
     });
   };
+
   const handleOnDelete = async (folderId: string) => {
     showModal({
       title: "Delete Folder",

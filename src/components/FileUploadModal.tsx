@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import { Modal, View, Button, Text, StyleSheet } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
-import { uploadFile } from "#/api";
-import { FileUpload } from "#/types";
 import useFiles from "#/hooks/useFiles";
 import { useFolders } from "#/hooks/useFolders";
 import { useModal } from "#/components/Modal";
@@ -11,13 +9,11 @@ import { useModal } from "#/components/Modal";
 interface FileUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  folderId: string;
 }
 
 export const FileUploadModal: React.FC<FileUploadModalProps> = ({
   isOpen,
   onClose,
-  folderId,
 }) => {
   const [file, setFile] = useState<DocumentPicker.DocumentPickerAsset | null>(
     null

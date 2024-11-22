@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo } from "react";
 import { FlatList, View, Text, StyleSheet } from "react-native";
 import { useModal } from "../Modal";
-import { FileItemComponent } from "./FileItemComponent";
 import { FileItem } from "../../types/File";
 import { FileForm } from "#/components/files/FileForm";
 import { LineItem } from "#/components/common/LineItem";
