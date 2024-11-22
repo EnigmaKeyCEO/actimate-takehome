@@ -1,9 +1,22 @@
 # Image Folder Management Mobile Application
+---
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/YOUR_BADGE/deploy-status)](https://app.netlify.com/sites/actimate-takehome/deploys)
+## Deployment Status
+
+| Production | Development |
+|------------|-------------|
+| [![Netlify Status](https://api.netlify.com/api/v1/badges/7d0fb964-5b89-4611-97b7-9c5e2876147c/deploy-status)](https://app.netlify.com/sites/actimate-takehome/deploys) | [![Netlify Status](https://api.netlify.com/api/v1/badges/7d0fb964-5b89-4611-97b7-9c5e2876147c/deploy-status?branch=develop)](https://app.netlify.com/sites/actimate-takehome/deploys) |
 
 ## Introduction
 This project is a mobile application built with Expo (React Native) and TypeScript, allowing users to manage image folders and images with CRUD operations and pagination.
+
+## Development Journey
+
+I wanted to share some insights from my experience building this project. Throughout the process, I learned quite a few things and faced some challenges due to initial misconceptions.
+
+Initially, I misinterpreted the requirements and assumed that AWS services could be easily interchanged with Firebase. As a result, I built an entire project around Firebase. However, after revisiting the requirements, I realized that AWS and S3 were explicitly specified multiple times. This realization prompted me to reassess my approach.
+
+I then began reconstructing the project using AWS and attempted to merge it with my existing Firebase-based project. Unfortunately, this merging process did not go smoothly. Despite the setbacks, my ultimate goal was to create a unified codebase that contains both the API and the app code, all written in TypeScript. I aimed for a single repository that could target iOS, web, and server platforms, leveraging the same API from a monorepo setup.
 
 ## Setup Instructions
 
