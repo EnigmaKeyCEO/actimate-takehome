@@ -64,29 +64,38 @@ const handleGet = async (event: any, headers: any) => {
     IndexName: "parentId-index", // Assuming you have a GSI for parentId
     KeyConditionExpression: "parentId = :parentId",
     ExpressionAttributeValues: {
-      ":parentId": { S: String(parentId) }, // Ensure string type
+      ":parentId": { S: String(parentId) },
     },
     ScanIndexForward: true,
     Limit: 20,
     ExclusiveStartKey: lastKey ? JSON.parse(lastKey) : undefined,
   };
 
-  const command = new QueryCommand(params);
-  const result = await dynamoDb.send(command);
-  const folders: Folder[] = result.Items
-    ? result.Items.map((item) => unmarshall(item) as Folder)
-    : [];
+  try {
+    const command = new QueryCommand(params);
+    const result = await dynamoDb.send(command);
+    const folders: Folder[] = result.Items
+      ? result.Items.map((item) => unmarshall(item) as Folder)
+      : [];
 
-  return {
-    statusCode: 200,
-    headers,
-    body: JSON.stringify({
-      folders,
-      lastKey: result.LastEvaluatedKey
-        ? JSON.stringify(result.LastEvaluatedKey)
-        : null,
-    }),
-  };
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        folders,
+        lastKey: result.LastEvaluatedKey
+          ? JSON.stringify(result.LastEvaluatedKey)
+          : null,
+      }),
+    };
+  } catch (error) {
+    console.error("Error listing folders from DynamoDB:", error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ message: "Error listing folders from DynamoDB" }),
+    };
+  }
 };
 
 // Handler for POST requests to create a new folder

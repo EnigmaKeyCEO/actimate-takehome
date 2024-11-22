@@ -15,7 +15,7 @@ import {
   UpdateItemCommandInput,
 } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
-import { FileItem } from "../../src/types/File";
+import { DBMetadata, FileItem } from "../../src/types/File";
 import { v4 as uuidv4 } from "uuid";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -64,7 +64,13 @@ export const handler: Handler = async (event) => {
   }
 };
 
-// Handler for GET requests to list files
+/**
+ * Handles GET requests to list files with pagination.
+ * Synchronizes S3 and DynamoDB to ensure data consistency.
+ * @param event - Netlify event object
+ * @param headers - HTTP headers for CORS
+ * @returns Response object (TODO: DEFINE TYPE) with files and pagination token
+ */
 const handleGet = async (event: any, headers: any) => {
   const folderId = event.queryStringParameters?.folderId;
   const lastKey = event.queryStringParameters?.lastKey;
@@ -80,18 +86,18 @@ const handleGet = async (event: any, headers: any) => {
   }
 
   try {
-    // List objects in the S3 bucket
+    // List objects in the S3 bucket with pagination
     const listParams = {
       Bucket: process.env.VITE_AWS_BUCKET_NAME!,
       Prefix: folderId === "root" ? "" : `${folderId}/`,
+      ContinuationToken: lastKey || undefined,
+      MaxKeys: 20, // Define the page size
     };
     const listCommand = new ListObjectsV2Command(listParams);
     const s3Result = await S3.send(listCommand);
-    // TODO: establish the type for the signedUrl in types/File.ts
-    const fileMetadata: (FileItem & {
-      putCommand: PutItemCommand | null;
-      signedUrl: string;
-    })[] = [];
+
+    const fileMetadata: DBMetadata[] = [];
+
     if (s3Result.Contents) {
       for (const s3Object of s3Result.Contents) {
         const fileName = s3Object.Key?.split("/").pop();
@@ -115,24 +121,16 @@ const handleGet = async (event: any, headers: any) => {
             },
           };
           const getCommand = new GetItemCommand(getParams);
-          const DBResult = {
-            success: false,
-            file: null as FileItem | null,
-            putCommand: null as PutItemCommand | null,
+          const DBResult: DBMetadata = {
+            file: null,
+            putCommand: null,
+            lastKey: null,
           };
           try {
             const { Item = null } = await dynamoDb.send(getCommand);
             DBResult.file = Item ? (unmarshall(Item) as FileItem) : null;
-            DBResult.success = true;
           } catch (error) {
-            console.warn(
-              `
-              don't worry too much about this, it's probably just a new file
-
-              Error getting file from DynamoDB:
-            `,
-              error
-            );
+            console.warn("Error getting file from DynamoDB:", error);
           }
 
           if (!DBResult.file) {
@@ -147,54 +145,63 @@ const handleGet = async (event: any, headers: any) => {
                 createdAt: { S: fileItem.createdAt },
                 updatedAt: { S: fileItem.updatedAt },
               },
+              ConditionExpression:
+                "attribute_not_exists(folderId) AND attribute_not_exists(name)",
             };
             const putCommand = new PutItemCommand(putParams);
             try {
               await dynamoDb.send(putCommand);
-              console.log("File metadata stored in DynamoDB:", putParams.Item);
+              DBResult.file = fileItem;
             } catch (error) {
-              console.error("Error storing file metadata in DynamoDB:", error);
+              if (error.name === "ConditionalCheckFailedException") {
+                console.warn("Duplicate file entry detected:", fileItem.name);
+                throw error; // handle by skipping this file; TODO: make this do something else
+              } else {
+                console.error(
+                  "Error storing file metadata in DynamoDB:",
+                  error
+                );
+              }
             }
-            DBResult.putCommand = putCommand;
           }
 
-          const pushItem = DBResult.file ? DBResult.file : fileItem;
-
           fileMetadata.push({
-            ...pushItem,
+            file: DBResult.file,
             putCommand: DBResult.putCommand,
-            signedUrl: "",
+            lastKey: null, // Not needed here
           });
         }
       }
     }
 
-    // TODO: fix this type, like why does it not error in the POST handler but it does here?
-    const s3Client = S3 as __Client<any, any, any, any>;
-    // now we need to get the signed URL for each file
+    // Prepare the signed URLs
     for (const obj of fileMetadata) {
-      const signedUrl = await getSignedUrl(s3Client, obj.putCommand!, {
-        expiresIn: 3600,
-      });
-      obj.signedUrl = signedUrl;
+      const signedUrl = await getSignedUrl(
+        S3,
+        new PutObjectCommand({
+          Bucket: process.env.VITE_AWS_BUCKET_NAME!,
+          Key: obj.file?.key,
+        }),
+        {
+          expiresIn: 3600,
+        }
+      );
+      try {
+        obj.file!.url = signedUrl;
+      } catch (error) {
+        // fail silently, TODO: make this do something...
+      }
     }
 
-    const files = fileMetadata.map((metadata) => ({
-      id: metadata.id,
-      folderId: metadata.folderId,
-      key: metadata.key,
-      name: metadata.name,
-      url: metadata.signedUrl,
-      createdAt: metadata.createdAt,
-      updatedAt: metadata.updatedAt,
-    }));
+    const files = fileMetadata.map((metadata) => metadata.file);
+    const newLastKey = s3Result.NextContinuationToken || null;
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         files,
-        lastKey: lastKey || fileMetadata[fileMetadata.length - 1].key,
+        lastKey: newLastKey,
       }),
     };
   } catch (error) {
