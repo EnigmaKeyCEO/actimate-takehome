@@ -1,14 +1,16 @@
-import { Folder, FileItem } from "#/types";
+import { FileItem } from "#/types";
 import { API_BASE_URL } from "./config";
 
 export const getFolders = async (
   folderId: string,
-  page: number,
+  lastKey: string | null,
   sortOptions: any
 ) => {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/folders?parentId=${folderId}&page=${page}&sort=${sortOptions.field}&direction=${sortOptions.direction}`
+      `${API_BASE_URL}/folders?parentId=${folderId}${
+        lastKey ? `&lastKey=${lastKey}` : ""
+      }&sort=${sortOptions.field}&direction=${sortOptions.direction}`
     );
     if (!response.ok) {
       throw new Error("Failed to fetch folders");
@@ -57,7 +59,9 @@ export const getFiles = async (
 ) => {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/files?folderId=${folderId}&lastKey=${lastKey}&sort=${sortOptions.field}&direction=${sortOptions.direction}`
+      `${API_BASE_URL}/files?folderId=${folderId}${
+        lastKey ? `&lastKey=${encodeURIComponent(lastKey)}` : ""
+      }&sort=${sortOptions.field}&direction=${sortOptions.direction}`
     );
     if (!response.ok) {
       throw new Error("Failed to fetch files");
@@ -73,7 +77,9 @@ export const getFiles = async (
   }
 };
 
-export const uploadFile = async (folderId: string, fileData: FormData) => {
+export const uploadFile: (fileData: FormData) => Promise<FileItem> = async (
+  fileData: FormData
+) => {
   try {
     const response = await fetch(`${API_BASE_URL}/files`, {
       method: "POST",
@@ -93,7 +99,7 @@ export const uploadFile = async (folderId: string, fileData: FormData) => {
   }
 };
 
-export const updateFile = async (folderId: string, file: FileItem) => {
+export const updateFile = async (file: FileItem) => {
   try {
     const response = await fetch(`${API_BASE_URL}/files/${file.id}`, {
       method: "PUT",
