@@ -6,7 +6,9 @@ import {
   StyleSheet,
   Modal,
   TouchableWithoutFeedback,
+  Platform,
 } from "react-native";
+import { Icon } from "native-base";
 import { SortField, SortOptions } from "#/types";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -48,7 +50,11 @@ export const SortHeader: React.FC<SortHeaderProps> = ({
           accessibilityLabel="Sort Options Menu"
           accessibilityRole="button"
         >
-          <Ionicons name="menu" size={24} color="black" />
+          {typeof Icon === "function" ? (
+            <Icon as={Ionicons} name="menu" size="sm" />
+          ) : (
+            <Text style={styles.notActuallyAnIcon}>{`☰`}</Text>
+          )}
         </TouchableOpacity>
       </View>
       <Modal
@@ -79,18 +85,23 @@ export const SortHeader: React.FC<SortHeaderProps> = ({
                       >
                         {capitalize(field)}
                       </Text>
-                      {sortOptions.field === field && (
-                        <Ionicons
-                          name={
-                            sortOptions.direction === "asc"
-                              ? "chevron-up"
-                              : "chevron-down"
-                          }
-                          size={16}
-                          color="black"
-                          style={styles.chevron}
-                        />
-                      )}
+                      {sortOptions.field === field &&
+                        (Platform.OS !== "ios" ? (
+                          <Ionicons
+                            name={
+                              sortOptions.direction === "asc"
+                                ? "chevron-up"
+                                : "chevron-down"
+                            }
+                            size={16}
+                            color="black"
+                            style={styles.chevron}
+                          />
+                        ) : (
+                          sortOptions.direction === "asc"
+                            ? <Text style={styles.notActuallyAnIcon}>{`⬆️`}</Text>
+                            : <Text style={styles.notActuallyAnIcon}>{`⬇️`}</Text>
+                        ))}
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -160,5 +171,10 @@ const styles = StyleSheet.create({
   },
   chevron: {
     marginLeft: 8,
+  },
+  notActuallyAnIcon: {
+    fontSize: 24,
+    color: "black",
+    fontWeight: "bold",
   },
 });

@@ -1,4 +1,4 @@
-import { Button, VStack } from "native-base";
+import { Box, Button, HStack, VStack } from "native-base";
 import React, {
   createContext,
   useContext,
@@ -81,16 +81,20 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const showConfigModal: ModalConfigFunction = useCallback((config) => {
     setMessage(
-      <VStack>
+      <VStack space={2} alignItems="center" justifyContent="center">
         <Text accessibilityRole="header" style={styles.modalTitle}>
           {config.title}
         </Text>
-        {config.body}
-        {config.actions.map((action, index) => (
-          <Button key={index} onPress={action.onPress} accessible>
-            {action.label}
-          </Button>
-        ))}
+        <Box alignItems="center" justifyContent="center">
+          {config.body}
+        </Box>
+        <HStack space={2} alignItems="center" justifyContent="center">
+          {config.actions.map((action, index) => (
+            <Button key={index} onPress={action.onPress} accessible>
+              {action.label}
+            </Button>
+          ))}
+        </HStack>
       </VStack>
     );
     setType("info");
@@ -208,6 +212,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
+    flexDirection: "column",
     padding: 20,
     borderRadius: 10,
     width: "80%",
@@ -219,8 +224,14 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     // Add elevation for Android
     elevation: 5,
+    // center content
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
   },
   modalTitle: {
+    flexDirection: "row",
+    color: "white",
     fontSize: 20,
     marginBottom: 12,
     textAlign: "center",

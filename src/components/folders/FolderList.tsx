@@ -45,9 +45,10 @@ export const FolderList: React.FC<FolderListProps> = () => {
     },
     [parentId, showModal]
   );
+  const updatedName = React.useRef("");
 
-  const handleOnUpdate = async (folder: Folder) => {
-    let updatedName = folder.name;
+    const handleOnUpdate = async (folder: Folder) => {
+    updatedName.current = folder.name;
 
     showModal({
       title: "Update Folder",
@@ -55,7 +56,7 @@ export const FolderList: React.FC<FolderListProps> = () => {
         <FolderForm
           folder={folder}
           onChangeName={(name) => {
-            updatedName = name;
+            updatedName.current = name;
           }}
         />
       ),
@@ -65,7 +66,7 @@ export const FolderList: React.FC<FolderListProps> = () => {
           label: "Update",
           onPress: async () => {
             try {
-              await updateFolder(folder.id, { name: updatedName });
+              await updateFolder(folder.id, { name: updatedName.current });
               hideModal();
             } catch (error: any) {
               console.error("Error updating folder:", error);
@@ -119,7 +120,7 @@ export const FolderList: React.FC<FolderListProps> = () => {
 
   const renderLoadMoreSection = React.useCallback(() => {
     if (loading) return <LoadingIndicator />;
-    if (folders.length % 20 !== 0) {
+    if (folders.length % 20 !== 0 && folders.length !== 0) {
       return null;
     }
     return (
@@ -140,8 +141,8 @@ export const FolderList: React.FC<FolderListProps> = () => {
         //   onEndReached={loadMoreFolders}
         //   onEndReachedThreshold={0.5}
         ListFooterComponent={renderLoadMoreSection()}
-        refreshing={loading && folders.length === 0}
-        onRefresh={refreshFolders}
+        // refreshing={loading && folders.length === 0}
+        // onRefresh={refreshFolders}
       />
       <CreateFolderModal
         isOpen={isCreating}
@@ -180,7 +181,7 @@ const FolderForm: React.FC<FolderFormProps> = ({ folder, onChangeName }) => {
 
 const styles = StyleSheet.create({
   listContainer: {
-    padding: 16,
+    padding: 8,
   },
   loadMoreContainer: {
     padding: 16,
@@ -193,16 +194,22 @@ const styles = StyleSheet.create({
   },
   folderName: {
     fontSize: 16,
+    color: "white",
   },
   formContainer: {
+    width: "100%",
     marginVertical: 16,
   },
   label: {
+    color: "white",
+    flex: 1,
     fontSize: 16,
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
+    color: "white",
+    flex: 1,
     borderColor: "#ccc",
     borderRadius: 4,
     padding: 8,
