@@ -5,14 +5,18 @@ import { Folder } from "#/types/Folder";
 import { useFolders } from "#/hooks/useFolders";
 import { LineItem } from "#/components/common/LineItem";
 import { LoadingIndicator } from "#/components/common/LoadingIndicator";
+import { Button } from "native-base";
+import { CreateFolderModal } from "#/components/modals/FolderModal";
+import { createFolder } from "#/api";
 
-interface FolderListProps {
-  folders: Folder[];
-}
+interface FolderListProps {}
 
-export const FolderList: React.FC<FolderListProps> = ({ folders }) => {
+export const FolderList: React.FC<FolderListProps> = () => {
   const { showModal, hideModal } = useModal();
+  const [isCreating, setIsCreating] = React.useState(false);
   const {
+    parentId,
+    folders,
     loading,
     deleteFolder,
     updateFolder,
@@ -25,9 +29,21 @@ export const FolderList: React.FC<FolderListProps> = ({ folders }) => {
     enterFolder(folder.id);
   };
 
-  const handleOnCreate = (parentId: string) => {
-    showModal("Create subfolder functionality not implemented yet.", "info");
+  const handleOnCreate = () => {
+    setIsCreating(true);
   };
+
+  const onCreateFolder = React.useCallback(
+    async (folderName: Folder["name"]) => {
+      try {
+        await createFolder(parentId, folderName);
+        showModal(`Successfully created "${folderName}"`, "success");
+      } catch (error: any) {
+        showModal(error.message, "error");
+      }
+    },
+    [createFolder, parentId, showModal]
+  );
 
   const handleOnUpdate = async (folder: Folder) => {
     let updatedName = folder.name;
@@ -100,18 +116,43 @@ export const FolderList: React.FC<FolderListProps> = ({ folders }) => {
     [handleOnDelete, handleOnUpdate]
   );
 
+  const renderLoadMoreSection = React.useCallback(() => {
+    if (loading || folders.length % 20 !== 0) {
+      return null;
+    }
+
+    return (
+      <View style={styles.loadMoreContainer}>
+        <Button onPress={loadMoreFolders}>Load More</Button>
+      </View>
+    );
+  }, [loading]);
+
   return (
-    <FlatList
-      data={folders}
-      renderItem={renderItem}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.listContainer}
-      onEndReached={loadMoreFolders}
-      onEndReachedThreshold={0.5}
-      ListFooterComponent={loading ? <LoadingIndicator /> : null}
-      refreshing={loading && folders.length === 0}
-      onRefresh={refreshFolders}
-    />
+    <>
+      <FlatList
+        data={folders}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContainer}
+        // TODO: use infinite scroll and a loading indicator instead of a button
+        //   onEndReached={loadMoreFolders}
+        //   onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          // TODO: use infinite scroll and a loading indicator instead of a button
+          loading ? <LoadingIndicator /> : renderLoadMoreSection()
+        }
+        refreshing={loading && folders.length === 0}
+        onRefresh={refreshFolders}
+      />
+      {isCreating && (
+        <CreateFolderModal
+          isOpen={isCreating}
+          onClose={() => setIsCreating(false)}
+          onCreate={onCreateFolder}
+        />
+      )}
+    </>
   );
 };
 
@@ -143,6 +184,9 @@ const FolderForm: React.FC<FolderFormProps> = ({ folder, onChangeName }) => {
 
 const styles = StyleSheet.create({
   listContainer: {
+    padding: 16,
+  },
+  loadMoreContainer: {
     padding: 16,
   },
   itemContainer: {

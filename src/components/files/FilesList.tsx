@@ -5,27 +5,15 @@ import { FileItem } from "../../types/File";
 import { FileForm } from "#/components/files/FileForm";
 import { LineItem } from "#/components/common/LineItem";
 import { Image } from "native-base";
+import useFiles from "#/hooks/useFiles";
 
-interface FilesListProps {
-  files: FileItem[];
-  loadMoreFiles: () => void;
-  removeFile: (id: string) => void;
-  updateFile: (file: FileItem) => void;
-  createFile: (file: FileItem) => void;
-  loading?: boolean;
-  error?: string | null;
-}
+interface FilesListProps {}
 
-export const FilesList: React.FC<FilesListProps> = ({
-  files,
-  loadMoreFiles,
-  removeFile,
-  updateFile,
-  createFile,
-  loading,
-  error,
-}) => {
+export const FilesList: React.FC<FilesListProps> = () => {
   const { showModal, hideModal } = useModal();
+
+  const { loadMoreFiles, files, loading, error, removeFile, updateFile } =
+    useFiles();
 
   const handleOnPress = (file: FileItem) => {
     showModal({
@@ -153,7 +141,11 @@ export const FilesList: React.FC<FilesListProps> = ({
         <Text style={styles.centeredMiddleText}>No Files Found...</Text>
       )}
       {loading && <Text style={styles.loadingText}>Loading...</Text>}
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && (
+        <Text style={styles.errorText}>
+          {error instanceof Error ? error.message : String(error)}
+        </Text>
+      )}
     </View>
   );
 };

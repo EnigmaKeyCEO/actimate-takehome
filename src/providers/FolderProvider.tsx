@@ -21,6 +21,11 @@ export const FolderContext = React.createContext<{
   hasMoreFolders: boolean;
   fetchSingleFolder: (id: string) => Promise<Folder | null>;
   enterFolder: (folderId: string) => void;
+  sortOptions: SortOptions;
+  setSortOptions: (
+    sortOptions: SortOptions | ((prev: SortOptions) => SortOptions)
+  ) => void;
+  currentFolderName: string;
 }>({
   parentId: "root",
   folders: [],
@@ -40,10 +45,18 @@ export const FolderContext = React.createContext<{
   hasMoreFolders: true,
   fetchSingleFolder: async () => null,
   enterFolder: () => {},
+  sortOptions: {
+    field: "name",
+    direction: "asc",
+  },
+  setSortOptions: () => {},
+  currentFolderName: "root",
 });
 
 // Define the FolderProvider component
-export const FolderProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const FolderProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
@@ -54,14 +67,24 @@ export const FolderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [lastKey, setLastKey] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [parentId, setParentId] = useState<string>("root");
+  const [currentFolderName, setCurrentFolderName] = useState<string>("root");
 
   const fetchFolders = useCallback(
-    async (currentLastKey: string | null = null, currentSort: SortOptions = sortOptions) => {
+    async (
+      currentLastKey: string | null = null,
+      currentSort: SortOptions = sortOptions
+    ) => {
       setLoading(true);
       setError(null);
       try {
-        const response = await getFolders(parentId, currentLastKey, currentSort);
-        const fetchedFolders = Array.isArray(response.folders) ? response.folders : [];
+        const response = await getFolders(
+          parentId,
+          currentLastKey,
+          currentSort
+        );
+        const fetchedFolders = Array.isArray(response.folders)
+          ? response.folders
+          : [];
         const newLastKey = response.lastKey || null;
 
         if (fetchedFolders.length === 0) {
@@ -75,7 +98,9 @@ export const FolderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           setLastKey(newLastKey);
         }
       } catch (err: any) {
-        setError(err instanceof Error ? err : new Error("Failed to fetch folders"));
+        setError(
+          err instanceof Error ? err : new Error("Failed to fetch folders")
+        );
       } finally {
         setLoading(false);
       }
@@ -109,7 +134,9 @@ export const FolderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setFolders((prev) => [newFolder, ...prev]);
       return newFolder;
     } catch (err: any) {
-      setError(err instanceof Error ? err : new Error("Failed to create folder"));
+      setError(
+        err instanceof Error ? err : new Error("Failed to create folder")
+      );
       throw err;
     }
   }, []);
@@ -119,33 +146,50 @@ export const FolderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       await apiDeleteFolder(id);
       setFolders((prev) => prev.filter((folder) => folder.id !== id));
     } catch (err: any) {
-      setError(err instanceof Error ? err : new Error("Failed to delete folder"));
+      setError(
+        err instanceof Error ? err : new Error("Failed to delete folder")
+      );
       throw err;
     }
   }, []);
 
-  const updateFolder = useCallback(async (id: string, updateData: Partial<Folder>) => {
-    try {
-      const updatedFolder = await apiUpdateFolder(id, updateData);
-      setFolders((prev) => prev.map((folder) => (folder.id === id ? updatedFolder : folder)));
-    } catch (err: any) {
-      setError(err instanceof Error ? err : new Error("Failed to update folder"));
-      throw err;
-    }
-  }, []);
+  const updateFolder = useCallback(
+    async (id: string, updateData: Partial<Folder>) => {
+      try {
+        const updatedFolder = await apiUpdateFolder(id, updateData);
+        setFolders((prev) =>
+          prev.map((folder) => (folder.id === id ? updatedFolder : folder))
+        );
+      } catch (err: any) {
+        setError(
+          err instanceof Error ? err : new Error("Failed to update folder")
+        );
+        throw err;
+      }
+    },
+    []
+  );
 
-  const fetchSingleFolder = useCallback(async (id: string): Promise<Folder | null> => {
-    try {
-      const folder = await getFolderById(id);
-      return folder;
-    } catch (err) {
-      console.error("Error fetching single folder:", err);
-      return null;
-    }
-  }, []);
+  const fetchSingleFolder = useCallback(
+    async (id: string): Promise<Folder | null> => {
+      try {
+        const folder = await getFolderById(id);
+        return folder;
+      } catch (err) {
+        console.error("Error fetching single folder:", err);
+        return null;
+      }
+    },
+    []
+  );
 
   const enterFolder = useCallback((folderId: string) => {
     setParentId(folderId);
+    async function updateFolderName() {
+      const folder = await fetchSingleFolder(folderId);
+      setCurrentFolderName(folder?.name || "root");
+    }
+    updateFolderName();
   }, []);
 
   return (
@@ -163,6 +207,9 @@ export const FolderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         hasMoreFolders: hasMore,
         fetchSingleFolder,
         enterFolder,
+        sortOptions,
+        setSortOptions,
+        currentFolderName,
       }}
     >
       {children}

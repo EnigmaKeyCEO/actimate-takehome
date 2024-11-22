@@ -26,17 +26,17 @@ export const getFolders = async (
   }
 };
 
-export const createFolder = async (data: any) => {
+export const createFolder = async (parentId: string, name: string) => {
   try {
     if (process.env.environment === "development") {
-      console.log("Creating folder with data:", data);
+      console.log("Creating folder with data:", { parentId, name });
     }
     const response = await fetch(`${API_BASE_URL}/folders`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ parentId, name }),
     });
     if (!response.ok) {
       throw new Error("Failed to create folder");

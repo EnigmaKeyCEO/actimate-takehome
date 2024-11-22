@@ -6,9 +6,7 @@ import {
   StyleSheet,
   Modal,
   TouchableWithoutFeedback,
-  Platform,
 } from "react-native";
-import { useTheme } from "native-base";
 import { SortField, SortOptions } from "#/types";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -21,7 +19,6 @@ export const SortHeader: React.FC<SortHeaderProps> = ({
   sortOptions,
   onSortChange,
 }) => {
-  const theme = useTheme();
   const [menuVisible, setMenuVisible] = useState(false);
 
   const toggleMenu = () => {

@@ -4,14 +4,13 @@ import { useNavigate, useParams } from "react-router-native";
 import { FolderActions } from "#/components/actions/FolderActions";
 import { useFolders } from "#/hooks/useFolders";
 import { useFiles } from "#/hooks/useFiles";
-import { Folder, SortOptions } from "#/types";
+import { Folder } from "#/types";
 import { useModal } from "#/components/Modal";
 import { FolderList } from "#/components/folders/FolderList";
 import { FilesList } from "#/components/files/FilesList";
 import { SortHeader } from "#/components/headers/SortHeader";
 import { SectionHeader } from "#/components/headers/SectionHeader";
 import { CreateFolderModal } from "#/components/modals/FolderModal";
-import * as IP from "expo-image-picker";
 import { debounce } from "lodash";
 import { Breadcrumb } from "#/components/Breadcrumb";
 import { FileUploadModal } from "#/components/FileUploadModal";
@@ -28,30 +27,25 @@ export function FolderScreen(passedProps: { folderId?: string }) {
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [showFileUploadModal, setShowFileUploadModal] = useState(false);
 
-  // Define sortOptions state
-  const [sortOptions, setSortOptions] = useState<SortOptions>({
-    field: "name",
-    direction: "asc",
-  });
 
   const {
     folders,
     loading: foldersLoading,
     error: foldersError,
     createFolder,
-    deleteFolder,
     loadMoreFolders: doLoadMoreFolders,
-    refreshFolders,
     hasMoreFolders,
     fetchSingleFolder,
+    sortOptions,
+    setSortOptions,
   } = useFolders(parentId);
+  
 
   const {
     files,
     loading: filesLoading,
     error: filesError,
     loadMoreFiles: doLoadMoreFiles,
-    uploadNewFile,
     removeFile,
     updateFile,
     createFile,
@@ -180,7 +174,7 @@ export function FolderScreen(passedProps: { folderId?: string }) {
         {foldersLoading && folderId === "root" ? (
           <ActivityIndicator size="large" color="#0000ff" />
         ) : (
-          <FolderList folders={folders} />
+          <FolderList />
         )}
       </View>
 
@@ -190,15 +184,7 @@ export function FolderScreen(passedProps: { folderId?: string }) {
         {filesLoading && folderId === "root" ? (
           <ActivityIndicator size="large" color="#0000ff" />
         ) : (
-          <FilesList
-            files={files}
-            loading={filesLoading}
-            error={filesError?.message}
-            loadMoreFiles={handleLoadMoreFiles}
-            removeFile={removeFile}
-            updateFile={updateFile}
-            createFile={createFile}
-          />
+          <FilesList />
         )}
       </View>
 
@@ -220,7 +206,6 @@ export function FolderScreen(passedProps: { folderId?: string }) {
       <FileUploadModal
         isOpen={showFileUploadModal}
         onClose={() => setShowFileUploadModal(false)}
-        folderId={folderId}
       />
     </Animated.View>
   );
