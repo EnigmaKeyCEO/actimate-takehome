@@ -11,6 +11,20 @@
 [https://develop--actimate-takehome.netlify.app/](https://develop--actimate-takehome.netlify.app/)
 
 
+## Table of Contents
+- [Introduction](#introduction)
+- [Features](#features)
+- [Setup Instructions](#setup-instructions)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Running the Application](#running-the-application)
+  - [Additional Documentation](#additional-documentation)
+- [Deployment](#deployment)
+- [Environment Variables](#environment-variables)
+- [Additional Notes](#additional-notes)
+- [License](#license)
+
+
 ## Introduction
 This project is a mobile application built with Expo (React Native) and TypeScript, allowing users to manage image folders and images with CRUD operations and pagination.
 
@@ -47,9 +61,16 @@ actimate-takehome/
 ├── assets/                  - Static assets like images and fonts
 ├── netlify/
 │   └── functions/           - Serverless Lambda functions
+│       ├── awsConfig.ts     - AWS configuration
 │       ├── folders.ts       - Lambda function for folder operations
 │       └── files.ts         - Lambda function for file operations
-├── assets/                  - Static assets like images and fonts
+├── eas.json                 - EAS configuration
+├── netlify.toml             - Netlify configuration
+├── app.json                 - Expo configuration
+├── index.js                 - Bootstraps the application
+├── tsconfig.json            - TypeScript configuration
+├── tailwind.config.js       - Tailwind CSS configuration (for web)
+├── vite.config.ts           - Vite configuration (important for web)
 └── package.json             - Project dependencies and scripts
 ```
 
@@ -62,16 +83,20 @@ actimate-takehome/
 - **EAS CLI**: Install using `npm install -g eas-cli`.
 
 ### Installation
-1. **Clone the repository**:
+1. **Global Packages**:
+   - **EAS CLI**: `npm install -g eas-cli`
+   - **Netlify CLI**: `npm install -g netlify-cli`
+
+2. **Clone the repository**:
    Open your terminal and run:
    ```bash
    git clone https://github.com/EnigmaKeyCEO/actimate-takehome.git
    ```
-2. **Navigate to the project directory**:
+3. **Navigate to the project directory**:
    ```bash
    cd actimate-takehome
    ```
-3. **Install dependencies**:
+4. **Install dependencies**:
    Run the following command to install all necessary packages:
    ```bash
    npm install
@@ -94,6 +119,12 @@ actimate-takehome/
   ```bash
   npm run dev:ios
   ```
+
+### Additional Documentation
+- [Deployment Instructions](DEPLOY_README.md)
+- [Development Process](DEVELOP_README.md)
+- [Local Environment Setup](LOCAL_README.md)
+
 
 ## Deployment
 - **Develop Branch**: [https://develop--actimate-takehome.netlify.app/](https://develop--actimate-takehome.netlify.app/)
