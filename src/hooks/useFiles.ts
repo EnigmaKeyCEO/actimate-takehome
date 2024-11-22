@@ -107,7 +107,7 @@ export function useFiles() {
   const uploadNewFile = useCallback(
     async (fileData: FormData) => {
       try {
-        await apiUploadNewFile(folderId, fileData);
+        await apiUploadNewFile(fileData);
         setFiles([]);
         setLastKey(null);
         setHasMore(true);

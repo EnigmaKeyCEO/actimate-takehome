@@ -71,34 +71,9 @@ export function FolderScreen(passedProps: { folderId?: string }) {
     [createFolder, folderId, showModal]
   );
 
-  const handleUploadFile = useCallback(async () => {
-    // Implement your file upload logic here
-    // Example: Launch image picker and upload selected file
-    const result = await IP.launchImageLibraryAsync({
-      mediaTypes: IP.MediaTypeOptions.Images,
-      allowsEditing: true,
-      base64: true,
-    });
-
-    if (
-      !result.canceled &&
-      result.assets &&
-      result.assets.length > 0 &&
-      result.assets[0].base64
-    ) {
-      const formData = new FormData();
-      formData.append("file", result.assets[0].base64);
-      formData.append("name", result.assets[0].fileName || "");
-      formData.append("parentId", parentId);
-      formData.append("createdAt", new Date().toISOString());
-      formData.append("updatedAt", new Date().toISOString());
-      try {
-        await uploadNewFile(formData);
-      } catch (error: any) {
-        showModal(error.message, "error");
-      }
-    }
-  }, [uploadNewFile, showModal]);
+  const onUploadFile = useCallback(() => {
+    setShowFileUploadModal(true);
+  }, []);
 
   // Debounced handlers to prevent rapid calls
   const handleLoadMoreFolders = useCallback(
@@ -231,7 +206,7 @@ export function FolderScreen(passedProps: { folderId?: string }) {
       <View style={styles.folderActionsContainer}>
         <FolderActions
           onAddFolder={() => setShowFolderModal(true)}
-          onUploadFile={() => setShowFileUploadModal(true)}
+          onUploadFile={onUploadFile}
         />
       </View>
 

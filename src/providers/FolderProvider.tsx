@@ -51,39 +51,31 @@ export const FolderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     field: "name",
     direction: "asc",
   });
-  const [page, setPage] = useState<number>(1);
+  const [lastKey, setLastKey] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [parentId, setParentId] = useState<string>("root");
 
   const fetchFolders = useCallback(
-    async (
-      currentPage: number = 1,
-      currentSort: SortOptions = sortOptions
-    ) => {
+    async (currentLastKey: string | null = null, currentSort: SortOptions = sortOptions) => {
       setLoading(true);
       setError(null);
       try {
-        const response = await getFolders(parentId, currentPage, currentSort);
-        const fetchedFolders = Array.isArray(response.folders)
-          ? response.folders
-          : [];
+        const response = await getFolders(parentId, currentLastKey, currentSort);
+        const fetchedFolders = Array.isArray(response.folders) ? response.folders : [];
+        const newLastKey = response.lastKey || null;
 
         if (fetchedFolders.length === 0) {
           setHasMore(false);
         } else {
-          setFolders((prevFolders) => {
-            if (currentPage === 1) {
-              return fetchedFolders;
-            } else {
-              return [...prevFolders, ...fetchedFolders];
-            }
-          });
-          setPage(currentPage + 1);
+          if (currentLastKey === null) {
+            setFolders(fetchedFolders);
+          } else {
+            setFolders((prev) => [...prev, ...fetchedFolders]);
+          }
+          setLastKey(newLastKey);
         }
       } catch (err: any) {
-        setError(
-          err instanceof Error ? err : new Error("Failed to fetch folders")
-        );
+        setError(err instanceof Error ? err : new Error("Failed to fetch folders"));
       } finally {
         setLoading(false);
       }
@@ -93,90 +85,67 @@ export const FolderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
     setFolders([]);
-    setPage(1);
+    setLastKey(null);
     setHasMore(true);
-    fetchFolders(1, sortOptions);
-  }, [parentId, sortOptions, fetchFolders]);
+    fetchFolders(null, sortOptions);
+  }, [parentId, sortOptions]); // intentionally removed fetchFolders from dependencies
 
   const loadMoreFolders = useCallback(() => {
     if (hasMore && !loading && !error) {
-      fetchFolders(page, sortOptions);
+      fetchFolders(lastKey, sortOptions);
     }
-  }, [hasMore, loading, error, fetchFolders, page, sortOptions]);
+  }, [hasMore, loading, error, fetchFolders, lastKey, sortOptions]);
 
   const refreshFolders = useCallback(async () => {
     setFolders([]);
-    setPage(1);
+    setLastKey(null);
     setHasMore(true);
-    fetchFolders(1, sortOptions);
+    fetchFolders(null, sortOptions);
   }, [fetchFolders, sortOptions]);
 
-  const createFolder = useCallback(
-    async (folderData: Partial<Folder>) => {
-      try {
-        const newFolder = await apiCreateFolder(
-          folderData as CreateFolderInput
-        );
-        setFolders((prev) => [newFolder, ...prev]);
-        return newFolder;
-      } catch (err: any) {
-        setError(
-          err instanceof Error ? err : new Error("Failed to create folder")
-        );
-        throw err;
-      }
-    },
-    []
-  );
+  const createFolder = useCallback(async (folderData: Partial<Folder>) => {
+    try {
+      const newFolder = await apiCreateFolder(folderData as CreateFolderInput);
+      setFolders((prev) => [newFolder, ...prev]);
+      return newFolder;
+    } catch (err: any) {
+      setError(err instanceof Error ? err : new Error("Failed to create folder"));
+      throw err;
+    }
+  }, []);
 
-  const deleteFolder = useCallback(
-    async (id: string) => {
-      try {
-        await apiDeleteFolder(id);
-        setFolders((prev) => prev.filter((folder) => folder.id !== id));
-      } catch (err: any) {
-        setError(
-          err instanceof Error ? err : new Error("Failed to delete folder")
-        );
-        throw err;
-      }
-    },
-    []
-  );
+  const deleteFolder = useCallback(async (id: string) => {
+    try {
+      await apiDeleteFolder(id);
+      setFolders((prev) => prev.filter((folder) => folder.id !== id));
+    } catch (err: any) {
+      setError(err instanceof Error ? err : new Error("Failed to delete folder"));
+      throw err;
+    }
+  }, []);
 
-  const updateFolder = useCallback(
-    async (id: string, updateData: Partial<Folder>) => {
-      try {
-        const updatedFolder = await apiUpdateFolder(id, updateData);
-        setFolders((prev) =>
-          prev.map((folder) => (folder.id === id ? updatedFolder : folder))
-        );
-      } catch (err: any) {
-        setError(
-          err instanceof Error ? err : new Error("Failed to update folder")
-        );
-        throw err;
-      }
-    },
-    []
-  );
+  const updateFolder = useCallback(async (id: string, updateData: Partial<Folder>) => {
+    try {
+      const updatedFolder = await apiUpdateFolder(id, updateData);
+      setFolders((prev) => prev.map((folder) => (folder.id === id ? updatedFolder : folder)));
+    } catch (err: any) {
+      setError(err instanceof Error ? err : new Error("Failed to update folder"));
+      throw err;
+    }
+  }, []);
 
-  const fetchSingleFolder = useCallback(
-    async (id: string): Promise<Folder | null> => {
-      try {
-        const folder = await getFolderById(id);
-        return folder;
-      } catch (err) {
-        console.error("Error fetching single folder:", err);
-        return null;
-      }
-    },
-    []
-  );
+  const fetchSingleFolder = useCallback(async (id: string): Promise<Folder | null> => {
+    try {
+      const folder = await getFolderById(id);
+      return folder;
+    } catch (err) {
+      console.error("Error fetching single folder:", err);
+      return null;
+    }
+  }, []);
 
   const enterFolder = useCallback((folderId: string) => {
     setParentId(folderId);
-    
   }, []);
 
   return (
