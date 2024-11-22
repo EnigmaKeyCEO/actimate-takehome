@@ -1,7 +1,4 @@
-# Image Folder Management Mobile Application
----
-
-## Deployment Status
+# ACTIMATE: <br />&nbsp;&nbsp;TAKE HOME CHALLENGE
 
 | Production | Development |
 |------------|-------------|
@@ -17,6 +14,11 @@ I wanted to share some insights from my experience building this project. Throug
 Initially, I misinterpreted the requirements and assumed that AWS services could be easily interchanged with Firebase. As a result, I built an entire project around Firebase. However, after revisiting the requirements, I realized that AWS and S3 were explicitly specified multiple times. This realization prompted me to reassess my approach.
 
 I then began reconstructing the project using AWS and attempted to merge it with my existing Firebase-based project. Unfortunately, this merging process did not go smoothly. Despite the setbacks, my ultimate goal was to create a unified codebase that contains both the API and the app code, all written in TypeScript. I aimed for a single repository that could target iOS, web, and server platforms, leveraging the same API from a monorepo setup.
+
+## Project Structure
+
+
+
 
 ## Setup Instructions
 
@@ -73,7 +75,8 @@ VITE_API_BASE_URL=https://actimate-takehome.netlify.app/api
 VITE_AWS_ACCESS_KEY_ID=your_access_key_id
 VITE_AWS_SECRET_ACCESS_KEY=your_secret_access_key
 VITE_AWS_REGION=your_aws_region
-VITE_S3_BUCKET=your_s3_bucket
+VITE_AWS_BUCKET_NAME=your_s3_bucket
+VITE_AWS_ACCESS_URL_KEY=your_access_url_key
 ```
 
 ## Features
