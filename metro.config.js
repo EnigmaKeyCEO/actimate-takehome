@@ -1,11 +1,10 @@
 const { getDefaultConfig, mergeConfig } = require("@react-native/metro-config");
 const path = require("path");
-const createExpoWebpackConfigAsync = require('@expo/webpack-config');
+const createExpoWebpackConfigAsync = require("@expo/webpack-config");
 
 const defaultConfig = getDefaultConfig(__dirname);
 
 const mergedConfig = mergeConfig(defaultConfig, {
-  mode: process.env.NODE_ENV === "development" ? "development" : "production",
   resolver: {
     ...defaultConfig.resolver,
     assetExts: [...defaultConfig.resolver.assetExts],
@@ -34,5 +33,8 @@ const mergedConfig = mergeConfig(defaultConfig, {
 module.exports = async function (env, argv) {
   const config = await createExpoWebpackConfigAsync(env, argv);
   // Customize the config before returning it.
-  return mergeConfig(mergedConfig, config);
+  return {
+    ...mergeConfig(mergedConfig, config),
+    mode: process.env.NODE_ENV === "development" ? "development" : "production",
+  };
 };
