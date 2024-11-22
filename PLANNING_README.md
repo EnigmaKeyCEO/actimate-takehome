@@ -46,7 +46,6 @@ November 21, 2024
 November 22, 2024
 - Early Morning (~12 AM - 3 AM)
   - Focused on Expo CI integration and debugging.
-  - Fixed various UI issues, particularly related to modals and environment variables.
-- Late Morning (~3 AM - 2:30 AM)
-  - Finalized debugging and addressed build issues related to Expo and EAS CI.
-  - Completed file upload functionality.
+  - Fixed various UI issues, particularly related to modals and environment variables
+  - Tried to implement file upload functionality, but ran into a bug with being able to parse the FormData, so I'll have to come back to it.
+  - I need to go to bed but can't sleep with the state of this project...

@@ -11,6 +11,7 @@ import {
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { Folder } from "../../src/types/Folder";
 import { v4 as uuidv4 } from "uuid";
+import { QueryCommandInput } from "@aws-sdk/lib-dynamodb";
 
 export const handler: Handler = async (event) => {
   const headers = {
@@ -58,18 +59,33 @@ export const handler: Handler = async (event) => {
 const handleGet = async (event: any, headers: any) => {
   const parentId = event.queryStringParameters?.parentId || "root";
   const lastKey = event.queryStringParameters?.lastKey;
+  const sort = event.queryStringParameters?.sort;
+  const direction = event.queryStringParameters?.direction;
 
   const params = {
     TableName: process.env.VITE_DYNAMODB_FOLDERS_TABLE_NAME!,
     IndexName: "parentId-index", // Assuming you have a GSI for parentId
     KeyConditionExpression: "parentId = :parentId",
+    ExpressionAttributeNames: {
+      "#name": "name",
+    },
     ExpressionAttributeValues: {
       ":parentId": { S: String(parentId) },
     },
     ScanIndexForward: true,
     Limit: 20,
+    QueryFilter: {
+      SortDirection: {
+        ComparisonOperator: "EQ",
+        AttributeValueList: [{ S: direction || "ASC" }],
+      },
+      SortField: {
+        ComparisonOperator: "EQ",
+        AttributeValueList: [{ S: sort || "#name" }],
+      },
+    },
     ExclusiveStartKey: lastKey ? JSON.parse(lastKey) : undefined,
-  };
+  } as QueryCommandInput;
 
   try {
     const command = new QueryCommand(params);
