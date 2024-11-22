@@ -31,10 +31,14 @@ const mergedConfig = mergeConfig(defaultConfig, {
 });
 
 module.exports = async function (env, argv) {
+  // force the mode to be development or production BEFORE creating the config
+  env.mode = process.env.NODE_ENV === "development" ? "development" : "production";
   const config = await createExpoWebpackConfigAsync(env, argv);
   // Customize the config before returning it.
   return {
-    ...mergeConfig(mergedConfig, config),
-    mode: process.env.NODE_ENV === "development" ? "development" : "production",
+    ...mergeConfig(config, mergedConfig),
+    ...(env.mode === "development" && {
+      watchFolders: [path.resolve(__dirname, "node_modules")],
+    }),
   };
 };
