@@ -40,5 +40,9 @@ module.exports = async function (env, argv) {
     ...(env.mode === "development" && {
       watchFolders: [path.resolve(__dirname, "node_modules")],
     }),
+    mode:
+      env.mode === "development" || process.env.NODE_ENV === "development"
+        ? "development"
+        : "production",
   };
 };
