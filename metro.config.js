@@ -1,33 +1,31 @@
-const { getDefaultConfig, mergeConfig } = require("@react-native/metro-config");
-const { withExpo } = require("@expo/webpack-config");
+const { mergeConfig } = require("@react-native/metro-config");
+const { getDefaultConfig } = require("@expo/webpack-config");
 const path = require("path");
 
 const defaultConfig = getDefaultConfig(__dirname);
 
-module.exports = withExpo(
-  mergeConfig(defaultConfig, {
-    resolver: {
-      ...defaultConfig.resolver,
-      assetExts: [...defaultConfig.resolver.assetExts],
-      sourceExts: [...defaultConfig.resolver.sourceExts],
-      alias: {
-        "#": path.resolve(__dirname, "./src"),
-      },
+module.exports = mergeConfig(defaultConfig, {
+  resolver: {
+    ...defaultConfig.resolver,
+    assetExts: [...defaultConfig.resolver.assetExts],
+    sourceExts: [...defaultConfig.resolver.sourceExts],
+    alias: {
+      "#": path.resolve(__dirname, "./src"),
     },
-    transformer: {
-      ...defaultConfig.transformer,
-      babelTransformerPath: require.resolve("react-native-svg-transformer"),
-      assetPlugins: ["expo-asset/tools/hashAssetFiles"],
+  },
+  transformer: {
+    ...defaultConfig.transformer,
+    babelTransformerPath: require.resolve("react-native-svg-transformer"),
+    assetPlugins: ["expo-asset/tools/hashAssetFiles"],
+  },
+  server: {
+    enhanceMiddleware: (middleware) => {
+      return (req, res, next) => {
+        if (req.url.endsWith(".png")) {
+          req.headers["Content-Type"] = "image/png";
+        }
+        return middleware(req, res, next);
+      };
     },
-    server: {
-      enhanceMiddleware: (middleware) => {
-        return (req, res, next) => {
-          if (req.url.endsWith(".png")) {
-            req.headers["Content-Type"] = "image/png";
-          }
-          return middleware(req, res, next);
-        };
-      },
-    },
-  })
-);
+  },
+});
