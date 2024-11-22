@@ -1,5 +1,4 @@
-const webpack = require("@nativescript/webpack");
-const expoWebpackConfig = require("./metro.config");
+const webpack = require('@nativescript/webpack');
 
 module.exports = (env) => {
   webpack.init(env);
@@ -7,14 +6,5 @@ module.exports = (env) => {
   // Learn how to customize:
   // https://docs.nativescript.org/webpack
 
-  return {
-    ...webpack.resolveConfig(expoWebpackConfig),
-    ...(env.mode === "development" && {
-      watchFolders: [path.resolve(__dirname, "/node_modules")],
-    }),
-    mode:
-      env.mode === "development" || process.env.NODE_ENV === "development"
-        ? "development"
-        : "production",
-  };
+  return webpack.resolveConfig();
 };
