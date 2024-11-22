@@ -1,3 +1,1 @@
-# Suggested to ignore native project files for EAS... TBD?
-ios/
-android/
+# Suggested to ignore native project files for EAS... TBD?.. I am uningoreing to test Expo CLI with these intact.
