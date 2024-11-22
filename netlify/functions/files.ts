@@ -235,9 +235,10 @@ const handleGet = async (event: any, headers: any) => {
 const handlePost = async (event: any, headers: any) => {
   try {
     const data = multipart.parse(event, true);
-    const file = data.files ? data.files[0] : null;
+    const file = data.files ? data.files[0] || data["file"] : null;
 
     if (!file) {
+      console.error("No file provided", data);
       throw new Error("No file provided");
     }
 
