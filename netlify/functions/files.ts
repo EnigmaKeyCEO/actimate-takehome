@@ -5,19 +5,20 @@ import {
   DeleteObjectCommand,
   CopyObjectCommand,
   ListObjectsV2Command,
-  __Client,
 } from "@aws-sdk/client-s3";
 import {
   DeleteItemCommand,
   GetItemCommand,
   PutItemCommand,
   UpdateItemCommand,
+  QueryCommand,
+  QueryCommandInput,
   UpdateItemCommandInput,
+  PutItemCommandInput,
 } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { DBMetadata, FileItem } from "../../src/types/File";
 import { v4 as uuidv4 } from "uuid";
-import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import multipart from "aws-lambda-multipart-parser";
 
@@ -69,7 +70,7 @@ export const handler: Handler = async (event) => {
  * Synchronizes S3 and DynamoDB to ensure data consistency.
  * @param event - Netlify event object
  * @param headers - HTTP headers for CORS
- * @returns Response object (TODO: DEFINE TYPE) with files and pagination token
+ * @returns Response object with files and pagination token
  */
 const handleGet = async (event: any, headers: any) => {
   const folderId = event.queryStringParameters?.folderId;
@@ -112,30 +113,31 @@ const handleGet = async (event: any, headers: any) => {
             updatedAt: new Date().toISOString(),
           };
 
-          // Check if the file exists in DynamoDB
-          const getParams = {
+          // Query DynamoDB using the GSI to check if the file exists
+          const queryParams: QueryCommandInput = {
             TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
-            Key: {
-              folderId: { S: folderId.toString() },
-              name: { S: fileName.toString() },
+            IndexName: "folderId-name-index", // Replace with your actual GSI name
+            KeyConditionExpression: "folderId = :folderId AND #name = :name",
+            ExpressionAttributeNames: {
+              "#name": "name", // Mapping reserved keyword
             },
+            ExpressionAttributeValues: {
+              ":folderId": { S: folderId.toString() },
+              ":name": { S: fileName.toString() },
+            },
+            Limit: 1,
           };
-          const getCommand = new GetItemCommand(getParams);
-          const DBResult: DBMetadata = {
-            file: null,
-            putCommand: null,
-            lastKey: null,
-          };
-          try {
-            const { Item = null } = await dynamoDb.send(getCommand);
-            DBResult.file = Item ? (unmarshall(Item) as FileItem) : null;
-          } catch (error) {
-            console.warn("Error getting file from DynamoDB:", error);
+          const queryCommand = new QueryCommand(queryParams);
+          const queryResult = await dynamoDb.send(queryCommand);
+
+          let dbFile: FileItem | null = null;
+          if (queryResult.Items && queryResult.Items.length > 0) {
+            dbFile = unmarshall(queryResult.Items[0]) as FileItem;
           }
 
-          if (!DBResult.file) {
+          if (!dbFile) {
             // Add file to DynamoDB if it doesn't exist
-            const putParams = {
+            const putParams: PutItemCommandInput = {
               TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
               Item: {
                 id: { S: fileItem.id },
@@ -146,16 +148,19 @@ const handleGet = async (event: any, headers: any) => {
                 updatedAt: { S: fileItem.updatedAt },
               },
               ConditionExpression:
-                "attribute_not_exists(folderId) AND attribute_not_exists(name)",
+                "attribute_not_exists(folderId) AND attribute_not_exists(#name)",
+              ExpressionAttributeNames: {
+                "#name": "name", // Mapping reserved keyword
+              },
             };
             const putCommand = new PutItemCommand(putParams);
             try {
               await dynamoDb.send(putCommand);
-              DBResult.file = fileItem;
-            } catch (error) {
+              dbFile = fileItem;
+            } catch (error: any) {
               if (error.name === "ConditionalCheckFailedException") {
                 console.warn("Duplicate file entry detected:", fileItem.name);
-                throw error; // handle by skipping this file; TODO: make this do something else
+                // Optionally, fetch the existing item again or handle duplicates as needed
               } else {
                 console.error(
                   "Error storing file metadata in DynamoDB:",
@@ -165,31 +170,38 @@ const handleGet = async (event: any, headers: any) => {
             }
           }
 
-          fileMetadata.push({
-            file: DBResult.file,
-            putCommand: DBResult.putCommand,
-            lastKey: null, // Not needed here
-          });
+          if (dbFile) {
+            fileMetadata.push({
+              file: dbFile,
+              putCommand: null,
+              lastKey: null, // Not needed here
+            });
+          }
         }
       }
     }
 
     // Prepare the signed URLs
     for (const obj of fileMetadata) {
-      const signedUrl = await getSignedUrl(
-        S3,
-        new PutObjectCommand({
-          Bucket: process.env.VITE_AWS_BUCKET_NAME!,
-          Key: obj.file?.key,
-        }),
-        {
-          expiresIn: 3600,
+      if (obj.file && obj.file.key) {
+        try {
+          const signedUrl = await getSignedUrl(
+            S3,
+            new PutObjectCommand({
+              Bucket: process.env.VITE_AWS_BUCKET_NAME!,
+              Key: obj.file.key,
+            }),
+            {
+              expiresIn: 3600,
+            }
+          );
+          obj.file.url = signedUrl;
+        } catch (error) {
+          // Handle the error appropriately
+          console.warn("Error generating signed URL:", error);
         }
-      );
-      try {
-        obj.file!.url = signedUrl;
-      } catch (error) {
-        // fail silently, TODO: make this do something...
+      } else {
+        console.warn("File or Key is undefined for signed URL generation.");
       }
     }
 
@@ -204,89 +216,90 @@ const handleGet = async (event: any, headers: any) => {
         lastKey: newLastKey,
       }),
     };
-  } catch (error) {
-    console.error("Error listing files from S3:", error);
+  } catch (error: any) {
+    console.error("Error listing files from S3 or DynamoDB:", error);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ message: "Error listing files from S3" }),
+      body: JSON.stringify({ message: "Error listing files" }),
     };
   }
 };
 
-// Handler for POST requests to generate a pre-signed URL for file upload
+/**
+ * Handles POST requests to generate a pre-signed URL for file upload.
+ * @param event - Netlify event object
+ * @param headers - HTTP headers for CORS
+ * @returns Response object with pre-signed URL and file details
+ */
 const handlePost = async (event: any, headers: any) => {
-  console.log("POST request received:", JSON.stringify(event, null, 2));
   try {
-    let parsedBody: any;
+    const data = multipart.parse(event, true);
+    const file = data.files ? data.files[0] : null;
 
-    if (!event.body) {
-      throw new Error("Request body is missing.");
+    if (!file) {
+      throw new Error("No file provided");
     }
 
-    if (event.isBase64Encoded) {
-      // 'file' is the field name for the uploaded file
-      parsedBody = multipart.parse(event, "file");
-    } else {
-      parsedBody = JSON.parse(event.body);
+    const { folderId } = data.fields;
+
+    if (!folderId) {
+      throw new Error("folderId is required");
     }
 
-    console.log("Parsed body:", parsedBody);
-
-    const folderId = parsedBody.folderId;
-    const fileName = parsedBody.fileName;
-    const contentType = parsedBody.contentType;
-    const file = parsedBody.file;
-
-    console.debug("POST request decoded:", {
-      folderId,
-      fileName,
-      contentType,
-      file,
-    });
-
-    if (!folderId || !fileName || !contentType || !file) {
-      throw new Error(
-        "folderId, fileName, contentType, and file are required."
-      );
-    }
-
-    // Generate a unique file ID and S3 key
     const fileId = uuidv4();
-    const s3Key = `root/${Date.now()}-${fileId}-${fileName}`;
+    const s3Key = `${folderId}/${file.originalFilename}`;
 
-    // Create S3 PutObjectCommand
-    const putCommand = new PutObjectCommand({
-      Bucket: process.env.VITE_AWS_BUCKET_NAME!,
-      Key: s3Key,
-      ContentType: contentType,
-    });
-
-    // Generate pre-signed URL valid for 1 hour
-    const signedUrl = await getSignedUrl(S3, putCommand, { expiresIn: 3600 });
-
-    // Store file metadata in DynamoDB
-    const dynamoParams = {
-      TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
-      Item: {
-        folderId: { S: String(folderId) },
-        // key: { S: s3Key }, // TODO: add this back in, it's needed for the file upload modal, but may be causing an error, so test without it first
-        name: { S: fileName },
-        url: {
-          S: `https://${process.env.VITE_AWS_BUCKET_NAME}.s3.amazonaws.com/${s3Key}`,
-        },
-        createdAt: { S: new Date().toISOString() },
-        updatedAt: { S: new Date().toISOString() },
-      },
+    const fileItem: FileItem = {
+      id: fileId,
+      folderId,
+      key: s3Key,
+      name: file.originalFilename,
+      url: `https://${process.env.VITE_AWS_BUCKET_NAME}.s3.amazonaws.com/${s3Key}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
-    const putDynamoCommand = new PutItemCommand(dynamoParams);
+    // Add file to DynamoDB if it doesn't exist
+    const putParams: PutItemCommandInput = {
+      TableName: process.env.VITE_DYNAMODB_FILES_TABLE_NAME!,
+      Item: {
+        id: { S: fileItem.id },
+        folderId: { S: fileItem.folderId },
+        name: { S: fileItem.name },
+        url: { S: fileItem.url },
+        createdAt: { S: fileItem.createdAt },
+        updatedAt: { S: fileItem.updatedAt },
+      },
+      ConditionExpression:
+        "attribute_not_exists(folderId) AND attribute_not_exists(#name)",
+      ExpressionAttributeNames: {
+        "#name": "name", // Mapping reserved keyword
+      },
+    };
+    const putCommand = new PutItemCommand(putParams);
     try {
-      await dynamoDb.send(putDynamoCommand);
-      console.log("File metadata stored in DynamoDB:", dynamoParams.Item);
-    } catch (error) {
-      console.error("Error storing file metadata in DynamoDB:", error);
+      await dynamoDb.send(putCommand);
+      console.log("File metadata stored in DynamoDB:", putParams.Item);
+    } catch (error: any) {
+      if (error.name === "ConditionalCheckFailedException") {
+        console.warn("Duplicate file entry detected:", fileItem.name);
+        throw new Error("File already exists");
+      } else {
+        console.error("Error storing file metadata in DynamoDB:", error);
+        throw new Error("DynamoDB error");
+      }
     }
+
+    // Generate pre-signed URL
+    const signedUrl = await getSignedUrl(
+      S3,
+      new PutObjectCommand({
+        Bucket: process.env.VITE_AWS_BUCKET_NAME!,
+        Key: s3Key,
+      }),
+      { expiresIn: 3600 }
+    );
 
     return {
       statusCode: 200,
@@ -307,7 +320,6 @@ const handlePost = async (event: any, headers: any) => {
     };
   }
 };
-
 // Handler for PUT requests to update a file
 const handlePut = async (event: any, headers: any) => {
   const { id, updateData } = JSON.parse(event.body);
