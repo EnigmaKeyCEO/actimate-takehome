@@ -1,5 +1,7 @@
+import { API_BASE_URL } from "#/api/config";
+
 const useApi = () => {
-  const apiBaseUrl = process.env.VITE_API_BASE_URL ?? "http://localhost:8888/.netlify/functions";
+  const apiBaseUrl = API_BASE_URL
 
   return { apiBaseUrl };
 };
