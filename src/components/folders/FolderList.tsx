@@ -117,10 +117,10 @@ export const FolderList: React.FC<FolderListProps> = () => {
   );
 
   const renderLoadMoreSection = React.useCallback(() => {
-    if (loading || folders.length % 20 !== 0) {
+    if (loading) return <LoadingIndicator />;
+    if (folders.length % 20 !== 0) {
       return null;
     }
-
     return (
       <View style={styles.loadMoreContainer}>
         <Button onPress={loadMoreFolders}>Load More</Button>
@@ -138,20 +138,15 @@ export const FolderList: React.FC<FolderListProps> = () => {
         // TODO: use infinite scroll and a loading indicator instead of a button
         //   onEndReached={loadMoreFolders}
         //   onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          // TODO: use infinite scroll and a loading indicator instead of a button
-          loading ? <LoadingIndicator /> : renderLoadMoreSection()
-        }
+        ListFooterComponent={renderLoadMoreSection()}
         refreshing={loading && folders.length === 0}
         onRefresh={refreshFolders}
       />
-      {isCreating && (
-        <CreateFolderModal
-          isOpen={isCreating}
-          onClose={() => setIsCreating(false)}
-          onCreate={onCreateFolder}
-        />
-      )}
+      <CreateFolderModal
+        isOpen={isCreating}
+        onClose={() => setIsCreating(false)}
+        onCreate={onCreateFolder}
+      />
     </>
   );
 };

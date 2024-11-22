@@ -6,6 +6,8 @@ import { FileForm } from "#/components/files/FileForm";
 import { LineItem } from "#/components/common/LineItem";
 import { Image } from "native-base";
 import useFiles from "#/hooks/useFiles";
+import { useFolders } from "#/hooks/useFolders";
+import { LoadingIndicator } from "#/components/common/LoadingIndicator";
 
 interface FilesListProps {}
 
@@ -15,12 +17,27 @@ export const FilesList: React.FC<FilesListProps> = () => {
   const { loadMoreFiles, files, loading, error, removeFile, updateFile } =
     useFiles();
 
+  const { VITE_AWS_ACCESS_KEY_ID, VITE_AWS_BUCKET_NAME } = process.env;
+
+  React.useEffect(() => {
+    if (error && !loading && error instanceof Error) {
+      showModal(error.message, "error");
+    }
+  }, [error, showModal]);
+
   const handleOnPress = (file: FileItem) => {
     showModal({
       title: file.name,
       body: (
         <Image
-          source={{ uri: file.url }}
+          source={{
+            uri: file.url.replace(
+              String(VITE_AWS_BUCKET_NAME),
+              `${String(VITE_AWS_ACCESS_KEY_ID)}.${String(
+                VITE_AWS_BUCKET_NAME
+              )}`
+            ),
+          }}
           style={{ width: "100%", height: 200 }}
           resizeMode="contain"
         />
@@ -135,16 +152,12 @@ export const FilesList: React.FC<FilesListProps> = () => {
           contentContainerStyle={styles.listContainer}
           onEndReached={loadMoreFiles}
           onEndReachedThreshold={0.5}
-          ListFooterComponent={<View style={{ height: 16 }} />}
+          ListFooterComponent={
+            loading ? <LoadingIndicator /> : <View style={{ height: 16 }} />
+          }
         />
       ) : (
         <Text style={styles.centeredMiddleText}>No Files Found...</Text>
-      )}
-      {loading && <Text style={styles.loadingText}>Loading...</Text>}
-      {error && (
-        <Text style={styles.errorText}>
-          {error instanceof Error ? error.message : String(error)}
-        </Text>
       )}
     </View>
   );

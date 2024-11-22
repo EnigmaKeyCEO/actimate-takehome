@@ -90,7 +90,7 @@ export function useFiles() {
 
   const createFile = useCallback(
     async (file: FileItem) => {
-      await apiCreateFile(folderId, file);
+      await apiCreateFile(file);
       setFiles([...files, file]);
     },
     [files]
@@ -98,7 +98,7 @@ export function useFiles() {
 
   const updateFile = useCallback(
     async (file: FileItem) => {
-      await apiUpdateFile(folderId, file);
+      await apiUpdateFile(file);
       setFiles([...files, file]);
     },
     [files]

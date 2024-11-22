@@ -130,7 +130,10 @@ export const FolderProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const createFolder = useCallback(async (folderData: Partial<Folder>) => {
     try {
-      const newFolder = await apiCreateFolder(folderData as CreateFolderInput);
+      if (!folderData.name) {
+        throw new Error("Folder name is required");
+      }
+      const newFolder = await apiCreateFolder(parentId, folderData.name);
       setFolders((prev) => [newFolder, ...prev]);
       return newFolder;
     } catch (err: any) {
