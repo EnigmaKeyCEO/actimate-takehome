@@ -1,4 +1,4 @@
-import { Handler } from "@netlify/functions";
+import { Handler, HandlerEvent } from "@netlify/functions";
 import { S3, dynamoDb } from "./awsConfig";
 import {
   PutObjectCommand,
@@ -20,7 +20,7 @@ import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { DBMetadata, FileItem } from "../../src/types/File";
 import { v4 as uuidv4 } from "uuid";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import multipart from "aws-lambda-multipart-parser";
+// import multipart from "aws-lambda-multipart-parser";
 
 // Handler for GET requests to list files
 export const handler: Handler = async (event) => {
@@ -227,6 +227,36 @@ const handleGet = async (event: any, headers: any) => {
 };
 
 /**
+ * Parses the multipart event and returns the contained objects
+ * @param event - Netlify event object
+ * @returns Object containing files and fields
+ */
+const parseMultipartEvent = (event: HandlerEvent) => {
+  // return multipart.parse(event, true); // this would be great but it doesn't WORK!!!
+  const base64EncodedBody = event.body;
+  if (!base64EncodedBody) {
+    throw new Error("No body found in event");
+  }
+  const glob: { decoded?: string; parsed?: any } = {
+    decoded: undefined,
+    parsed: undefined,
+  };
+  try {
+    glob.decoded = Buffer.from(base64EncodedBody, "base64").toString("utf-8");
+  } catch (error) {
+    console.error("Error decoding base64 body:", error);
+    throw new Error("Error Decoding BASE64");
+  }
+  try {
+    glob.parsed = JSON.parse(glob.decoded!);
+  } catch (error) {
+    console.error("Error parsing JSON body:", error);
+    throw new Error("Error Parsing JSON");
+  }
+  return glob.parsed;
+};
+
+/**
  * Handles POST requests to generate a pre-signed URL for file upload.
  * @param event - Netlify event object
  * @param headers - HTTP headers for CORS
@@ -234,8 +264,9 @@ const handleGet = async (event: any, headers: any) => {
  */
 const handlePost = async (event: any, headers: any) => {
   try {
-    const data = multipart.parse(event, true);
-    const file = data.files ? data.files[0] || data["file"] : null;
+    // const data = multipart.parse(event, true);
+    const data = parseMultipartEvent(event);
+    const file = data.files ? data.files[0] : data.file ? data.file : null;
 
     if (!file) {
       console.error("No file provided", data);
