@@ -23,7 +23,7 @@
       "showFieldAuthNotification": false
     },
     "frontend-ios": {
-      "enablexcodeintegration": false
+      "enablexcodeintegration": true
     },
     "auth": {
       "enablecaseinsensitivity": false,

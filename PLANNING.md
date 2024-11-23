@@ -4,9 +4,10 @@
 
 ### App
 
-- [ ] Create the main app screen
-- [ ] Create a context for the app
-- [ ] Create a provider for the app
+- [X] Create the main app screen
+- [X] Create a context for the app
+- [/] Create a provider for the app
+- [/] Create a provider for the api
 - [ ] Global Navigation Bar (back button, title, etc.)
 - [ ] Create the folder list screen
 - [ ] Add pagination to the folder list screen
@@ -17,13 +18,16 @@
 - [ ] Add the CRUD operations to the image detail screen
 - [ ] Create the image upload modal
 - [ ] Create the add folder modal
+- [ ] Add the ability to sort images by name, modified date and date uploaded
+- [ ] Add the ability to search for images by name **bonus**
+- [ ] Add the ability to copy images to the clipboard **bonus**
+
 
 ### Shared Hooks
 
 - [ ] Create the useAmplify hook
-- [ ] Create the useAuth hook
 - [ ] Create the useUploadImage hook
-- [ ] Create the useAppState hook
+- [X] Create the useAppState hook
 - [ ] Create the useFolders hook
 - [ ] Create the useImages hook
 - [ ] Create the useImage hook
@@ -32,10 +36,10 @@
 
 ## Backend
 
-- [ ] Deploy the barebones backend to AWS
-- [ ] Add additional Amplify backend configuration needed for the frontend (dynamodb)
+- [X] Deploy the barebones backend to AWS
+- [/] Add additional Amplify backend configuration needed for the frontend (dynamodb)
 - [ ] Create the signed URL method
-- [ ] Setup the CI/CD pipeline
+- [X] Setup the CI/CD pipeline
 
 ## Final Checklist
 

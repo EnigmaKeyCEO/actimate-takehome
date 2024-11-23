@@ -98,3 +98,9 @@ testAws.ts
 .expo/
 ios/
 android/
+
+# Amplify
+amplify/#current-cloud-backend/
+
+# Amplify Backend Build
+amplify/backend/**/build/

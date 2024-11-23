@@ -39,7 +39,7 @@
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-expoexampleamplify-dev-28768-deployment/amplify-cfn-templates/auth/expoexampleamplify25cbcd09-cloudformation-template.yml",
         "logicalId": "authexpoexampleamplify25cbcd09"
       },
-      "lastPushTimeStamp": "2024-11-23T06:09:36.971Z",
+      "lastPushTimeStamp": "2024-11-23T12:14:07.730Z",
       "output": {
         "AppClientSecret": "1imjficv5a09ssdask8q90e7ltbijdr1umfpbl9a0em261lbp028",
         "UserPoolId": "us-east-2_eRF4R4vnJ",
@@ -60,12 +60,39 @@
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-expoexampleamplify-dev-28768-deployment/amplify-cfn-templates/storage/s3-cloudformation-template.json",
         "logicalId": "storageexpoupload"
       },
-      "lastPushTimeStamp": "2024-11-23T06:09:36.971Z",
+      "lastPushTimeStamp": "2024-11-23T12:14:05.985Z",
       "output": {
         "BucketName": "expouploads28768-dev",
         "Region": "us-east-2"
       },
       "lastPushDirHash": "+k0vXA44BxIhuvlbLbP6gIfj2oU="
+    }
+  },
+  "api": {
+    "expoexampleamplify": {
+      "service": "AppSync",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [],
+      "output": {
+        "authConfig": {
+          "defaultAuthentication": {
+            "authenticationType": "API_KEY",
+            "apiKeyConfig": {
+              "apiKeyExpirationDays": 7
+            }
+          },
+          "additionalAuthenticationProviders": []
+        },
+        "GraphQLAPIIdOutput": "6vcmcke3xbbcxhf4cgtcxuyjvu",
+        "GraphQLAPIEndpointOutput": "https://nquhq2r2sfbcnbrzlzuc2g4epe.appsync-api.us-east-2.amazonaws.com/graphql",
+        "GraphQLAPIKeyOutput": "da2-slnhlgzar5coxl2laucpt5mwxq"
+      },
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-expoexampleamplify-dev-28768-deployment/amplify-cfn-templates/api/cloudformation-template.json",
+        "logicalId": "apiexpoexampleamplify"
+      },
+      "lastPushTimeStamp": "2024-11-23T12:14:07.738Z",
+      "lastPushDirHash": "pRCJ4cJ4TFUWF76uHvSS+e6JooI="
     }
   }
 }

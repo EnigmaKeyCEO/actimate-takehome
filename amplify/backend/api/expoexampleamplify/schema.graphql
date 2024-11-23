@@ -1,0 +1,11 @@
+type Folder @model {
+  id: ID!
+  name: String!
+}
+
+type Image @model {
+  id: ID!
+  name: String!
+  folderID: ID!
+  folder: Folder @connection(fields: ["folderID"])
+}
