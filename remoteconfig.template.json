@@ -1,7 +1,0 @@
-{
-  "useFirebaseStorage": {
-    "defaultValue": {
-      "value": "false"
-    }
-  }
-}

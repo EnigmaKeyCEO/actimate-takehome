@@ -93,3 +93,8 @@ testAws.ts
 *.ipa
 *.app
 *.apk
+
+# Expo
+.expo/
+ios/
+android/
