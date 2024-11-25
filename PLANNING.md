@@ -25,9 +25,9 @@
 
 ### Shared Hooks
 
-- [/] Create the useAmplify hook
+- [X] Create the useAmplify hook
 - [ ] Create the useUploadImage hook
-- [X] Create the useAppState hook
+- [X] Create the useAppContext hook
 - [ ] Create the useFolders hook
 - [ ] Create the useImages hook
 - [ ] Create the useImage hook
@@ -37,7 +37,7 @@
 ## Backend
 
 - [X] Deploy the barebones backend to AWS
-- [/] Add additional Amplify backend configuration needed for the frontend (dynamodb)
+- [X] Add additional Amplify backend configuration needed for the frontend (dynamodb)
 - [/] Create the signed URL method
 - [X] Setup the CI/CD pipeline
 
