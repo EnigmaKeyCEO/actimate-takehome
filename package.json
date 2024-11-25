@@ -8,6 +8,7 @@
     "android": "npx expo start --android",
     "ios": "npx expo start --ios",
     "web": "npx expo start --web",
+    "prebuild": "npx ampx generate outputs",
     "build": "npx expo export --platform web"
   },
   "dependencies": {
