@@ -8,7 +8,6 @@
       "node": "12.13.0",
       "yarn": "1.22.5",
       "env": {
-        "VITE_API_BASE_URL": "https://actimate-takehome.netlify.app/api"
       },
       "android": {
         "image": "default",
@@ -29,8 +28,7 @@
       "extends": "base",
       "developmentClient": true,
       "env": {
-        "NODE_ENV": "development",
-        "VITE_API_BASE_URL": "https://develop--actimate-takehome.netlify.app/api"
+        "NODE_ENV": "development"
       },
       "android": {
         "distribution": "internal",
@@ -43,8 +41,7 @@
     "development-simulator": {
       "extends": "development",
       "env": {
-        "NODE_ENV": "development",
-        "VITE_API_BASE_URL": "https://0.0.0.0:3000/.netlify/functions"
+        "NODE_ENV": "development"
       },
       "ios": {
         "simulator": true
@@ -53,8 +50,7 @@
     "preview": {
       "extends": "base",
       "env": {
-        "NODE_ENV": "development",
-        "VITE_API_BASE_URL": "https://develop--actimate-takehome.netlify.app/api"
+        "NODE_ENV": "development"
       },
       "distribution": "internal",
       "android": {
@@ -64,8 +60,7 @@
     "production": {
       "extends": "base",
       "env": {
-        "NODE_ENV": "production",
-        "VITE_API_BASE_URL": "https://actimate-takehome.netlify.app/api"
+        "NODE_ENV": "production"
       }
     }
   },

@@ -1,26 +1,28 @@
-import { Image } from "./Image";
-
-export type Folder = {
+export type Image = {
   id: string;
+  folderId: string;
   name: string;
   createdAt: Date;
   updatedAt: Date;
-  images: Image[];
+  url: string;
+  base64: string;
 };
 
 export const schema = {
   models: {
-    Folder: {
-      name: "Folder",
+    Image: {
+      name: "Image",
       fields: {
         id: { type: "ID", isRequired: true },
+        folderId: { type: "relation", isRequired: true, relationName: "parentFolder" },
         name: { type: "String", isRequired: true },
         createdAt: { type: "AWSDateTime", isRequired: true },
         updatedAt: { type: "AWSDateTime", isRequired: true },
-        images: { type: "relation", isRequired: false, relationName: "FolderImages" },
+        url: { type: "String", isRequired: true },
+        base64: { type: "String", isRequired: true },
       },
       syncable: true,
-      pluralName: "Folders",
+      pluralName: "Images",
     },
   },
   enums: {},
