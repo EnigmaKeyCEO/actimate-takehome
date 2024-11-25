@@ -4,14 +4,11 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
-    "preinstall": "which amplify > /dev/null || npm install -g @aws-amplify/cli",
     "start": "npx expo start",
     "android": "npx expo start --android",
     "ios": "npx expo start --ios",
     "web": "npx expo start --web",
-    "prebuild": "amplify pull",
-    "build": "npx expo export --platform web",
-    "deploy": "amplify push"
+    "build": "npx expo export --platform web"
   },
   "dependencies": {
     "@aws-amplify/auth": "^6.7.0",
