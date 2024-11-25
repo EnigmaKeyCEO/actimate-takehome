@@ -28,3 +28,11 @@ And sort images by name, modified date and date uploaded.
 - Run `npm install`
 - Run `npm run start` to try it out.
 
+### Development
+
+We are using Expo out-of-the-box with Expo Router and Amplify as a provider.
+
+Files in the `app` folder are views associated with the expo router.
+`app/index.tsx` is the main entry point.
+
+

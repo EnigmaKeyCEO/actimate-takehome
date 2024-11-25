@@ -104,3 +104,6 @@ amplify/#current-cloud-backend/
 
 # Amplify Backend Build
 amplify/backend/**/build/
+
+# Expo
+.expo/
