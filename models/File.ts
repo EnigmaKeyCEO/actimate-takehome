@@ -13,6 +13,11 @@ export const schema = {
         name: { type: "String", isRequired: true },
         folderID: { type: "ID", isRequired: true },
       },
+      syncable: true,
+      pluralName: "Files",
     },
   },
+  enums: {},
+  nonModels: {},
+  version: "1",
 };

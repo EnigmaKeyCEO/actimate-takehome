@@ -1,17 +1,14 @@
 import React from "react";
 import Storage, { TransferProgressEvent } from "@aws-amplify/storage";
 import Clipboard from "expo-clipboard";
-import { FileType, FolderType } from "../types";
+import { Image, Folder } from "../types";
 import { Platform } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { ImageType } from "../types";
 
 export type AppContextType = {
   takePhoto: () => void;
   pickImage: () => void;
   image: string | null; // selected image uri
-  images: FileType[]; // list of images
-  folders: FolderType[]; // list of folders
   percentage: number;
   copyToClipboard: () => void;
   uploadImage: (
@@ -28,8 +25,6 @@ export const INITIAL_STATE: AppContextType = {
   takePhoto: () => {},
   pickImage: () => {},
   image: null,
-  images: [],
-  folders: [],
   percentage: 0,
   copyToClipboard: () => {},
   uploadImage: () => Promise.resolve({ path: "" }),
@@ -46,7 +41,7 @@ export default function AppProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [image, setImage] = React.useState<ImageType | null>(null);
+  const [image, setImage] = React.useState<Image | null>(null);
   const [percentage, setPercentage] = React.useState(0);
 
   React.useEffect(() => {
@@ -133,7 +128,8 @@ export default function AppProvider({
   const downloadImage = async (uri: string) => {
     const response = await Storage.downloadData({ path: uri });
     const result = await response.result;
-    setImage({ uri: result.path, name: result.path });
+    const image = await result.body.json();
+    setImage(image);
   };
 
   const fetchImageFromUri = async (uri: string) => {
@@ -143,7 +139,8 @@ export default function AppProvider({
   };
 
   const copyToClipboard = async () => {
-    await Clipboard.setStringAsync(image?.uri ?? "");
+    const imageString = JSON.stringify(image);
+    await Clipboard.setStringAsync(imageString);
     alert("Copied image URL to clipboard");
   };
 
