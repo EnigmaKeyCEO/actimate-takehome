@@ -1,7 +1,7 @@
 import React from "react";
 import Storage, { TransferProgressEvent } from "@aws-amplify/storage";
 import Clipboard from "expo-clipboard";
-import { Image, Folder } from "../types";
+import { Image } from "../types";
 import { Platform } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 
@@ -67,7 +67,7 @@ export default function AppProvider({
   }, []);
 
   const takePhoto = async () => {
-    let result = await ImagePicker.launchCameraAsync({
+    const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       aspect: [4, 3],
     });
@@ -77,7 +77,7 @@ export default function AppProvider({
 
   const pickImage = async () => {
     console.log("pickImage");
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       aspect: [4, 3],
       quality: 1,

@@ -1,18 +1,18 @@
 import React, { useState } from "react";
 import {
   uploadData,
-  downloadData,
-  remove,
-  list,
-  getProperties,
-  copy,
-  getUrl,
+  // downloadData,
+  // remove,
+  // list,
+  // getProperties,
+  // copy,
+  // getUrl,
 } from "@aws-amplify/storage";
 import type {
-  DownloadDataWithPathInput,
-  DownloadDataWithPathOutput,
-  RemoveWithPathInput,
-  RemoveWithPathOutput,
+  // DownloadDataWithPathInput,
+  // DownloadDataWithPathOutput,
+  // RemoveWithPathInput,
+  // RemoveWithPathOutput,
   UploadDataWithPathInput,
   UploadDataWithPathOutput,
 } from "@aws-amplify/storage";
@@ -30,9 +30,9 @@ import type {
   UpdateImageInput,
 } from "../types";
 import { Amplify } from "@aws-amplify/core";
-import outputs from "../amplify_outputs.json";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "../amplify/data/resource";
+import outputs from "../amplify_outputs.json";
 
 let _client: ReturnType<typeof generateClient<Schema>>;
 
@@ -40,6 +40,7 @@ type AmplifyContextType = {
   // TODO: remove this once the methods are implemented
   client: ReturnType<typeof generateClient<Schema>>; // only temporarily expose for testing
   ready: boolean;
+  error: Error | null;
   create: (
     input: CreateImageInput | CreateFolderInput,
     data?: StorageUploadDataPayload
@@ -56,6 +57,7 @@ type AmplifyContextType = {
 export const AmplifyContext = React.createContext<AmplifyContextType>({
   ready: false, // TODO: remove this (below) once the methods are implemented
   client: null as unknown as ReturnType<typeof generateClient<Schema>>,
+  error: null,
   create: async () => Promise.resolve(false),
   read: async () => Promise.resolve(null),
   update: async () => Promise.resolve(false),
@@ -148,7 +150,8 @@ const ApiProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // create a new folder
-  const createFolder = async (input: CreateFolderInput) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const createFolder = async (_input: CreateFolderInput) => {
     // use dynamodb to create folder
     return true;
   };
@@ -163,6 +166,7 @@ const ApiProvider = ({ children }: { children: React.ReactNode }) => {
   const value = {
     client: client!, // only temporarily expose for testing
     ready,
+    error,
     create,
     read,
     update,

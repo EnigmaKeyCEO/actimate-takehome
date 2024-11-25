@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import type { Schema } from "../amplify/data/resource";
-import { generateClient } from "aws-amplify/data";
 import { Button, Linking, Text, TouchableOpacity, View } from "react-native";
 import useAmplify from "../hooks/useAmplify";
 
@@ -12,7 +11,7 @@ function App() {
     client.models.Folder.observeQuery().subscribe({
       next: (data) => setFolders([...data.items]),
     });
-  }, []);
+  }, [client.models.Folder]);
 
   function createFolder() {
     client.models.Folder.create({ name: window.prompt("Folder name") });
