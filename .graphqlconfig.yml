@@ -1,5 +1,5 @@
 projects:
-  expoexampleamplify:
+  actimage-takehome:
     schemaPath: ./graphql/schema.json
     includes:
       - ./graphql/**/*.ts
@@ -10,3 +10,6 @@ projects:
         codeGenTarget: typescript
         generatedFileName: ./types/responses.ts
         docsFilePath: ./graphql/docs.md
+extensions:
+  amplify:
+    version: 3
