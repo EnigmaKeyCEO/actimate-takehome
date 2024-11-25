@@ -28,7 +28,7 @@
     },
     "esModuleInterop": true
   },
-  "include": ["src", "App.js", "types", "graphql"],
+  "include": ["src", "types"],
   "extensions": [
     ".ts",
     ".tsx",
