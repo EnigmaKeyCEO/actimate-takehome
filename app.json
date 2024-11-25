@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "Actimate Takehome",
+    "slug": "actimate-takehome",
+    "scheme": "actimate-takehome",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*",
+      "./assets/fonts/*",
+      "./assets/images/*"
+    ],
+    "web": {
+      "bundler": "metro"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ceo.enigma.actimate",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "ceo.enigma.actimate",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app needs access to your photos.",
+          "cameraPermission": "The app needs access to your camera."
+        }
+      ],
+      "expo-router"
+    ],
+    "developmentClient": {
+      "silentLaunch": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "4caf71d9-059f-44d7-b4c1-e36972638c97"
+      }
+    },
+    "owner": "devcoup"
+  }
+}

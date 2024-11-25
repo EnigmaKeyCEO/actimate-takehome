@@ -1,25 +1,38 @@
-## AWS Amplify React+Vite Starter Template
+# Actimate Take Home Challenge
 
-This repository provides a starter template for creating applications using React+Vite and AWS Amplify, emphasizing easy setup for authentication, API, and database capabilities.
+This is a take home challenge for Actimate. It was built with React Native and Expo:
+```bash
+npx create-expo-app@latest actimate-takehome --template with-aws-storage-upload
+```
+The app allows you to upload images to S3 and view them in a grid.
+It also allows you to copy images to the clipboard.
+And organize images into folders.
+You can also download images to your device.
+And sort images by name, modified date and date uploaded.
 
-## Overview
+> Check out the [AWS Amplify](https://docs.amplify.aws/) docs.
 
-This template equips you with a foundational React application integrated with AWS Amplify, streamlined for scalability and performance. It is ideal for developers looking to jumpstart their project with pre-configured AWS services like Cognito, AppSync, and DynamoDB.
+## How to use
 
-## Features
+### Setup AWS account
 
-- **Authentication**: Setup with Amazon Cognito for secure user authentication.
-- **API**: Ready-to-use GraphQL endpoint with AWS AppSync.
-- **Database**: Real-time database powered by Amazon DynamoDB.
+- Create a new AWS account
+- Run `npm install -g @aws-amplify/cli` to install Amplify CLI
+- Run `amplify init` to initilise a new Amplify project
+- note: it is already deployed in my account, so you can skip this step
+- Run `amplify push` to deploy the Storage and Auth resources in AWS
+- note: it is already deployed in my account, so you can skip this step
 
-## Deploying to AWS
+### Running the app
 
-For detailed instructions on deploying your application, refer to the [deployment section](https://docs.amplify.aws/react/start/quickstart/#deploy-a-fullstack-app-to-aws) of our documentation.
+- Run `npm install`
+- Run `npm run start` to try it out.
 
-## Security
+### Development
 
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+We are using Expo out-of-the-box with Expo Router and Amplify as a provider.
 
-## License
+Files in the `app` folder are views associated with the expo router.
+`app/index.tsx` is the main entry point.
 
-This library is licensed under the MIT-0 License. See the LICENSE file.
+

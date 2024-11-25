@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ES2020", "DOM", "DOM.Iterable", "ESNext"],
     "module": "ESNext",
     "skipLibCheck": true,
 
@@ -18,8 +18,39 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    /* others */
+    "allowJs": true,
+    "baseUrl": ".",
+    "paths": {
+      "#/*": ["src/*"]
+    },
+    "esModuleInterop": true
   },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": ["src", "types"],
+  "extensions": [
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".json",
+    ".web.ts",
+    ".web.tsx",
+    ".web.js",
+    ".web.jsx",
+    ".native.ts",
+    ".native.tsx",
+    ".native.js",
+    ".native.jsx",
+    ".android.ts",
+    ".android.tsx",
+    ".android.js",
+    ".android.jsx",
+    ".ios.ts",
+    ".ios.tsx",
+    ".ios.js",
+    ".ios.jsx"
+  ],
+  "extends": "expo/tsconfig.base"
 }
