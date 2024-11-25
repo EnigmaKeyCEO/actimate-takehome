@@ -26,6 +26,7 @@ And sort images by name, modified date and date uploaded.
 ### Running the app
 
 - Run `npm install`
+- Run `amplify pull --branch main --app-id d2jhnq7hpt97d5` to checkout the backend
 - Run `npm run start` to try it out.
 
 ### Development
@@ -34,5 +35,12 @@ We are using Expo out-of-the-box with Expo Router and Amplify as a provider.
 
 Files in the `app` folder are views associated with the expo router.
 `app/index.tsx` is the main entry point.
+
+The `amplify` folder is the Amplify project.
+
+To checkout a different environment, run `amplify env checkout <env>`.
+The options are `dev`, `prod` and `staging`.
+
+To deploy the Amplify project, run `amplify push`.
 
 
