@@ -8,12 +8,15 @@ function App() {
   const { client } = useAmplify();
 
   useEffect(() => {
-    client.models.Folder.observeQuery().subscribe({
-      next: (data) => setFolders([...data.items]),
-    });
-  }, [client.models.Folder]);
+    if (client?.models?.Folder) {
+      client.models.Folder.observeQuery().subscribe({
+        next: (data) => setFolders([...data.items]),
+      });
+    }
+  }, [client?.models?.Folder]);
 
   function createFolder() {
+    if (!client?.models?.Folder) return console.error("No client");
     client.models.Folder.create({ name: window.prompt("Folder name") });
   }
 

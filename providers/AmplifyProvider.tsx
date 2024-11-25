@@ -38,7 +38,7 @@ let _client: ReturnType<typeof generateClient<Schema>>;
 
 type AmplifyContextType = {
   // TODO: remove this once the methods are implemented
-  client: ReturnType<typeof generateClient<Schema>>; // only temporarily expose for testing
+  client?: ReturnType<typeof generateClient<Schema>>; // only temporarily expose for testing
   ready: boolean;
   error: Error | null;
   create: (
@@ -56,7 +56,7 @@ type AmplifyContextType = {
 
 export const AmplifyContext = React.createContext<AmplifyContextType>({
   ready: false, // TODO: remove this (below) once the methods are implemented
-  client: null as unknown as ReturnType<typeof generateClient<Schema>>,
+  client: undefined,
   error: null,
   create: async () => Promise.resolve(false),
   read: async () => Promise.resolve(null),
