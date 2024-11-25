@@ -1,5 +1,5 @@
 import React from "react";
-import API from "@aws-amplify/api";
+import * as API from "@aws-amplify/api";
 import { DocumentType } from "@aws-amplify/core/internals/utils";
 
 type AmplifyContextType = {

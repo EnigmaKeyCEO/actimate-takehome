@@ -1,6 +1,13 @@
 import React from "react";
-import { Text } from "react-native";
+import { Button, Text, View } from "react-native";
+import useAppContext from "../hooks/useAppContext";
 
 export default function MainPage() {
-  return <Text>Hello World</Text>;
+  const { pickImage } = useAppContext();
+  return (
+    <View>
+      <Text>Hello World</Text>
+      <Button title="Pick Image" onPress={pickImage} />
+    </View>
+  );
 }

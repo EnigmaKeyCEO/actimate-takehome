@@ -41,14 +41,6 @@ export const INITIAL_STATE: AppContextType = {
 
 export const AppContext = React.createContext(INITIAL_STATE);
 
-export const useState = () => {
-  const context = React.useContext(AppContext);
-  if (context === undefined) {
-    throw new Error("useAppContext must be used within a AppProvider");
-  }
-  return context;
-};
-
 export default function AppProvider({
   children,
 }: {
@@ -89,6 +81,7 @@ export default function AppProvider({
   };
 
   const pickImage = async () => {
+    console.log("pickImage");
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       aspect: [4, 3],
