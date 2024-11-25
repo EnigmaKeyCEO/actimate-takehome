@@ -2,13 +2,16 @@ import React from "react";
 import API from "@aws-amplify/api";
 import { DocumentType } from "@aws-amplify/core/internals/utils";
 
-type ApiContextType = {
-  getSignedUrl: (input: { path: string; expires: number }) => Promise<DocumentType>;
+type AmplifyContextType = {
+  getSignedUrl: (input: {
+    path: string;
+    expires: number;
+  }) => Promise<DocumentType>;
 };
 
 const APIName = "amplify-expoexampleamplify-dev-28768";
 
-const APIContext = React.createContext<ApiContextType>({
+const AmplifyContext = React.createContext<AmplifyContextType>({
   getSignedUrl: async () => "",
 });
 
@@ -36,7 +39,9 @@ const ApiProvider = ({ children }: { children: React.ReactNode }) => {
   const value = {
     getSignedUrl,
   };
-  return <APIContext.Provider value={value}>{children}</APIContext.Provider>;
+  return (
+    <AmplifyContext.Provider value={value}>{children}</AmplifyContext.Provider>
+  );
 };
 
 export default ApiProvider;
