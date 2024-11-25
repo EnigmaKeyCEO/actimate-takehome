@@ -1,12 +1,12 @@
 projects:
   expoexampleamplify:
-    schemaPath: Users/devcoup/Projects/Actimate/actimate-takehome/graphql/schema.json
+    schemaPath: ./graphql/schema.json
     includes:
-      - src/graphql/**/*.ts
+      - ./graphql/**/*.ts
     excludes:
       - ./amplify/**
     extensions:
       amplify:
         codeGenTarget: typescript
-        generatedFileName: src/providers/ApiProvider.tsx
-        docsFilePath: src/graphql
+        generatedFileName: ./types/responses.ts
+        docsFilePath: ./graphql/docs.md
