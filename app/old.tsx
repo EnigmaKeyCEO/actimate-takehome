@@ -1,13 +1,12 @@
-import React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { Schema } from "../amplify/data/resource";
 import { generateClient } from "aws-amplify/data";
 import { Button, Linking, Text, TouchableOpacity, View } from "react-native";
-
-const client = generateClient<Schema>();
+import useAmplify from "../hooks/useAmplify";
 
 function App() {
   const [folders, setFolders] = useState<Array<Schema["Folder"]["type"]>>([]);
+  const { client } = useAmplify();
 
   useEffect(() => {
     client.models.Folder.observeQuery().subscribe({
