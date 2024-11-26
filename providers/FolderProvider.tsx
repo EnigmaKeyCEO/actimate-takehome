@@ -1,12 +1,12 @@
 import React, { useRef, useState } from "react";
 import useAmplify from "../hooks/useAmplify";
 import { Folder } from "../types";
-import { FolderContext, FolderContextType } from "#/contexts/FolderContext";
+import { FolderContext, FolderContextType, ROOT_FOLDER } from "#/contexts/FolderContext";
 
 const FolderProvider = ({ children }: { children: React.ReactNode }) => {
   const { create, list } = useAmplify();
   const [folders, setFolders] = useState<Array<Folder>>([]);
-  const currentFolder = useRef<string>("root");
+  const currentFolder = useRef<Folder>(ROOT_FOLDER);
   const nextToken = useRef<string | null>(null);
 
   const createFolder: FolderContextType["createFolder"] = React.useCallback(
@@ -21,7 +21,7 @@ const FolderProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   const getFolders: FolderContextType["getFolders"] = React.useCallback(
-    async (folderID: string = currentFolder.current) => {
+    async (folderID: string = currentFolder.current.id) => {
       const result = await list<Folder>(folderID);
       nextToken.current = result.nextToken ?? null;
       if (result.items === null) {

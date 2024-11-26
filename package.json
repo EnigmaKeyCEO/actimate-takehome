@@ -11,10 +11,10 @@
     "build": "npx expo export --platform web",
     "sandbox": "npx ampx --app-id d2jhnq7hpt97d5 --branch dev sandbox",
     "sandbox:delete": "npx ampx --app-id d2jhnq7hpt97d5 --branch dev sandbox delete",
-    "gen:outputs": "npx ampx --app-id d2jhnq7hpt97d5 --branch dev generate outputs --out ./graphql",
+    "gen:outputs": "npx ampx --app-id d2jhnq7hpt97d5 --branch dev generate outputs",
     "gen:code": "npx ampx --app-id d2jhnq7hpt97d5 --branch dev generate graphql-client-code --out ./graphql",
     "gen": "npm run gen:outputs && npm run gen:code",
-    "prod:gen:outputs": "npx ampx --app-id d2jhnq7hpt97d5 --branch main generate outputs --out ./graphql",
+    "prod:gen:outputs": "npx ampx --app-id d2jhnq7hpt97d5 --branch main generate outputs",
     "prod:gen:code": "npx ampx --app-id d2jhnq7hpt97d5 --branch main generate graphql-client-code --out ./graphql",
     "prod:gen": "npm run prod:gen:outputs && npm run prod:gen:code"
   },

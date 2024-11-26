@@ -17,6 +17,7 @@ export const getFolder = /* GraphQL */ `query GetFolder($id: ID!) {
       __typename
     }
     name
+    parentId
     updatedAt
     __typename
   }
@@ -24,15 +25,22 @@ export const getFolder = /* GraphQL */ `query GetFolder($id: ID!) {
 ` as GeneratedQuery<APITypes.GetFolderQueryVariables, APITypes.GetFolderQuery>;
 export const getImage = /* GraphQL */ `query GetImage($id: ID!) {
   getImage(id: $id) {
-    base64
     createdAt
-    folderId {
+    file {
+      bucket
+      key
+      region
+      __typename
+    }
+    folder {
       createdAt
       id
       name
+      parentId
       updatedAt
       __typename
     }
+    folderId
     id
     name
     updatedAt
@@ -59,6 +67,7 @@ export const listFolders = /* GraphQL */ `query ListFolders(
       createdAt
       id
       name
+      parentId
       updatedAt
       __typename
     }
@@ -85,8 +94,8 @@ export const listImages = /* GraphQL */ `query ListImages(
     sortDirection: $sortDirection
   ) {
     items {
-      base64
       createdAt
+      folderId
       id
       name
       updatedAt

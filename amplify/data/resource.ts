@@ -23,7 +23,7 @@ const schema = a.schema({
       url: a.string(),
       file: a.customType({
         bucket: a.string(),
-        key: a.string(),
+        key: a.string().required(),
         region: a.string(),
       }),
     })

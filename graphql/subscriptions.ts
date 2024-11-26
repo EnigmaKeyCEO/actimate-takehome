@@ -17,6 +17,7 @@ export const onCreateFolder = /* GraphQL */ `subscription OnCreateFolder($filter
       __typename
     }
     name
+    parentId
     updatedAt
     __typename
   }
@@ -27,15 +28,22 @@ export const onCreateFolder = /* GraphQL */ `subscription OnCreateFolder($filter
 >;
 export const onCreateImage = /* GraphQL */ `subscription OnCreateImage($filter: ModelSubscriptionImageFilterInput) {
   onCreateImage(filter: $filter) {
-    base64
     createdAt
-    folderId {
+    file {
+      bucket
+      key
+      region
+      __typename
+    }
+    folder {
       createdAt
       id
       name
+      parentId
       updatedAt
       __typename
     }
+    folderId
     id
     name
     updatedAt
@@ -56,6 +64,7 @@ export const onDeleteFolder = /* GraphQL */ `subscription OnDeleteFolder($filter
       __typename
     }
     name
+    parentId
     updatedAt
     __typename
   }
@@ -66,15 +75,22 @@ export const onDeleteFolder = /* GraphQL */ `subscription OnDeleteFolder($filter
 >;
 export const onDeleteImage = /* GraphQL */ `subscription OnDeleteImage($filter: ModelSubscriptionImageFilterInput) {
   onDeleteImage(filter: $filter) {
-    base64
     createdAt
-    folderId {
+    file {
+      bucket
+      key
+      region
+      __typename
+    }
+    folder {
       createdAt
       id
       name
+      parentId
       updatedAt
       __typename
     }
+    folderId
     id
     name
     updatedAt
@@ -95,6 +111,7 @@ export const onUpdateFolder = /* GraphQL */ `subscription OnUpdateFolder($filter
       __typename
     }
     name
+    parentId
     updatedAt
     __typename
   }
@@ -105,15 +122,22 @@ export const onUpdateFolder = /* GraphQL */ `subscription OnUpdateFolder($filter
 >;
 export const onUpdateImage = /* GraphQL */ `subscription OnUpdateImage($filter: ModelSubscriptionImageFilterInput) {
   onUpdateImage(filter: $filter) {
-    base64
     createdAt
-    folderId {
+    file {
+      bucket
+      key
+      region
+      __typename
+    }
+    folder {
       createdAt
       id
       name
+      parentId
       updatedAt
       __typename
     }
+    folderId
     id
     name
     updatedAt

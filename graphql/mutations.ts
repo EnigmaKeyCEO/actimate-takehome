@@ -20,6 +20,7 @@ export const createFolder = /* GraphQL */ `mutation CreateFolder(
       __typename
     }
     name
+    parentId
     updatedAt
     __typename
   }
@@ -33,15 +34,22 @@ export const createImage = /* GraphQL */ `mutation CreateImage(
   $input: CreateImageInput!
 ) {
   createImage(condition: $condition, input: $input) {
-    base64
     createdAt
-    folderId {
+    file {
+      bucket
+      key
+      region
+      __typename
+    }
+    folder {
       createdAt
       id
       name
+      parentId
       updatedAt
       __typename
     }
+    folderId
     id
     name
     updatedAt
@@ -65,6 +73,7 @@ export const deleteFolder = /* GraphQL */ `mutation DeleteFolder(
       __typename
     }
     name
+    parentId
     updatedAt
     __typename
   }
@@ -78,15 +87,22 @@ export const deleteImage = /* GraphQL */ `mutation DeleteImage(
   $input: DeleteImageInput!
 ) {
   deleteImage(condition: $condition, input: $input) {
-    base64
     createdAt
-    folderId {
+    file {
+      bucket
+      key
+      region
+      __typename
+    }
+    folder {
       createdAt
       id
       name
+      parentId
       updatedAt
       __typename
     }
+    folderId
     id
     name
     updatedAt
@@ -110,6 +126,7 @@ export const updateFolder = /* GraphQL */ `mutation UpdateFolder(
       __typename
     }
     name
+    parentId
     updatedAt
     __typename
   }
@@ -123,15 +140,22 @@ export const updateImage = /* GraphQL */ `mutation UpdateImage(
   $input: UpdateImageInput!
 ) {
   updateImage(condition: $condition, input: $input) {
-    base64
     createdAt
-    folderId {
+    file {
+      bucket
+      key
+      region
+      __typename
+    }
+    folder {
       createdAt
       id
       name
+      parentId
       updatedAt
       __typename
     }
+    folderId
     id
     name
     updatedAt

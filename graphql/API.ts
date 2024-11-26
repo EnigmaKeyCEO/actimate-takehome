@@ -7,7 +7,8 @@ export type Folder = {
   createdAt?: number | null,
   id: string,
   images?: ModelImageConnection | null,
-  name?: string | null,
+  name: string,
+  parentId: string,
   updatedAt?: number | null,
 };
 
@@ -19,13 +20,21 @@ export type ModelImageConnection = {
 
 export type Image = {
   __typename: "Image",
-  base64?: string | null,
   createdAt?: number | null,
-  folderId?: Folder | null,
+  file?: ImageFile | null,
+  folder?: Folder | null,
+  folderId: string,
   id: string,
   name: string,
   updatedAt?: number | null,
   url?: string | null,
+};
+
+export type ImageFile = {
+  __typename: "ImageFile",
+  bucket?: string | null,
+  key?: string | null,
+  region?: string | null,
 };
 
 export type ModelFolderFilterInput = {
@@ -35,6 +44,7 @@ export type ModelFolderFilterInput = {
   name?: ModelStringInput | null,
   not?: ModelFolderFilterInput | null,
   or?: Array< ModelFolderFilterInput | null > | null,
+  parentId?: ModelIDInput | null,
   updatedAt?: ModelIntInput | null,
 };
 
@@ -120,8 +130,8 @@ export type ModelFolderConnection = {
 
 export type ModelImageFilterInput = {
   and?: Array< ModelImageFilterInput | null > | null,
-  base64?: ModelStringInput | null,
   createdAt?: ModelIntInput | null,
+  folderId?: ModelIDInput | null,
   id?: ModelIDInput | null,
   name?: ModelStringInput | null,
   not?: ModelImageFilterInput | null,
@@ -136,20 +146,22 @@ export type ModelFolderConditionInput = {
   name?: ModelStringInput | null,
   not?: ModelFolderConditionInput | null,
   or?: Array< ModelFolderConditionInput | null > | null,
+  parentId?: ModelIDInput | null,
   updatedAt?: ModelIntInput | null,
 };
 
 export type CreateFolderInput = {
   createdAt?: number | null,
   id?: string | null,
-  name?: string | null,
+  name: string,
+  parentId: string,
   updatedAt?: number | null,
 };
 
 export type ModelImageConditionInput = {
   and?: Array< ModelImageConditionInput | null > | null,
-  base64?: ModelStringInput | null,
   createdAt?: ModelIntInput | null,
+  folderId?: ModelIDInput | null,
   name?: ModelStringInput | null,
   not?: ModelImageConditionInput | null,
   or?: Array< ModelImageConditionInput | null > | null,
@@ -158,12 +170,19 @@ export type ModelImageConditionInput = {
 };
 
 export type CreateImageInput = {
-  base64?: string | null,
   createdAt?: number | null,
+  file?: ImageFileInput | null,
+  folderId: string,
   id?: string | null,
   name: string,
   updatedAt?: number | null,
   url?: string | null,
+};
+
+export type ImageFileInput = {
+  bucket?: string | null,
+  key?: string | null,
+  region?: string | null,
 };
 
 export type DeleteFolderInput = {
@@ -178,12 +197,14 @@ export type UpdateFolderInput = {
   createdAt?: number | null,
   id: string,
   name?: string | null,
+  parentId?: string | null,
   updatedAt?: number | null,
 };
 
 export type UpdateImageInput = {
-  base64?: string | null,
   createdAt?: number | null,
+  file?: ImageFileInput | null,
+  folderId?: string | null,
   id: string,
   name?: string | null,
   updatedAt?: number | null,
@@ -196,6 +217,7 @@ export type ModelSubscriptionFolderFilterInput = {
   id?: ModelSubscriptionIDInput | null,
   name?: ModelSubscriptionStringInput | null,
   or?: Array< ModelSubscriptionFolderFilterInput | null > | null,
+  parentId?: ModelSubscriptionIDInput | null,
   updatedAt?: ModelSubscriptionIntInput | null,
 };
 
@@ -243,8 +265,8 @@ export type ModelSubscriptionStringInput = {
 
 export type ModelSubscriptionImageFilterInput = {
   and?: Array< ModelSubscriptionImageFilterInput | null > | null,
-  base64?: ModelSubscriptionStringInput | null,
   createdAt?: ModelSubscriptionIntInput | null,
+  folderId?: ModelSubscriptionIDInput | null,
   id?: ModelSubscriptionIDInput | null,
   name?: ModelSubscriptionStringInput | null,
   or?: Array< ModelSubscriptionImageFilterInput | null > | null,
@@ -265,7 +287,8 @@ export type GetFolderQuery = {
       __typename: "ModelImageConnection",
       nextToken?: string | null,
     } | null,
-    name?: string | null,
+    name: string,
+    parentId: string,
     updatedAt?: number | null,
   } | null,
 };
@@ -277,15 +300,22 @@ export type GetImageQueryVariables = {
 export type GetImageQuery = {
   getImage?:  {
     __typename: "Image",
-    base64?: string | null,
     createdAt?: number | null,
-    folderId?:  {
+    file?:  {
+      __typename: "ImageFile",
+      bucket?: string | null,
+      key?: string | null,
+      region?: string | null,
+    } | null,
+    folder?:  {
       __typename: "Folder",
       createdAt?: number | null,
       id: string,
-      name?: string | null,
+      name: string,
+      parentId: string,
       updatedAt?: number | null,
     } | null,
+    folderId: string,
     id: string,
     name: string,
     updatedAt?: number | null,
@@ -308,7 +338,8 @@ export type ListFoldersQuery = {
       __typename: "Folder",
       createdAt?: number | null,
       id: string,
-      name?: string | null,
+      name: string,
+      parentId: string,
       updatedAt?: number | null,
     } | null >,
     nextToken?: string | null,
@@ -328,8 +359,8 @@ export type ListImagesQuery = {
     __typename: "ModelImageConnection",
     items:  Array< {
       __typename: "Image",
-      base64?: string | null,
       createdAt?: number | null,
+      folderId: string,
       id: string,
       name: string,
       updatedAt?: number | null,
@@ -353,7 +384,8 @@ export type CreateFolderMutation = {
       __typename: "ModelImageConnection",
       nextToken?: string | null,
     } | null,
-    name?: string | null,
+    name: string,
+    parentId: string,
     updatedAt?: number | null,
   } | null,
 };
@@ -366,15 +398,22 @@ export type CreateImageMutationVariables = {
 export type CreateImageMutation = {
   createImage?:  {
     __typename: "Image",
-    base64?: string | null,
     createdAt?: number | null,
-    folderId?:  {
+    file?:  {
+      __typename: "ImageFile",
+      bucket?: string | null,
+      key?: string | null,
+      region?: string | null,
+    } | null,
+    folder?:  {
       __typename: "Folder",
       createdAt?: number | null,
       id: string,
-      name?: string | null,
+      name: string,
+      parentId: string,
       updatedAt?: number | null,
     } | null,
+    folderId: string,
     id: string,
     name: string,
     updatedAt?: number | null,
@@ -396,7 +435,8 @@ export type DeleteFolderMutation = {
       __typename: "ModelImageConnection",
       nextToken?: string | null,
     } | null,
-    name?: string | null,
+    name: string,
+    parentId: string,
     updatedAt?: number | null,
   } | null,
 };
@@ -409,15 +449,22 @@ export type DeleteImageMutationVariables = {
 export type DeleteImageMutation = {
   deleteImage?:  {
     __typename: "Image",
-    base64?: string | null,
     createdAt?: number | null,
-    folderId?:  {
+    file?:  {
+      __typename: "ImageFile",
+      bucket?: string | null,
+      key?: string | null,
+      region?: string | null,
+    } | null,
+    folder?:  {
       __typename: "Folder",
       createdAt?: number | null,
       id: string,
-      name?: string | null,
+      name: string,
+      parentId: string,
       updatedAt?: number | null,
     } | null,
+    folderId: string,
     id: string,
     name: string,
     updatedAt?: number | null,
@@ -439,7 +486,8 @@ export type UpdateFolderMutation = {
       __typename: "ModelImageConnection",
       nextToken?: string | null,
     } | null,
-    name?: string | null,
+    name: string,
+    parentId: string,
     updatedAt?: number | null,
   } | null,
 };
@@ -452,15 +500,22 @@ export type UpdateImageMutationVariables = {
 export type UpdateImageMutation = {
   updateImage?:  {
     __typename: "Image",
-    base64?: string | null,
     createdAt?: number | null,
-    folderId?:  {
+    file?:  {
+      __typename: "ImageFile",
+      bucket?: string | null,
+      key?: string | null,
+      region?: string | null,
+    } | null,
+    folder?:  {
       __typename: "Folder",
       createdAt?: number | null,
       id: string,
-      name?: string | null,
+      name: string,
+      parentId: string,
       updatedAt?: number | null,
     } | null,
+    folderId: string,
     id: string,
     name: string,
     updatedAt?: number | null,
@@ -481,7 +536,8 @@ export type OnCreateFolderSubscription = {
       __typename: "ModelImageConnection",
       nextToken?: string | null,
     } | null,
-    name?: string | null,
+    name: string,
+    parentId: string,
     updatedAt?: number | null,
   } | null,
 };
@@ -493,15 +549,22 @@ export type OnCreateImageSubscriptionVariables = {
 export type OnCreateImageSubscription = {
   onCreateImage?:  {
     __typename: "Image",
-    base64?: string | null,
     createdAt?: number | null,
-    folderId?:  {
+    file?:  {
+      __typename: "ImageFile",
+      bucket?: string | null,
+      key?: string | null,
+      region?: string | null,
+    } | null,
+    folder?:  {
       __typename: "Folder",
       createdAt?: number | null,
       id: string,
-      name?: string | null,
+      name: string,
+      parentId: string,
       updatedAt?: number | null,
     } | null,
+    folderId: string,
     id: string,
     name: string,
     updatedAt?: number | null,
@@ -522,7 +585,8 @@ export type OnDeleteFolderSubscription = {
       __typename: "ModelImageConnection",
       nextToken?: string | null,
     } | null,
-    name?: string | null,
+    name: string,
+    parentId: string,
     updatedAt?: number | null,
   } | null,
 };
@@ -534,15 +598,22 @@ export type OnDeleteImageSubscriptionVariables = {
 export type OnDeleteImageSubscription = {
   onDeleteImage?:  {
     __typename: "Image",
-    base64?: string | null,
     createdAt?: number | null,
-    folderId?:  {
+    file?:  {
+      __typename: "ImageFile",
+      bucket?: string | null,
+      key?: string | null,
+      region?: string | null,
+    } | null,
+    folder?:  {
       __typename: "Folder",
       createdAt?: number | null,
       id: string,
-      name?: string | null,
+      name: string,
+      parentId: string,
       updatedAt?: number | null,
     } | null,
+    folderId: string,
     id: string,
     name: string,
     updatedAt?: number | null,
@@ -563,7 +634,8 @@ export type OnUpdateFolderSubscription = {
       __typename: "ModelImageConnection",
       nextToken?: string | null,
     } | null,
-    name?: string | null,
+    name: string,
+    parentId: string,
     updatedAt?: number | null,
   } | null,
 };
@@ -575,15 +647,22 @@ export type OnUpdateImageSubscriptionVariables = {
 export type OnUpdateImageSubscription = {
   onUpdateImage?:  {
     __typename: "Image",
-    base64?: string | null,
     createdAt?: number | null,
-    folderId?:  {
+    file?:  {
+      __typename: "ImageFile",
+      bucket?: string | null,
+      key?: string | null,
+      region?: string | null,
+    } | null,
+    folder?:  {
       __typename: "Folder",
       createdAt?: number | null,
       id: string,
-      name?: string | null,
+      name: string,
+      parentId: string,
       updatedAt?: number | null,
     } | null,
+    folderId: string,
     id: string,
     name: string,
     updatedAt?: number | null,
