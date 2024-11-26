@@ -1,69 +1,39 @@
 import React, { useState } from "react";
-import {
-  uploadData,
-  // downloadData,
-  // remove,
-  // list,
-  // getProperties,
-  // copy,
-  // getUrl,
-} from "@aws-amplify/storage";
-import type {
-  // DownloadDataWithPathInput,
-  // DownloadDataWithPathOutput,
-  // RemoveWithPathInput,
-  // RemoveWithPathOutput,
-  UploadDataWithPathInput,
-  UploadDataWithPathOutput,
-} from "@aws-amplify/storage";
-import type {
-  StorageUploadDataPayload,
-  CreateFolderInput,
-  CreateImageInput,
-  DeleteFolderInput,
-  DeleteImageInput,
-  Folder,
-  Image,
-  ListFoldersQuery,
-  ListImagesQuery,
-  UpdateFolderInput,
-  UpdateImageInput,
-} from "../types";
+import AmplifyContext from "../contexts/AmplifyContext";
 import { Amplify } from "@aws-amplify/core";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "../amplify/data/resource";
 import outputs from "../amplify_outputs.json";
+import type {
+  CreateImageInput,
+  CreateFolderInput,
+  Image,
+  Folder,
+  DeleteFolderMutation,
+  DeleteImageMutation,
+  ListImagesQueryVariables,
+  ListFoldersQueryVariables,
+  ModelImageConnection,
+  ModelFolderConnection,
+  DeleteImageInput,
+  DeleteFolderInput,
+  UpdateImageInput,
+} from "../types";
+
+import {
+  createImage,
+  createFolder,
+  updateImage,
+  deleteImage,
+  deleteFolder,
+} from "../graphql/mutations";
+import {
+  getImage,
+  listImages,
+  listFolders,
+} from "../graphql/queries";
 
 let _client: ReturnType<typeof generateClient<Schema>>;
-
-type AmplifyContextType = {
-  // TODO: remove this once the methods are implemented
-  client?: ReturnType<typeof generateClient<Schema>>; // only temporarily expose for testing
-  ready: boolean;
-  error: Error | null;
-  create: (
-    input: CreateImageInput | CreateFolderInput,
-    data?: StorageUploadDataPayload
-  ) => Promise<boolean>;
-  read: (id?: string) => Promise<ListImagesQuery | ListFoldersQuery | null>;
-  update: (
-    id: string,
-    data: UpdateImageInput | UpdateFolderInput
-  ) => Promise<boolean>;
-  delete: (id: DeleteImageInput | DeleteFolderInput) => Promise<boolean>;
-  list: (id: string) => Promise<Array<Image | Folder>>;
-};
-
-export const AmplifyContext = React.createContext<AmplifyContextType>({
-  ready: false, // TODO: remove this (below) once the methods are implemented
-  client: undefined,
-  error: null,
-  create: async () => Promise.resolve(false),
-  read: async () => Promise.resolve(null),
-  update: async () => Promise.resolve(false),
-  delete: async () => Promise.resolve(false),
-  list: async () => Promise.resolve([]),
-});
 
 const ApiProvider = ({ children }: { children: React.ReactNode }) => {
   const [ready, setIsConfigured] = useState(false);
@@ -100,7 +70,8 @@ const ApiProvider = ({ children }: { children: React.ReactNode }) => {
   // initialize the app on mount
   React.useEffect(() => {
     __inti__();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally empty so it only runs once
 
   // log the client status
   React.useEffect(() => {
@@ -111,57 +82,102 @@ const ApiProvider = ({ children }: { children: React.ReactNode }) => {
         console.error("Error initializing App");
       }
     }
-  }, [ready]);
+  }, [ready, client]);
 
   // create a new image or folder
-  const create = async (
-    input: CreateImageInput | CreateFolderInput,
-    data?: StorageUploadDataPayload
-  ) => {
+  const create = async <T extends CreateImageInput | CreateFolderInput>(
+    input: T
+  ): Promise<boolean> => {
     switch (true) {
-      case (input as CreateImageInput) !== null:
-        if (!data) throw new Error("No data provided");
-        return createImage(input as CreateImageInput, data);
-      case (input as CreateFolderInput) !== null:
-        return createFolder(input);
+      case (input as CreateImageInput) !== null: {
+        // TODO: add data validation
+        // if (!input.data) throw new Error("No data provided");
+        const response = await client?.graphql({
+          query: createImage,
+          variables: {
+            input: input as CreateImageInput,
+          },
+        });
+        return Boolean(response?.data?.createImage?.id);
+      }
+      case (input as CreateFolderInput) !== null: {
+        const response = await client?.graphql({
+          query: createFolder,
+          variables: {
+            input: input as CreateFolderInput,
+          },
+        });
+        return Boolean(response?.data?.createFolder?.id);
+      }
       default:
         throw new Error("Invalid data type");
     }
   };
 
-  // create a new image
-  const createImage = async (
-    input: CreateImageInput,
-    data: StorageUploadDataPayload
-  ) => {
-    const uploadDataInput: UploadDataWithPathInput = {
-      path: input.folderID,
-      data: data,
-    };
-    const response: UploadDataWithPathOutput = await uploadData(
-      uploadDataInput
-    );
-    return response.result
-      .then((result) => {
-        console.log(result);
-        return true;
-      })
-      .catch(() => false);
+  const read = async <T extends Image | Folder>(
+    id: string
+  ): Promise<T | null> => {
+    const response = await client?.graphql({
+      query: getImage,
+      variables: {
+        id,
+      },
+    });
+    return response?.data?.getImage as T | null;
   };
 
-  // create a new folder
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const createFolder = async (_input: CreateFolderInput) => {
-    // use dynamodb to create folder
-    return true;
+  const update = async <T extends Image | Folder>(
+    input: T
+  ): Promise<boolean> => {
+    const response = await client?.graphql({
+      query: updateImage,
+      variables: {
+        input: input as UpdateImageInput,
+      },
+    });
+    return Boolean(response?.data?.updateImage?.id);
   };
 
-  // stub in the rest so i can do this right:
-  // TODO: implement read, update, delete
-  const read = async () => Promise.resolve(null);
-  const update = async () => Promise.resolve(false);
-  const del = async () => Promise.resolve(false);
-  const list = async () => Promise.resolve([]);
+  const del = async <T extends Image | Folder>(input: T): Promise<boolean> => {
+    const isFolder = (input as Folder) !== null;
+    const response = await client?.graphql({
+      query: isFolder ? deleteFolder : deleteImage,
+      variables: {
+        input: isFolder
+          ? (input as DeleteFolderInput)
+          : (input as DeleteImageInput),
+      },
+    });
+    const data = response?.data;
+    return isFolder
+      ? Boolean(data as DeleteFolderMutation)
+      : Boolean(data as DeleteImageMutation);
+  };
+
+  const list = async <T extends Image | Folder>(
+    folderId: string = "root"
+  ): Promise<
+    T extends Image ? ModelImageConnection : ModelFolderConnection
+  > => {
+    const type = {} as new (...args: unknown[]) => T;
+    const query = type.name === "Image" ? listImages : listFolders;
+    const response = await client?.graphql({
+      query,
+      variables:
+        type.name === "Image"
+          ? ({
+              folderId: folderId,
+            } as ListImagesQueryVariables)
+          : ({
+              id: folderId,
+            } as ListFoldersQueryVariables),
+    });
+    if (!response?.data) throw new Error("No data returned");
+    const list = (response.data as { listImages: ModelImageConnection }).listImages !== null
+      ? (response.data as { listImages: ModelImageConnection }).listImages
+      : (response.data as { listFolders: ModelFolderConnection }).listFolders;
+    return list as T extends Image ? ModelImageConnection : ModelFolderConnection;
+  };
 
   const value = {
     client: client!, // only temporarily expose for testing
