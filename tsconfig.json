@@ -21,6 +21,7 @@
     "noFallthroughCasesInSwitch": true,
 
     /* others */
+    "allowSyntheticDefaultImports": true,
     "allowJs": true,
     "baseUrl": ".",
     "paths": {

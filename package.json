@@ -18,7 +18,7 @@
     "@expo/metro-runtime": "~4.0.0",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-community/netinfo": "11.4.1",
-    "aws-amplify": "^6.9.0",
+    "aws-amplify": "^6.10.0",
     "expo": "^52.0.11",
     "expo-clipboard": "~7.0.0",
     "expo-constants": "~17.0.3",
@@ -34,24 +34,24 @@
     "react-native-web": "~0.19.13"
   },
   "devDependencies": {
-    "@aws-amplify/backend": "^1.5.0",
-    "@aws-amplify/backend-cli": "^1.2.9",
+    "@aws-amplify/backend": "^1.8.0",
+    "@aws-amplify/backend-cli": "^1.4.2",
     "@babel/core": "^7.19.3",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.2.22",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
     "@typescript-eslint/parser": "^7.2.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "aws-cdk": "^2.138.0",
-    "aws-cdk-lib": "^2.138.0",
-    "constructs": "^10.3.0",
+    "aws-cdk": "^2.171.0",
+    "aws-cdk-lib": "^2.171.0",
+    "constructs": "^10.4.2",
     "esbuild": "^0.20.2",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
     "expo-module-scripts": "^4.0.2",
-    "tsx": "^4.7.2",
-    "typescript": "^5.3.3"
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
   },
   "expo": {
     "doctor": {
