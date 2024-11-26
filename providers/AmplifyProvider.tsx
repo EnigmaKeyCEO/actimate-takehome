@@ -19,6 +19,7 @@ import type {
   DeleteFolderInput,
   UpdateImageInput,
 } from "../types";
+import { ModelConnection } from "../types";
 
 import {
   createImage,
@@ -27,11 +28,7 @@ import {
   deleteImage,
   deleteFolder,
 } from "../graphql/mutations";
-import {
-  getImage,
-  listImages,
-  listFolders,
-} from "../graphql/queries";
+import { getImage, listImages, listFolders } from "../graphql/queries";
 
 let _client: ReturnType<typeof generateClient<Schema>>;
 
@@ -157,7 +154,7 @@ const ApiProvider = ({ children }: { children: React.ReactNode }) => {
   const list = async <T extends Image | Folder>(
     folderId: string = "root"
   ): Promise<
-    T extends Image ? ModelImageConnection : ModelFolderConnection
+    ModelImageConnection | ModelFolderConnection
   > => {
     const type = {} as new (...args: unknown[]) => T;
     const query = type.name === "Image" ? listImages : listFolders;
@@ -172,12 +169,7 @@ const ApiProvider = ({ children }: { children: React.ReactNode }) => {
               id: folderId,
             } as ListFoldersQueryVariables),
     });
-    if (!response?.data) throw new Error("No data returned");
-    const list = (response.data as { listImages: ModelImageConnection }).listImages !== null
-      ? (response.data as { listImages: ModelImageConnection }).listImages
-      : (response.data as { listFolders: ModelFolderConnection }).listFolders;
-    const typedList = list as T extends Image ? ModelImageConnection : ModelFolderConnection;
-    return typedList ?? [];
+    return new ModelConnection(response?.data).list;
   };
 
   const value = {

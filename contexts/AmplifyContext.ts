@@ -21,7 +21,9 @@ export type AmplifyContextType = {
   read: <T extends Image | Folder>(id: string) => Promise<T | null>;
   update: <T extends Image | Folder>(arg0: T) => Promise<boolean>;
   delete: <T extends Image | Folder>(arg0: T) => Promise<boolean>;
-  list: <T extends Image | Folder>(folderId?: string) => Promise<T extends Image ? ModelImageConnection : ModelFolderConnection>;
+  list: <T extends Image | Folder>(
+    folderId?: T["id"] // hacky way to force the type to be correct
+  ) => Promise<ModelImageConnection | ModelFolderConnection>;
 };
 
 export const AmplifyContext = React.createContext<AmplifyContextType>({
