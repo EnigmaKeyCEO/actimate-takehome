@@ -1,1 +1,30 @@
-{}
+{
+  "api": {
+    "actimate-takehome": {
+      "providerPlugin": "awscloudformation",
+      "service": "AppSync"
+    }
+  },
+  "auth": {
+    "actimate-takehome": {
+      "providerPlugin": "awscloudformation",
+      "service": "Cognito"
+    }
+  },
+  "data": {
+    "Folder": {
+      "providerPlugin": "awscloudformation",
+      "service": "DynamoDB"
+    },
+    "Image": {
+      "providerPlugin": "awscloudformation",
+      "service": "DynamoDB"
+    }
+  },
+  "storage": {
+    "actimate-takehome": {
+      "providerPlugin": "awscloudformation",
+      "service": "S3"
+    }
+  }
+}

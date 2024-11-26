@@ -36,6 +36,11 @@
       "StackName": "amplify-actimate-dev-350a7",
       "StackId": "arn:aws:cloudformation:us-east-2:131687450852:stack/amplify-actimate-dev-350a7/4d94ee60-ab64-11ef-82e2-029ce3eeca79",
       "AmplifyAppId": "d2jhnq7hpt97d5"
+    },
+    "categories": {
+      "auth": {
+        "actimate-takehome": {}
+      }
     }
   }
 }
