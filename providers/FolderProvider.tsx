@@ -1,26 +1,54 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import useAmplify from "../hooks/useAmplify";
 import { Folder } from "../types";
-
-type FolderContextType = {
-  getFolders: (folderID: string) => Promise<Array<Folder>>;
-};
-
-const FolderContext = React.createContext<FolderContextType>({
-  getFolders: async () => Promise.resolve([]),
-});
+import { FolderContext, FolderContextType } from "#/contexts/FolderContext";
 
 const FolderProvider = ({ children }: { children: React.ReactNode }) => {
-  const { read } = useAmplify();
+  const { create, list } = useAmplify();
+  const [folders, setFolders] = useState<Array<Folder>>([]);
+  const currentFolder = useRef<string>("root");
+  const nextToken = useRef<string | null>(null);
 
-  const getFolders = async (folderID: string = "root") => {
-    const result = await read(folderID);
-    return result as Array<Folder>;
-  };
+  const createFolder: FolderContextType["createFolder"] = React.useCallback(
+    async (name: Folder["name"]) => {
+      const result = await create<Folder>({
+        name,
+        //   parentFolderId: currentFolder.current, // TODO: Fix this rather large oversight
+      } as Folder);
+      return result;
+    },
+    [create]
+  );
+
+  const getFolders: FolderContextType["getFolders"] = React.useCallback(
+    async (folderID: string = currentFolder.current) => {
+      const result = await list<Folder>(folderID);
+      nextToken.current = result.nextToken ?? null;
+      if (result.items === null) {
+        setFolders([]);
+        return null;
+      }
+      setFolders((prevFolders) => [
+        ...prevFolders,
+        ...(result.items as Array<Folder>),
+      ]);
+      return result.items as Array<Folder>;
+    },
+    [list]
+  );
+
+  const value = React.useMemo(
+    () => ({
+      folders: folders ?? [],
+      currentFolder: currentFolder.current ?? "root",
+      getFolders,
+      createFolder,
+    }),
+    [folders, getFolders, createFolder]
+  );
+
   return (
-    <FolderContext.Provider value={{ getFolders }}>
-      {children}
-    </FolderContext.Provider>
+    <FolderContext.Provider value={value}>{children}</FolderContext.Provider>
   );
 };
 

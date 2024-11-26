@@ -176,7 +176,8 @@ const ApiProvider = ({ children }: { children: React.ReactNode }) => {
     const list = (response.data as { listImages: ModelImageConnection }).listImages !== null
       ? (response.data as { listImages: ModelImageConnection }).listImages
       : (response.data as { listFolders: ModelFolderConnection }).listFolders;
-    return list as T extends Image ? ModelImageConnection : ModelFolderConnection;
+    const typedList = list as T extends Image ? ModelImageConnection : ModelFolderConnection;
+    return typedList ?? [];
   };
 
   const value = {

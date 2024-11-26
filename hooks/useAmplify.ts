@@ -1,5 +1,5 @@
 import React from "react";
-import { AmplifyContext } from "../providers/AmplifyProvider";
+import { AmplifyContext } from "#/contexts/AmplifyContext";
 
 export const useAmplify = () => {
   const context = React.useContext(AmplifyContext);
