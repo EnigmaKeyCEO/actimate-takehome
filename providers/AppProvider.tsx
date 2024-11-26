@@ -1,70 +1,69 @@
 import React from "react";
-import Storage, { TransferProgressEvent } from "@aws-amplify/storage";
-import Clipboard from "expo-clipboard";
-import { Image } from "../types";
 import { Platform } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-
-export type AppContextType = {
-  takePhoto: () => void;
-  pickImage: () => void;
-  image: string | null; // selected image uri
-  percentage: number;
-  copyToClipboard: () => void;
-  uploadImage: (
-    filename: string,
-    img: Blob
-  ) => Promise<{ path: string }>;
-  downloadImage: (uri: string) => void;
-  fetchImageFromUri: (uri: string) => Promise<Blob>;
-  setLoading: (progress: TransferProgressEvent) => void;
-  updatePercentage: (number: number) => void;
-};
-
-export const INITIAL_STATE: AppContextType = {
-  takePhoto: () => {},
-  pickImage: () => {},
-  image: null,
-  percentage: 0,
-  copyToClipboard: () => {},
-  uploadImage: () => Promise.resolve({ path: "" }),
-  downloadImage: () => {},
-  fetchImageFromUri: () => Promise.resolve(new Blob()),
-  setLoading: () => {},
-  updatePercentage: () => {},
-};
-
-export const AppContext = React.createContext(INITIAL_STATE);
+import { AppContext, AppContextType } from "#/contexts/AppContext";
 
 export default function AppProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [image, setImage] = React.useState<Image | null>(null);
-  const [percentage, setPercentage] = React.useState(0);
+  const [image, setImage] = React.useState<ImagePicker.ImagePickerAsset | null>(
+    null
+  );
+  const [error, setError] = React.useState<Error | null>(null);
+
+  const [cameraPermissionStatus, requestCameraPermissions] =
+    ImagePicker.useCameraPermissions();
+  const [mediaLibraryPermissionStatus, requestMediaLibraryPermissions] =
+    ImagePicker.useMediaLibraryPermissions();
+
+  const permissions = React.useRef<{
+    camera: boolean;
+    mediaLibrary: boolean;
+  }>({
+    camera: cameraPermissionStatus?.status === "granted",
+    mediaLibrary: mediaLibraryPermissionStatus?.status === "granted",
+  });
 
   React.useEffect(() => {
     (async () => {
       if (Platform.OS === "ios") {
-        const cameraRollStatus =
-          await ImagePicker.requestMediaLibraryPermissionsAsync();
-        const cameraStatus = await ImagePicker.requestCameraPermissionsAsync();
-        if (
-          cameraRollStatus.status !== "granted" ||
-          cameraStatus.status !== "granted"
-        ) {
-          alert("Sorry, we need these permissions to make this work!");
+        // only iOS requires camera permission
+        if (!permissions.current.camera) {
+          permissions.current.camera =
+            cameraPermissionStatus?.status === "granted";
         }
-      } else if (Platform.OS === "android") {
-        const cameraRollStatus =
-          await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (cameraRollStatus.status !== "granted") {
-          alert("Sorry, we need these permissions to make this work!");
+        if (!permissions.current.camera) {
+          const permissionPromise = await requestCameraPermissions();
+          permissions.current.camera = permissionPromise.status === "granted";
         }
       }
+      // all implemented platforms require mediaLibrary permission
+      if (!permissions.current.mediaLibrary) {
+        permissions.current.mediaLibrary =
+          mediaLibraryPermissionStatus?.status === "granted";
+      }
+      if (!permissions.current.mediaLibrary) {
+        const permissionPromise = await requestMediaLibraryPermissions();
+        permissions.current.mediaLibrary =
+          permissionPromise.status === "granted";
+      }
+      if (
+        (Platform.OS === "ios" && !permissions.current.camera) ||
+        !permissions.current.mediaLibrary
+      ) {
+        setError(
+          new Error("Sorry, we need these permissions to make this work!")
+        );
+      }
     })();
-  }, []);
+  }, [
+    cameraPermissionStatus,
+    mediaLibraryPermissionStatus,
+    requestCameraPermissions,
+    requestMediaLibraryPermissions,
+  ]);
 
   const takePhoto = async () => {
     const result = await ImagePicker.launchCameraAsync({
@@ -76,7 +75,6 @@ export default function AppProvider({
   };
 
   const pickImage = async () => {
-    console.log("pickImage");
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       aspect: [4, 3],
@@ -91,13 +89,10 @@ export default function AppProvider({
   ) => {
     try {
       if (pickerResult.canceled) {
-        alert("Upload cancelled");
+        setError(new Error("User cancelled image selection"));
         return;
       } else {
-        setPercentage(0);
-        const img = await fetchImageFromUri(pickerResult.assets[0].uri);
-        const uploadUrl = await uploadImage("demo.jpg", img);
-        downloadImage(uploadUrl.path);
+        setImage(pickerResult.assets[0]);
       }
     } catch (e) {
       console.log(e);
@@ -105,58 +100,11 @@ export default function AppProvider({
     }
   };
 
-  const uploadImage = async (filename: string, img: Blob) => {
-    const data: Storage.UploadDataWithPathInput = {
-      path: filename,
-      data: img,
-    };
-    const output = await Storage.uploadData(data);
-    return await output.result;
-  };
-
-  const setLoading = (progress: TransferProgressEvent) => {
-    const calculated = Math.round(
-      (progress.transferredBytes / (progress.totalBytes ?? 0)) * 100
-    );
-    updatePercentage(calculated); // due to s3 put function scoped
-  };
-
-  const updatePercentage = (number: number) => {
-    setPercentage(number);
-  };
-
-  const downloadImage = async (uri: string) => {
-    const response = await Storage.downloadData({ path: uri });
-    const result = await response.result;
-    const image = await result.body.json();
-    setImage(image);
-  };
-
-  const fetchImageFromUri = async (uri: string) => {
-    const response = await fetch(uri);
-    const blob = await response.blob();
-    return blob;
-  };
-
-  const copyToClipboard = async () => {
-    const imageString = JSON.stringify(image);
-    await Clipboard.setStringAsync(imageString);
-    alert("Copied image URL to clipboard");
-  };
-
   const value = {
     takePhoto,
     pickImage,
     image,
-    images: [], // TODO: implement
-    folders: [], // TODO: implement
-    percentage,
-    copyToClipboard,
-    uploadImage,
-    downloadImage,
-    fetchImageFromUri,
-    setLoading,
-    updatePercentage,
+    error,
   } as AppContextType;
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
