@@ -12,23 +12,23 @@ import {
 
 export type AmplifyContextType = {
   // TODO: remove this once the methods are implemented, probably.
-  client?: ReturnType<typeof generateClient<Schema>>;
+  client: ReturnType<typeof generateClient<Schema>> | null;
   ready: boolean;
   error: Error | null;
-  create: <T extends CreateImageInput | CreateFolderInput>(
-    input: T
+  create: <T extends CreateImageInput | CreateFolderInput | null>(
+    input: NonNullable<T>
   ) => Promise<boolean>;
   read: <T extends Image | Folder>(id: string) => Promise<T | null>;
   update: <T extends Image | Folder>(arg0: T) => Promise<boolean>;
   delete: <T extends Image | Folder>(arg0: T) => Promise<boolean>;
   list: <T extends Image | Folder>(
     folderId?: T["id"] // hacky way to force the type to be correct
-  ) => Promise<ModelImageConnection | ModelFolderConnection>;
+  ) => Promise<ModelImageConnection | ModelFolderConnection | null>;
 };
 
 export const AmplifyContext = React.createContext<AmplifyContextType>({
   ready: false,
-  client: undefined,
+  client: null,
   error: null,
   create: async () => Promise.resolve(false),
   read: async () => Promise.resolve(null),

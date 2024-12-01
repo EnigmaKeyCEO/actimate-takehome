@@ -23,16 +23,16 @@ const FolderProvider = ({ children }: { children: React.ReactNode }) => {
   const getFolders: FolderContextType["getFolders"] = React.useCallback(
     async (folderID: string = currentFolder.current.id) => {
       const result = await list<Folder>(folderID);
-      nextToken.current = result.nextToken ?? null;
-      if (result.items === null) {
+      nextToken.current = result?.nextToken ?? null;
+      if (result?.items === null) {
         setFolders([]);
         return null;
       }
       setFolders((prevFolders) => [
         ...prevFolders,
-        ...(result.items as Array<Folder>),
+        ...(result?.items as Array<Folder>),
       ]);
-      return result.items as Array<Folder>;
+      return result?.items as Array<Folder>;
     },
     [list]
   );

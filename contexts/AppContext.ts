@@ -3,14 +3,14 @@ import React from "react";
 
 export type AppContextType = {
   takePhoto: () => void;
-  pickImage: () => void;
+  pickImage: () => Promise<ImagePickerAsset | null>;
   image: ImagePickerAsset | null;
   error: Error | null;
 };
 
 export const INITIAL_STATE: AppContextType = {
   takePhoto: () => {},
-  pickImage: () => {},
+  pickImage: () => Promise.resolve(null),
   image: null,
   error: null,
 };

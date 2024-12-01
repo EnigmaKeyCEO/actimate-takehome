@@ -80,8 +80,7 @@ export default function AppProvider({
       aspect: [4, 3],
       quality: 1,
     });
-
-    handleImagePicked(result);
+    return await handleImagePicked(result);
   };
 
   const handleImagePicked = async (
@@ -92,11 +91,13 @@ export default function AppProvider({
         setError(new Error("User cancelled image selection"));
         return;
       } else {
+        console.log("image picked", pickerResult.assets[0]);
         setImage(pickerResult.assets[0]);
+        return pickerResult.assets[0];
       }
     } catch (e) {
-      console.log(e);
-      alert("Upload failed");
+      console.error(e);
+      setError(e as Error);
     }
   };
 

@@ -10,7 +10,30 @@ const schema = a.schema({
       updatedAt: a.timestamp().default(Date.now()),
       images: a.hasMany("Image", "folderId"), // One-to-Many relationship with Image
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [
+      allow.guest().to([
+        "list",
+        "get",
+        "create",
+        "update",
+        "delete",
+        "sync",
+        "listen",
+        "search",
+      ]),
+      allow
+        .publicApiKey()
+        .to([
+          "list",
+          "get",
+          "create",
+          "update",
+          "delete",
+          "sync",
+          "listen",
+          "search",
+        ]),
+    ]),
 
   Image: a
     .model({
@@ -27,7 +50,28 @@ const schema = a.schema({
         region: a.string(),
       }),
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [
+      allow.guest().to([
+        "list",
+        "get",
+        "create",
+        "update",
+        "delete",
+        "sync",
+        "listen",
+        "search",
+      ]),
+      allow.publicApiKey().to([
+        "list",
+        "get",
+        "create",
+        "update",
+        "delete",
+        "sync",
+        "listen",
+        "search",
+      ]),
+    ]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
