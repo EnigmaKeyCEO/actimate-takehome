@@ -2,6 +2,7 @@
   "expo": {
     "name": "Actimate Takehome",
     "slug": "actimate-takehome",
+    "scheme": "actimate-takehome",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,8 +13,13 @@
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
-      "**/*"
+      "**/*",
+      "./assets/fonts/*",
+      "./assets/images/*"
     ],
+    "web": {
+      "bundler": "metro"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ceo.enigma.actimate",
@@ -40,7 +46,8 @@
           "photosPermission": "The app needs access to your photos.",
           "cameraPermission": "The app needs access to your camera."
         }
-      ]
+      ],
+      "expo-router"
     ],
     "developmentClient": {
       "silentLaunch": true

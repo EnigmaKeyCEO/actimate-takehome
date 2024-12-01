@@ -1,0 +1,46 @@
+{
+  "staging": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-amplify26ba1126bbbd4-staging-1d293-authRole",
+      "UnauthRoleArn": "arn:aws:iam::131687450852:role/amplify-amplify26ba1126bbbd4-staging-1d293-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::131687450852:role/amplify-amplify26ba1126bbbd4-staging-1d293-authRole",
+      "Region": "us-east-2",
+      "DeploymentBucketName": "amplify-amplify26ba1126bbbd4-staging-1d293-deployment",
+      "UnauthRoleName": "amplify-amplify26ba1126bbbd4-staging-1d293-unauthRole",
+      "StackName": "amplify-amplify26ba1126bbbd4-staging-1d293",
+      "StackId": "arn:aws:cloudformation:us-east-2:131687450852:stack/amplify-amplify26ba1126bbbd4-staging-1d293/4253f2b0-ab61-11ef-8f82-069161df66af",
+      "AmplifyAppId": "d2jhnq7hpt97d5"
+    }
+  },
+  "prod": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-actimate-prod-e0125-authRole",
+      "UnauthRoleArn": "arn:aws:iam::131687450852:role/amplify-actimate-prod-e0125-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::131687450852:role/amplify-actimate-prod-e0125-authRole",
+      "Region": "us-east-2",
+      "DeploymentBucketName": "amplify-actimate-prod-e0125-deployment",
+      "UnauthRoleName": "amplify-actimate-prod-e0125-unauthRole",
+      "StackName": "amplify-actimate-prod-e0125",
+      "StackId": "arn:aws:cloudformation:us-east-2:131687450852:stack/amplify-actimate-prod-e0125/afc9e190-ab63-11ef-b222-027a4a31481f",
+      "AmplifyAppId": "d2jhnq7hpt97d5"
+    }
+  },
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-actimate-dev-350a7-authRole",
+      "UnauthRoleArn": "arn:aws:iam::131687450852:role/amplify-actimate-dev-350a7-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::131687450852:role/amplify-actimate-dev-350a7-authRole",
+      "Region": "us-east-2",
+      "DeploymentBucketName": "amplify-actimate-dev-350a7-deployment",
+      "UnauthRoleName": "amplify-actimate-dev-350a7-unauthRole",
+      "StackName": "amplify-actimate-dev-350a7",
+      "StackId": "arn:aws:cloudformation:us-east-2:131687450852:stack/amplify-actimate-dev-350a7/4d94ee60-ab64-11ef-82e2-029ce3eeca79",
+      "AmplifyAppId": "d2jhnq7hpt97d5"
+    },
+    "categories": {
+      "auth": {
+        "actimate-takehome": {}
+      }
+    }
+  }
+}

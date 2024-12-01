@@ -1,38 +1,70 @@
 {
   "cli": {
-    "version": ">= 7.3.0"
+    "version": ">= 7.3.0",
+    "appVersionSource": "remote"
   },
   "build": {
-    "development-simulator": {
+    "base": {
+      "node": "18.18.2",
+      "yarn": "1.22.22",
+      "env": {},
+      "android": {
+        "image": "default",
+        "env": {
+          "PLATFORM": "android",
+          "IS_WEB": "false"
+        }
+      },
+      "ios": {
+        "image": "latest",
+        "env": {
+          "PLATFORM": "ios",
+          "IS_WEB": "false"
+        }
+      }
+    },
+    "development": {
+      "extends": "base",
       "developmentClient": true,
-      "distribution": "internal",
       "env": {
-        "VITE_API_BASE_URL": "https://0.0.0.0:3000/.netlify/functions"
+        "NODE_ENV": "development"
+      },
+      "android": {
+        "distribution": "internal",
+        "withoutCredentials": true
+      },
+      "ios": {
+        "simulator": false
+      }
+    },
+    "development-simulator": {
+      "extends": "development",
+      "env": {
+        "NODE_ENV": "development"
       },
       "ios": {
         "simulator": true
       }
     },
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal",
-      "env": {
-        "VITE_API_BASE_URL": "https://actimate-takehome.netlify.app/api"
-      }
-    },
     "preview": {
-      "distribution": "internal",
+      "extends": "base",
       "env": {
-        "VITE_API_BASE_URL": "https://actimate-takehome.netlify.app/api"
+        "NODE_ENV": "development"
+      },
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
       }
     },
     "production": {
+      "extends": "base",
       "env": {
-        "VITE_API_BASE_URL": "https://actimate-takehome.netlify.app/api"
+        "NODE_ENV": "production"
       }
     }
   },
   "submit": {
+    "preview": {},
     "production": {}
   }
 }

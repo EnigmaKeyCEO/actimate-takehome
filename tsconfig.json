@@ -1,24 +1,44 @@
 {
   "compilerOptions": {
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "allowJs": true,
-    "target": "ESNext",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable", "ESNext"],
     "module": "ESNext",
-    "jsx": "react-jsx",
-    "baseUrl": ".",
-    "paths": {
-      "#/*": ["src/*"]
-    },
-    "moduleResolution": "node",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* others */
+    "allowSyntheticDefaultImports": true,
+    "allowJs": true,
+    "baseUrl": ".",
+    "paths": {
+      "#/*": ["./*"]
+    },
+    "esModuleInterop": true
   },
-  "include": ["src", "index.d.ts"],
+  "include": [
+    "app",
+    "assets",
+    "components",
+    "hooks",
+    "models",
+    "providers",
+    "types",
+    "amplify_outputs.json"
+  ],
   "extensions": [
     ".ts",
     ".tsx",

@@ -1,3 +1,3 @@
-# Suggested to ignore native project files for EAS... TBD?
 ios/
 android/
+dist/
