@@ -1,12 +1,12 @@
 {
   "cli": {
-    "version": "latest",
+    "version": ">= 7.3.0",
     "appVersionSource": "remote"
   },
   "build": {
     "base": {
-      "node": "latest",
-      "yarn": "latest",
+      "node": "18.18.2",
+      "yarn": "1.22.22",
       "env": {},
       "android": {
         "image": "default",
